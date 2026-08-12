@@ -1,0 +1,2594 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  legacy/DPLA047.xsql 를 iBatis -> MyBatis 문법으로 변환한 결과.
+  쿼리 로직은 원문 그대로 유지, 문법만 치환했다 (SQL 재작성 없음).
+
+  변환 완료: S001, queryCommon(공통 SQL 프래그먼트, 원본 4~2684행)
+  변환 보류: S002~S006
+    - S002: 원본에서 <select id="S002"> 가 </select>로 닫히지 않고 2850행에서
+      </isEqual>로 잘못 닫혀 있어(.NET XML 파서로 확인) 실제 SQL 본문의 끝을 알 수 없음.
+    - S003~S006: 원본 파일에 정의 자체가 없음(DPLA047.java가 dbSelect("S003")~("S006")으로
+      호출하지만 매핑되는 <select> 없음).
+    - queryCommon은 원본에서 <include>로 참조하는 곳이 없는 고아 프래그먼트였다.
+      S003~S006이 이 프래그먼트를 <include refid="queryCommon"/>로 사용했을 가능성이 높지만
+      원본이 없어 확인 불가 — 아래 <sql id="queryCommon"> 는 문법 변환만 마친 상태이며,
+      어느 <select>에 include 되어야 하는지는 원본 XSQL 보완 후 결정할 것.
+  이 파일만으로는 D BizUnit의 6개 메서드 중 dPLA04701(S001)만 실제로 동작한다.
+-->
+<mapper namespace="DPLA047">
+
+    <!-- dPLA04701 -> S001: REV 조회 -->
+    <select id="S001" parameterType="map" resultType="hashmap" fetchSize="50">
+        <![CDATA[
+        /* Biz: gscm.r.pm.pla.plab.db.DPLA047.S001 REV 조회 */
+        SELECT PLN_REV AS CODE
+                , PLN_REV||' : '||APPLY_CTN AS VALUE
+                , PLN_START_YM
+                , SUBSTR(PLN_START_YM, 1, 4) || '12' AS PLN_END_YM
+                , SOM_PLN_REV
+                , COST_PLN_REV
+                , YLD_PLN_REV
+                , PLN_TYP_CD
+                , APPLY_CTN
+            FROM PMI_PLN_REV
+            WHERE PLN_YW = #{PLN_YW}
+            AND USE_YN = 'Y'
+            AND PLN_TYP_CD != 'BSE'
+            ORDER BY CASE WHEN PLN_TYP_CD = 'SNR' THEN 1
+                          WHEN PLN_TYP_CD = 'VLD' THEN 2
+                          ELSE 4 END, PLN_REV DESC
+        ]]>
+    </select>
+
+    <!--
+      원본에 remapresults="true" 속성이 있었다. iBatis 전용 옵션(중복 컬럼명 재매핑)으로
+      MyBatis에는 직접 대응 기능이 없어 제거했다. 이 SELECT의 결과 컬럼명 중 중복이 없는지
+      확인 필요 (동작 차이가 생길 수 있는 지점이라 임의로 대체 로직을 만들지 않았다).
+    -->
+
+    <!--
+      아래 queryCommon은 원본 XSQL 4~2684행을 문법만 변환한 것. 참조하는 <select>가
+      원본에 없어(고아 프래그먼트), 어느 S00N이 include해야 하는지는 확정할 수 없다.
+      isEqual/isNotEqual -> if, isNotEmpty+iterate -> if+foreach, #x# -> #{x}, $x$ -> ${x}
+      로 기계적으로만 치환했고 조건/컬럼 로직은 원문과 동일하다.
+    -->
+﻿	<sql id="queryCommon">
+	<![CDATA[ /* PIVOT 적용 대상 쿼리 */
+			SELECT
+				/* DIMENSION 시작*/
+				${DIM}
+				/* DIMENSION 끝*/
+	]]><if test="SRCTYPE == 'UPPER2'">
+		<![CDATA[
+				, UPPER_CD1
+				, UPPER_CD2
+				, SORT_SEQ
+		]]>
+	</if>	
+		<if test="SRCTYPE == 'COLCHG'">
+			<![CDATA[
+					, UPPER_CD1
+					, SORT_SEQ
+			]]>
+		</if><![CDATA[
+					, NET_DIE_300_CNT AS NET_DIE_300_CNT
+					, MQHYT_GBN
+					, MQHYT
+	]]><if test="CHKYN == 'N'">
+		<![CDATA[
+				, CUM2_YLD
+				, ODD_CUM2_YLD
+		]]>				
+	</if>	
+		<if test="CHKYN == 'Y'">
+		<![CDATA[
+				/* ,(GOOD_DIE / NET_DIE_300_CNT) * 100 AS CUM2_YLD */
+				, CASE WHEN NET_DIE_300_CNT IS NULL THEN NULL
+						WHEN NET_DIE_300_CNT = 0 THEN 0
+						ELSE (GOOD_DIE / NET_DIE_300_CNT) * 100
+						END AS CUM2_YLD */
+				/* , CUM2_YLD */
+				, ODD_CUM2_YLD
+		]]>				
+		</if>
+		<![CDATA[
+				, GOOD_DIE
+				, ODD_GOOD_DIE
+				, WF_CONV_QTY
+				, SOM_EQ_QTY
+				, SOM_DIE_QTY
+				, ORG_QTY
+				, SALE_AMT
+				, ASP
+				, CASE WHEN SUM(SALE_AMT) OVER (PARTITION BY MQHYT_GBN, MQHYT) IS NULL THEN NULL
+						WHEN NVL(SUM(SALE_AMT) OVER (PARTITION BY MQHYT_GBN, MQHYT),0) = 0 THEN 0
+				  ELSE SALE_AMT / SUM(SALE_AMT) OVER (PARTITION BY MQHYT_GBN, MQHYT) END * 100 AS  SALE_GRAV
+				, CASE WHEN SUM(SOM_EQ_QTY) OVER (PARTITION BY MQHYT_GBN, MQHYT) IS NULL THEN NULL
+						WHEN NVL(SUM(SOM_EQ_QTY) OVER (PARTITION BY MQHYT_GBN, MQHYT),0) = 0 THEN 0
+				  ELSE SOM_EQ_QTY / SUM(SOM_EQ_QTY) OVER (PARTITION BY MQHYT_GBN, MQHYT) END * 100 AS  QTY_GRAV		
+				, CASE WHEN SUM(SALES_PROF) OVER (PARTITION BY MQHYT_GBN, MQHYT) IS NULL THEN NULL
+						WHEN NVL(SUM(SALES_PROF) OVER (PARTITION BY MQHYT_GBN, MQHYT),0) = 0 THEN 0
+				  ELSE SALES_PROF / SUM(SALES_PROF) OVER (PARTITION BY MQHYT_GBN, MQHYT) END * 100 AS  SALES_PROF_GRAV		
+				
+				/*장당 수익성*/		
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE SALE_YR_PROF/WF_CONV_QTY END AS SALE_WF_SLS_PROF
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE CNTRB_PROF_YR_PROF/WF_CONV_QTY END AS CNTRB_PROF_WF_SLS_PROF
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE CASH_PROF_YR_PROF/WF_CONV_QTY END AS CASH_PROF_WF_SLS_PROF  
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE SALE_PROF_YR_PROF/WF_CONV_QTY END AS SALE_PROF_WF_SLS_PROF
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE SALES_PROF_YR_PROF/WF_CONV_QTY END AS SALES_PROF_WF_SLS_PROF   
+				
+				, NVL(SALE_EQ_PROF,0) AS SALE_EQ_PROF		
+				, NVL(CNTRB_PROF_EQ_PROF,0) AS CNTRB_PROF_EQ_PROF
+				, NVL(CASH_PROF_EQ_PROF,0) AS CASH_PROF_EQ_PROF
+				, NVL(SALE_PROF_EQ_PROF,0) AS SALE_PROF_EQ_PROF
+				, NVL(SALES_PROF_EQ_PROF,0) AS SALES_PROF_EQ_PROF
+				
+				, NVL(SALE_DIE_PROF,0) AS SALE_DIE_PROF		
+				, NVL(CNTRB_PROF_DIE_PROF,0) AS CNTRB_PROF_DIE_PROF
+				, NVL(CASH_PROF_DIE_PROF,0) AS CASH_PROF_DIE_PROF
+				, NVL(SALE_PROF_DIE_PROF,0) AS SALE_PROF_DIE_PROF
+				, NVL(SALES_PROF_DIE_PROF,0) AS SALES_PROF_DIE_PROF
+				
+				, NVL(SALE_PROD_PROF,0) AS SALE_PROD_PROF		
+				, NVL(CNTRB_PROF_PROD_PROF,0) AS CNTRB_PROF_PROD_PROF
+				, NVL(CASH_PROF_PROD_PROF,0) AS CASH_PROF_PROD_PROF
+				, NVL(SALE_PROF_PROD_PROF,0) AS SALE_PROF_PROD_PROF
+				, NVL(SALES_PROF_PROD_PROF,0) AS SALES_PROF_PROD_PROF
+				
+				, NVL(SALE_YR_PROF,0) AS SALE_YR_PROF		
+				, NVL(CNTRB_PROF_YR_PROF,0) AS CNTRB_PROF_YR_PROF
+				, NVL(CASH_PROF_YR_PROF,0) AS CASH_PROF_YR_PROF
+				, NVL(SALE_PROF_YR_PROF,0) AS SALE_PROF_YR_PROF
+				, NVL(SALES_PROF_YR_PROF,0) AS SALES_PROF_YR_PROF
+				
+				/*장당 원가*/		
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE VAR_COST_YR_COST/WF_CONV_QTY END AS VAR_COST_WF_SLS_COST
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE CASH_COST_YR_COST/WF_CONV_QTY END AS CASH_COST_WF_SLS_COST
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE COSG_COST_YR_COST/WF_CONV_QTY END AS COGS_COST_WF_SLS_COST  
+				, CASE WHEN WF_CONV_QTY IS NULL THEN NULL
+						WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+				  ELSE COO_COST_YR_COST/WF_CONV_QTY END AS COO_COST_WF_SLS_COST 
+		
+				, NVL(VAR_COST_EQ_COST,0) AS VAR_COST_EQ_COST		
+				, NVL(CASH_COST_EQ_COST,0) AS CASH_COST_EQ_COST
+				, NVL(COGS_COST_EQ_COST,0) AS COGS_COST_EQ_COST
+				, NVL(COO_COST_EQ_COST,0) AS COO_COST_EQ_COST
+				
+				, NVL(VAR_COST_DIE_COST,0) AS VAR_COST_DIE_COST		
+				, NVL(CASH_COST_DIE_COST,0) AS CASH_COST_DIE_COST
+				, NVL(COGS_COST_DIE_COST,0) AS COGS_COST_DIE_COST
+				, NVL(COO_COST_DIE_COST,0) AS COO_COST_DIE_COST
+				
+				, NVL(VAR_COST_PROD_COST,0) AS VAR_COST_PROD_COST		
+				, NVL(CASH_COST_PROD_COST,0) AS CASH_COST_PROD_COST
+				, NVL(COGS_COST_PROD_COST,0) AS COGS_COST_PROD_COST
+				, NVL(COO_COST_PROD_COST,0) AS COO_COST_PROD_COST
+				
+				, NVL(VAR_COST_YR_COST,0) AS VAR_COST_YR_COST		
+				, NVL(CASH_COST_YR_COST,0) AS CASH_COST_YR_COST
+				, NVL(COGS_COST_YR_COST,0) AS COGS_COST_YR_COST
+				, NVL(COO_COST_YR_COST,0) AS COO_COST_YR_COST
+				FROM ( /*취합 (월, 분기, 반기, 년, 토탈) 후 산술식 적용 */
+					SELECT /* DIMENSION 시작*/
+							${DIM}
+							/* DIMENSION 끝*/
+				]]>
+				<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, MQHYT_GBN
+								, MQHYT
+								, NET_DIE_300_CNT
+				]]><if test="CHKYN == 'N'">
+					<![CDATA[
+							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) / NULLIF(NET_DIE_300_CNT,0) * 100 AS  CUM2_YLD
+							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) / NULLIF(NET_DIE_300_CNT,0) * 100 * SOM_EQ_QTY AS ODD_CUM2_YLD							
+							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) AS GOOD_DIE
+							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) * SOM_EQ_QTY AS ODD_GOOD_DIE
+					]]>				
+				</if>	
+				<if test="CHKYN == 'Y'">
+					<![CDATA[
+							, CUM2_YLD
+							, (CUM2_YLD * SOM_EQ_QTY) AS ODD_CUM2_YLD
+							, CASE WHEN WF_CONV_QTY IS NULL THEN NULL							
+								   WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+							  ELSE SOM_EQ_QTY/WF_CONV_QTY END AS GOOD_DIE
+							, CASE WHEN WF_CONV_QTY IS NULL THEN NULL							
+								   WHEN NVL(WF_CONV_QTY,0) = 0 THEN 0 
+							  ELSE (SOM_EQ_QTY/WF_CONV_QTY) * SOM_EQ_QTY END AS ODD_GOOD_DIE  
+					]]>				
+				</if>
+				<![CDATA[							
+							, WF_CONV_QTY
+							, SOM_EQ_QTY
+							, SOM_DIE_QTY
+							, ORG_QTY
+							, SALE_AMT
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL							
+								   WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT/SOM_EQ_QTY END AS ASP
+							, VAR_COST	
+							, CASH_COST
+							, COGS_COST
+							, COO_COST
+							, SALE_QTY
+							, COST_EQ_QTY
+							, COST_DIE_QTY
+									
+							, CASE WHEN COST_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(COST_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT - (VAR_COST / COST_EQ_QTY * SOM_EQ_QTY) END AS CNTRB_PROF
+							, CASE WHEN COST_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(COST_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT - (CASH_COST / COST_EQ_QTY * SOM_EQ_QTY) END AS CASH_PROF
+							, CASE WHEN COST_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(COST_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT - (COGS_COST / COST_EQ_QTY * SOM_EQ_QTY) END AS SALE_PROF
+							, CASE WHEN COST_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(COST_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT - (COO_COST / COST_EQ_QTY * SOM_EQ_QTY) END AS SALES_PROF
+							  
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT/ORG_QTY END AS SALE_PROD_PROF
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE CNTRB_PROF_YR_PROF/ORG_QTY END AS CNTRB_PROF_PROD_PROF
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE CASH_PROF_YR_PROF/ORG_QTY END AS CASH_PROF_PROD_PROF
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE SALE_PROF_YR_PROF/ORG_QTY END AS SALE_PROF_PROD_PROF
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE SALES_PROF_YR_PROF/ORG_QTY END AS SALES_PROF_PROD_PROF  
+							
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT/SOM_EQ_QTY END AS SALE_EQ_PROF
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE CNTRB_PROF_YR_PROF/SOM_EQ_QTY END AS CNTRB_PROF_EQ_PROF
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE CASH_PROF_YR_PROF/SOM_EQ_QTY END AS CASH_PROF_EQ_PROF
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALE_PROF_YR_PROF/SOM_EQ_QTY END AS SALE_PROF_EQ_PROF
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE SALES_PROF_YR_PROF/SOM_EQ_QTY END AS SALES_PROF_EQ_PROF  
+							  
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE SALE_AMT/SOM_DIE_QTY END AS SALE_DIE_PROF
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE CNTRB_PROF_YR_PROF/SOM_DIE_QTY END AS CNTRB_PROF_DIE_PROF
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE CASH_PROF_YR_PROF/SOM_DIE_QTY END AS CASH_PROF_DIE_PROF
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE SALE_PROF_YR_PROF/SOM_DIE_QTY END AS SALE_PROF_DIE_PROF
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE SALES_PROF_YR_PROF/SOM_DIE_QTY END AS SALES_PROF_DIE_PROF 
+							  
+							, SALE_AMT AS  SALE_YR_PROF
+							, CNTRB_PROF_YR_PROF AS CNTRB_PROF_YR_PROF
+							, CASH_PROF_YR_PROF AS CASH_PROF_YR_PROF
+							, SALE_PROF_YR_PROF AS SALE_PROF_YR_PROF
+							, SALES_PROF_YR_PROF AS SALES_PROF_YR_PROF
+							
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / ORG_QTY) - (CNTRB_PROF_YR_PROF / ORG_QTY) END AS VAR_COST_PROD_COST
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / ORG_QTY) - (CASH_PROF_YR_PROF / ORG_QTY) END AS CASH_COST_PROD_COST
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / ORG_QTY) - (COGS_PROF_YR_PROF / ORG_QTY) END AS COGS_COST_PROD_COST
+							, CASE WHEN ORG_QTY IS NULL THEN NULL
+									WHEN NVL(ORG_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / ORG_QTY) - (COO_PROF_YR_PROF / ORG_QTY) END AS COO_COST_PROD_COST
+							
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / SOM_EQ_QTY) - (CNTRB_PROF_YR_PROF / SOM_EQ_QTY) END AS VAR_COST_EQ_COST
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / SOM_EQ_QTY) - (CASH_PROF_YR_PROF / SOM_EQ_QTY) END AS CASH_COST_EQ_COST
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / SOM_EQ_QTY) - (COGS_PROF_YR_PROF / SOM_EQ_QTY) END AS COGS_COST_EQ_COST
+							, CASE WHEN SOM_EQ_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_EQ_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / SOM_EQ_QTY) - (COO_PROF_YR_PROF / SOM_EQ_QTY) END AS COO_COST_EQ_COST
+							
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / SOM_DIE_QTY) - (CNTRB_PROF_YR_PROF / SOM_EQ_QTY) END AS VAR_COST_DIE_COST
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE (SOM_DIE_QTY) - (CASH_PROF_YR_PROF / SOM_DIE_QTY) END AS CASH_COST_DIE_COST
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE (SALE_AMT / SOM_DIE_QTY) - (COGS_PROF_YR_PROF / SOM_DIE_QTY) END AS COGS_COST_DIE_COST
+							, CASE WHEN SOM_DIE_QTY IS NULL THEN NULL
+									WHEN NVL(SOM_DIE_QTY,0) = 0 THEN 0 
+							  ELSE (SOM_DIE_QTY) - (COO_PROF_YR_PROF / SOM_DIE_QTY) END AS COO_COST_DIE_COST
+							
+							, VAR_COST_YR_COST AS VAR_COST_YR_COST
+							, CASH_COST_YR_COST AS CASH_COST_YR_COST
+							, COGS_COST_YR_COST AS COGS_COST_YR_COST
+							, COO_COST_YR_COST AS COO_COST_YR_COST
+							
+							FROM (
+								/*============상단 체크박스 부분 시작 - 월 데이터 ====================*/
+		
+		]]>
+			<if test="CHKYN == 'Y'">
+				<![CDATA[
+					/*============조인 상단 부분 시작 ====================*/
+					SELECT /* 월 데이터 */	/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
+				]]>				
+					<if test="SRCTYPE == 'BASE'">
+						<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.TECH_CD,
+						]]>	
+						</if>
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.CHG_PROD_MODE_CD,
+						]]>	
+						</if>
+						</if>
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.UPPER_CD2 ,
+								A.SORT_SEQ ,
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.SORT_SEQ ,
+						]]>
+					</if><![CDATA[								
+								A.MQHYT_GBN ,
+								A.MQHYT ,
+								B.NET_DIE_300_CNT ,
+								A.CUM2_YLD ,
+								A.ORG_QTY ,
+								A.SOM_EQ_QTY,
+								A.SOM_DIE_QTY,
+								A.SALE_QTY,
+								A.COST_EQ_QTY,
+								A.COST_DIE_QTY,
+								A.WF_CONV_QTY,
+								A.SALE_AMT,								
+								A.VAR_COST,
+								A.CASH_COST,
+								A.COGS_COST,
+								A.COO_COST,
+								A.CNTRB_PROF_YR_PROF AS CNTRB_PROF_YR_PROF,
+								A.CASH_PROF_YR_PROF AS CASH_PROF_YR_PROF,
+								A.SALE_PROF_YR_PROF AS SALE_PROF_YR_PROF,
+								A.SALES_PROF_YR_PROF AS SALES_PROF_YR_PROF,
+								A.VAR_COST_YR_COST AS VAR_COST_YR_COST,
+								A.CASH_COST_YR_COST AS CASH_COST_YR_COST,
+								A.COGS_COST_YR_COST AS COGS_COST_YR_COST,
+								A.COO_COST_YR_COST AS COO_COST_YR_COST
+							FROM (
+								/*============조인 상단 부분 끝 ====================*/
+								/*체크 박스의 디맨젼으로 감싼다*/
+								SELECT /* 월 데이터 */
+										/* DIMENSION 시작*/
+										${DIM}
+										/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2
+								, MAX(SORT_SEQ) AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+									, UPPER_CD1
+									, MAX(SORT_SEQ) AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+									, MQHYT_GBN
+									, MQHYT
+									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
+									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+					]]><if test="CHKYN == 'N'">
+						<![CDATA[
+								, SUM(CUM2_YLD) AS  CUM2_YLD
+						]]>				
+					</if>	
+					<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
+								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(SALE_AMT - VAR_COST_YR_COST) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST_YR_COST) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST_YR_COST) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST_YR_COST) AS SALES_PROF_YR_PROF								
+								, SUM(VAR_COST_YR_COST) AS VAR_COST_YR_COST
+								, SUM(CASH_COST_YR_COST ) AS CASH_COST_YR_COST
+								, SUM(COGS_COST_YR_COST) AS COGS_COST_YR_COST
+								, SUM(COO_COST_YR_COST ) AS COO_COST_YR_COST
+							FROM (
+					]]>
+				</if><![CDATA[
+					/*================상단 체크박스 부분 끝 - 월 데이터==========================*/
+					/*통합 DATA 원본쿼리 - 그룹바이*/
+					SELECT /* 월 데이터 */
+							/* DIMENSION 시작*/
+							${DIMORG}
+							/* DIMENSION 끝*/
+					
+				]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, MQHYT_GBN
+								, MQHYT
+								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
+				]]><if test="CHKYN == 'N'">
+					<![CDATA[
+							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
+							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
+							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
+					]]>				
+				</if>	
+				<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
+								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS VAR_COST_YR_COST
+								, SUM(CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_COST_YR_COST
+								, SUM(COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COGS_COST_YR_COST
+								, SUM(COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COO_COST_YR_COST								
+								, SUM(SALE_AMT - VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALES_PROF_YR_PROF	
+							FROM (
+								SELECT /* DIMENSION 시작*/
+										${DIMORG}
+										/* DIMENSION 끝*/
+					]]>
+				<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, 'MONTH' AS MQHYT_GBN
+								, TGT_YM AS MQHYT
+								/*기본정보*/
+								, NET_DIE_300_CNT
+					]]><if test="CHKYN == 'Y'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<![CDATA[	
+								, CUM2_YLD
+								, BP_EXR
+								/* 수량정보 */
+								, ORG_QTY
+								, SOM_EQ_QTY
+								, SOM_DIE_QTY
+								, SALE_QTY
+								, COST_EQ_QTY
+								, COST_DIE_QTY
+								/* WAFER 환산*/
+								, CASE WHEN NVL(NET_DIE_300_CNT, 0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD, 0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								/* 금액 정보(USD) */  
+								, SALE_AMT
+								/* 원가 정보(USD) */ 
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE VAR_COST / BP_EXR END AS VAR_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE CASH_COST / BP_EXR END AS CASH_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COGS_COST / BP_EXR END AS COGS_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COO_COST / BP_EXR END AS COO_COST 
+								FROM PMO_PROFBLT_IMPROV_PROD T1					
+					]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_MONTH}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIMORG}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[								
+							, MQHYT_GBN
+							, MQHYT
+							/*============하단 체크박스 부분 시작 - 월 데이터=========================*/							
+				]]><if test="CHKYN == 'Y'">
+					<![CDATA[
+						/*체크 박스의 디맨젼으로 감싼다*/
+						)
+						GROUP BY 	/* DIMENSION 시작*/ /*ROLLUP 적용전*/
+										${DIM}
+									/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2								
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+						]]>
+					</if><![CDATA[
+							, MQHYT_GBN
+							, MQHYT 
+							/*============조인 쿼리 부분 시작=========================*/	
+					) A
+					INNER JOIN
+					(
+						SELECT /* DIMENSION 시작*/ 
+									${DIM}
+								/* DIMENSION 끝*/							
+			]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL
+							           WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+								ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+							  FROM (
+							  SELECT /* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/	
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, FAB_DEN_CD
+								, 'MONTH' AS MQHYT_GBN
+								, TGT_YM AS MQHYT								
+								, NET_DIE_300_CNT					
+					]]><if test="TYPE == 'DRAM'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
+								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<if test="TYPE == 'NAND'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
+								ELSE (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+'))) / 8 END AS FAB_DEN_NUM
+						]]>				
+					</if>					
+						<![CDATA[
+								, CASE WHEN NVL(NET_DIE_300_CNT,0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD,0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								FROM PMO_PROFBLT_IMPROV_PROD T1
+						]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_MONTH}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIM}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[
+						) B
+				]]>
+				<if test="SRCTYPE == 'BASE'">
+					<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.TECH_CD = B.TECH_CD
+						]]>
+					</if>	
+					<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
+						]]>
+					</if>
+				</if>									
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+								AND A.UPPER_CD2 = B.UPPER_CD2			
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+						]]>
+					</if><![CDATA[
+						/*============조인 쿼리 부분 시작=========================*/	
+						]]>
+					</if><![CDATA[
+					/*============하단 체크박스 부분 끝 - 월 데이터=========================*/	
+					UNION ALL
+					/*============하단 체크박스 부분 시작 - 분기 데이터=========================*/	
+		        ]]> <if test="CHKYN == 'Y'">
+				<![CDATA[
+					/*============조인 상단 부분 시작 ====================*/
+					SELECT /* 분기 데이터 */
+							/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
+				]]>				
+					<if test="SRCTYPE == 'BASE'">
+						<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.TECH_CD,
+						]]>	
+						</if>
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.CHG_PROD_MODE_CD,
+						]]>	
+						</if>
+						</if>
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.UPPER_CD2 ,
+								A.SORT_SEQ ,
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.SORT_SEQ ,
+						]]>
+					</if><![CDATA[								
+								A.MQHYT_GBN ,
+								A.MQHYT ,
+								B.NET_DIE_300_CNT ,
+								A.CUM2_YLD ,
+								A.ORG_QTY ,
+								A.SOM_EQ_QTY,
+								A.SOM_DIE_QTY,
+								A.SALE_QTY,
+								A.COST_EQ_QTY,
+								A.COST_DIE_QTY,
+								A.WF_CONV_QTY,
+								A.SALE_AMT,								
+								A.VAR_COST,
+								A.CASH_COST,
+								A.COGS_COST,
+								A.COO_COST,
+								A.CNTRB_PROF_YR_PROF AS CNTRB_PROF_YR_PROF,
+								A.CASH_PROF_YR_PROF AS CASH_PROF_YR_PROF,
+								A.SALE_PROF_YR_PROF AS SALE_PROF_YR_PROF,
+								A.SALES_PROF_YR_PROF AS SALES_PROF_YR_PROF,
+								A.VAR_COST_YR_COST AS VAR_COST_YR_COST,
+								A.CASH_COST_YR_COST AS CASH_COST_YR_COST,
+								A.COGS_COST_YR_COST AS COGS_COST_YR_COST,
+								A.COO_COST_YR_COST AS COO_COST_YR_COST
+							FROM (
+								/*============조인 상단 부분 끝 ====================*/
+								/*체크 박스의 디맨젼으로 감싼다*/
+								SELECT /* 분기 데이터 */
+										/* DIMENSION 시작*/
+										${DIM}
+										/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2
+								, MAX(SORT_SEQ) AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+									, UPPER_CD1
+									, MAX(SORT_SEQ) AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+									, MQHYT_GBN
+									, MQHYT
+									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
+									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+					]]><if test="CHKYN == 'N'">
+						<![CDATA[
+								, SUM(CUM2_YLD) AS  CUM2_YLD
+						]]>				
+					</if>	
+					<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
+								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(SALE_AMT - VAR_COST_YR_COST) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST_YR_COST) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST_YR_COST) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST_YR_COST) AS SALES_PROF_YR_PROF								
+								, SUM(VAR_COST_YR_COST) AS VAR_COST_YR_COST
+								, SUM(CASH_COST_YR_COST ) AS CASH_COST_YR_COST
+								, SUM(COGS_COST_YR_COST) AS COGS_COST_YR_COST
+								, SUM(COO_COST_YR_COST ) AS COO_COST_YR_COST
+							FROM (
+					]]>
+				</if><![CDATA[
+					/*================상단 체크박스 부분 끝 - 분기 데이터==========================*/
+					/*통합 DATA 원본쿼리 - 그룹바이*/
+					SELECT /* 분기 데이터 */
+							/* DIMENSION 시작*/
+							${DIMORG}
+							/* DIMENSION 끝*/
+					
+				]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, MQHYT_GBN
+								, MQHYT
+								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
+				]]><if test="CHKYN == 'N'">
+					<![CDATA[
+							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
+							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
+							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
+					]]>				
+				</if>	
+				<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
+								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS VAR_COST_YR_COST
+								, SUM(CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_COST_YR_COST
+								, SUM(COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COGS_COST_YR_COST
+								, SUM(COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COO_COST_YR_COST								
+								, SUM(SALE_AMT - VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALES_PROF_YR_PROF	
+							FROM (
+								SELECT /* DIMENSION 시작*/
+										${DIMORG}
+										/* DIMENSION 끝*/
+					]]>
+				<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, 'QUARTER' AS MQHYT_GBN
+								, TGT_QUTR AS MQHYT
+								/*기본정보*/
+								, NET_DIE_300_CNT
+					]]><if test="CHKYN == 'Y'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<![CDATA[	
+								, CUM2_YLD
+								, BP_EXR
+								/* 수량정보 */
+								, ORG_QTY
+								, SOM_EQ_QTY
+								, SOM_DIE_QTY
+								, SALE_QTY
+								, COST_EQ_QTY
+								, COST_DIE_QTY
+								/* WAFER 환산*/
+								, CASE WHEN NVL(NET_DIE_300_CNT, 0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD, 0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								/* 금액 정보(USD) */  
+								, SALE_AMT
+								/* 원가 정보(USD) */ 
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE VAR_COST / BP_EXR END AS VAR_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE CASH_COST / BP_EXR END AS CASH_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COGS_COST / BP_EXR END AS COGS_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COO_COST / BP_EXR END AS COO_COST 
+								FROM PMO_PROFBLT_IMPROV_PROD T1					
+					]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_QUARTER}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIMORG}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[								
+							, MQHYT_GBN
+							, MQHYT
+							/*============하단 체크박스 부분 시작 - 분기 데이터=========================*/							
+				]]><if test="CHKYN == 'Y'">
+					<![CDATA[
+						/*체크 박스의 디맨젼으로 감싼다*/
+						)
+						GROUP BY 	/* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2								
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+						]]>
+					</if><![CDATA[
+							, MQHYT_GBN
+							, MQHYT 
+							/*============조인 쿼리 부분 시작=========================*/	
+					) A
+					INNER JOIN
+					(
+						SELECT /* DIMENSION 시작*/ 
+									${DIM}
+								/* DIMENSION 끝*/							
+			]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL
+							           WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+								ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+							  FROM (
+							  SELECT /* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/	
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, FAB_DEN_CD
+								, 'QUARTER' AS MQHYT_GBN
+								, TGT_QUTR AS MQHYT								
+								, NET_DIE_300_CNT					
+					]]><if test="TYPE == 'DRAM'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
+								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<if test="TYPE == 'NAND'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
+								ELSE (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+'))) / 8 END AS FAB_DEN_NUM
+						]]>				
+					</if>					
+						<![CDATA[
+								, CASE WHEN NVL(NET_DIE_300_CNT,0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD,0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								FROM PMO_PROFBLT_IMPROV_PROD T1
+						]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_QUARTER}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIM}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[
+						) B
+				]]>
+				<if test="SRCTYPE == 'BASE'">
+					<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.TECH_CD = B.TECH_CD
+						]]>
+					</if>	
+					<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
+						]]>
+					</if>
+				</if>									
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+								AND A.UPPER_CD2 = B.UPPER_CD2			
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+						]]>
+					</if><![CDATA[
+						/*============조인 쿼리 부분 시작=========================*/	
+						]]>
+					</if><![CDATA[
+					/*============하단 체크박스 부분 끝 - 분기 데이터=========================*/		
+					UNION ALL
+					/*============하단 체크박스 부분 시작 - 반기 데이터=========================*/	
+		        ]]> <if test="CHKYN == 'Y'">
+				<![CDATA[
+					/*============조인 상단 부분 시작 ====================*/
+					SELECT /* 반기 데이터 */
+							/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
+				]]>				
+					<if test="SRCTYPE == 'BASE'">
+						<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.TECH_CD,
+						]]>	
+						</if>
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.CHG_PROD_MODE_CD,
+						]]>	
+						</if>
+						</if>
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.UPPER_CD2 ,
+								A.SORT_SEQ ,
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.SORT_SEQ ,
+						]]>
+					</if><![CDATA[								
+								A.MQHYT_GBN ,
+								A.MQHYT ,
+								B.NET_DIE_300_CNT ,
+								A.CUM2_YLD ,
+								A.ORG_QTY ,
+								A.SOM_EQ_QTY,
+								A.SOM_DIE_QTY,
+								A.SALE_QTY,
+								A.COST_EQ_QTY,
+								A.COST_DIE_QTY,
+								A.WF_CONV_QTY,
+								A.SALE_AMT,								
+								A.VAR_COST,
+								A.CASH_COST,
+								A.COGS_COST,
+								A.COO_COST,
+								A.CNTRB_PROF_YR_PROF AS CNTRB_PROF_YR_PROF,
+								A.CASH_PROF_YR_PROF AS CASH_PROF_YR_PROF,
+								A.SALE_PROF_YR_PROF AS SALE_PROF_YR_PROF,
+								A.SALES_PROF_YR_PROF AS SALES_PROF_YR_PROF,
+								A.VAR_COST_YR_COST AS VAR_COST_YR_COST,
+								A.CASH_COST_YR_COST AS CASH_COST_YR_COST,
+								A.COGS_COST_YR_COST AS COGS_COST_YR_COST,
+								A.COO_COST_YR_COST AS COO_COST_YR_COST
+							FROM (
+								/*============조인 상단 부분 끝 ====================*/
+								/*체크 박스의 디맨젼으로 감싼다*/
+								SELECT /* 분기 데이터 */
+										/* DIMENSION 시작*/
+										${DIM}
+										/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2
+								, MAX(SORT_SEQ) AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+									, UPPER_CD1
+									, MAX(SORT_SEQ) AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+									, MQHYT_GBN
+									, MQHYT
+									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
+									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+					]]><if test="CHKYN == 'N'">
+						<![CDATA[
+								, SUM(CUM2_YLD) AS  CUM2_YLD
+						]]>				
+					</if>	
+					<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
+								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(SALE_AMT - VAR_COST_YR_COST) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST_YR_COST) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST_YR_COST) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST_YR_COST) AS SALES_PROF_YR_PROF								
+								, SUM(VAR_COST_YR_COST) AS VAR_COST_YR_COST
+								, SUM(CASH_COST_YR_COST ) AS CASH_COST_YR_COST
+								, SUM(COGS_COST_YR_COST) AS COGS_COST_YR_COST
+								, SUM(COO_COST_YR_COST ) AS COO_COST_YR_COST
+							FROM (
+					]]>
+				</if><![CDATA[
+					/*================상단 체크박스 부분 끝 - 반기 데이터==========================*/
+					/*통합 DATA 원본쿼리 - 그룹바이*/
+					SELECT /* 반기 데이터 */
+							/* DIMENSION 시작*/
+							${DIMORG}
+							/* DIMENSION 끝*/
+					
+				]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, MQHYT_GBN
+								, MQHYT
+								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
+				]]><if test="CHKYN == 'N'">
+					<![CDATA[
+							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
+							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
+							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
+					]]>				
+				</if>	
+				<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
+								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS VAR_COST_YR_COST
+								, SUM(CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_COST_YR_COST
+								, SUM(COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COGS_COST_YR_COST
+								, SUM(COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COO_COST_YR_COST								
+								, SUM(SALE_AMT - VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALES_PROF_YR_PROF	
+							FROM (
+								SELECT /* DIMENSION 시작*/
+										${DIMORG}
+										/* DIMENSION 끝*/
+					]]>
+				<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, 'HALF' AS MQHYT_GBN
+								, TGT_HALF AS MQHYT
+								/*기본정보*/
+								, NET_DIE_300_CNT
+					]]><if test="CHKYN == 'Y'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<![CDATA[	
+								, CUM2_YLD
+								, BP_EXR
+								/* 수량정보 */
+								, ORG_QTY
+								, SOM_EQ_QTY
+								, SOM_DIE_QTY
+								, SALE_QTY
+								, COST_EQ_QTY
+								, COST_DIE_QTY
+								/* WAFER 환산*/
+								, CASE WHEN NVL(NET_DIE_300_CNT, 0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD, 0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								/* 금액 정보(USD) */  
+								, SALE_AMT
+								/* 원가 정보(USD) */ 
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE VAR_COST / BP_EXR END AS VAR_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE CASH_COST / BP_EXR END AS CASH_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COGS_COST / BP_EXR END AS COGS_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COO_COST / BP_EXR END AS COO_COST 
+								FROM PMO_PROFBLT_IMPROV_PROD T1					
+					]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_HALF}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIMORG}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[								
+							, MQHYT_GBN
+							, MQHYT
+							/*============하단 체크박스 부분 시작 - 반기 데이터=========================*/							
+				]]><if test="CHKYN == 'Y'">
+					<![CDATA[
+						/*체크 박스의 디맨젼으로 감싼다*/
+						)
+						GROUP BY 	/* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2								
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+						]]>
+					</if><![CDATA[
+							, MQHYT_GBN
+							, MQHYT 
+							/*============조인 쿼리 부분 시작=========================*/	
+					) A
+					INNER JOIN
+					(
+						SELECT /* DIMENSION 시작*/ 
+									${DIM}
+								/* DIMENSION 끝*/							
+			]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL
+							           WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+								ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+							  FROM (
+							  SELECT /* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/	
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, FAB_DEN_CD
+								, 'HALF' AS MQHYT_GBN
+								, TGT_HALF AS MQHYT								
+								, NET_DIE_300_CNT					
+					]]><if test="TYPE == 'DRAM'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
+								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<if test="TYPE == 'NAND'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
+								ELSE (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+'))) / 8 END AS FAB_DEN_NUM
+						]]>				
+					</if>					
+						<![CDATA[
+								, CASE WHEN NVL(NET_DIE_300_CNT,0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD,0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								FROM PMO_PROFBLT_IMPROV_PROD T1
+						]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_HALF}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIM}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[
+						) B
+				]]>
+				<if test="SRCTYPE == 'BASE'">
+					<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.TECH_CD = B.TECH_CD
+						]]>
+					</if>	
+					<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
+						]]>
+					</if>
+				</if>									
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+								AND A.UPPER_CD2 = B.UPPER_CD2			
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+						]]>
+					</if><![CDATA[
+						/*============조인 쿼리 부분 시작=========================*/	
+						]]>
+					</if><![CDATA[
+					/*============하단 체크박스 부분 끝 - 반기 데이터=========================*/	
+											UNION ALL
+					/*============하단 체크박스 부분 시작 - 년도 데이터=========================*/	
+		        ]]> <if test="CHKYN == 'Y'">
+				<![CDATA[
+					/*============조인 상단 부분 시작 ====================*/
+					SELECT /* 년도 데이터 */
+							/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
+				]]>				
+					<if test="SRCTYPE == 'BASE'">
+						<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.TECH_CD,
+						]]>	
+						</if>
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							A.SCM_FAMILY_CD,
+							A.CHG_PROD_MODE_CD,
+						]]>	
+						</if>
+						</if>
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.UPPER_CD2 ,
+								A.SORT_SEQ ,
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								A.SCM_FAMILY_CD ,
+								A.UPPER_CD1 ,
+								A.SORT_SEQ ,
+						]]>
+					</if><![CDATA[								
+								A.MQHYT_GBN ,
+								A.MQHYT ,
+								B.NET_DIE_300_CNT ,
+								A.CUM2_YLD ,
+								A.ORG_QTY ,
+								A.SOM_EQ_QTY,
+								A.SOM_DIE_QTY,
+								A.SALE_QTY,
+								A.COST_EQ_QTY,
+								A.COST_DIE_QTY,
+								A.WF_CONV_QTY,
+								A.SALE_AMT,								
+								A.VAR_COST,
+								A.CASH_COST,
+								A.COGS_COST,
+								A.COO_COST,
+								A.CNTRB_PROF_YR_PROF AS CNTRB_PROF_YR_PROF,
+								A.CASH_PROF_YR_PROF AS CASH_PROF_YR_PROF,
+								A.SALE_PROF_YR_PROF AS SALE_PROF_YR_PROF,
+								A.SALES_PROF_YR_PROF AS SALES_PROF_YR_PROF,
+								A.VAR_COST_YR_COST AS VAR_COST_YR_COST,
+								A.CASH_COST_YR_COST AS CASH_COST_YR_COST,
+								A.COGS_COST_YR_COST AS COGS_COST_YR_COST,
+								A.COO_COST_YR_COST AS COO_COST_YR_COST
+							FROM (
+								/*============조인 상단 부분 끝 ====================*/
+								/*체크 박스의 디맨젼으로 감싼다*/
+								SELECT /* 년도 데이터 */
+										/* DIMENSION 시작*/
+										${DIM}
+										/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2
+								, MAX(SORT_SEQ) AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+									, UPPER_CD1
+									, MAX(SORT_SEQ) AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+									, MQHYT_GBN
+									, MQHYT
+									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
+									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+					]]><if test="CHKYN == 'N'">
+						<![CDATA[
+								, SUM(CUM2_YLD) AS  CUM2_YLD
+						]]>				
+					</if>	
+					<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
+								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(SALE_AMT - VAR_COST_YR_COST) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST_YR_COST) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST_YR_COST) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST_YR_COST) AS SALES_PROF_YR_PROF								
+								, SUM(VAR_COST_YR_COST) AS VAR_COST_YR_COST
+								, SUM(CASH_COST_YR_COST ) AS CASH_COST_YR_COST
+								, SUM(COGS_COST_YR_COST) AS COGS_COST_YR_COST
+								, SUM(COO_COST_YR_COST ) AS COO_COST_YR_COST
+							FROM (
+					]]>
+				</if><![CDATA[
+					/*================상단 체크박스 부분 끝 - 년도 데이터==========================*/
+					/*통합 DATA 원본쿼리 - 그룹바이*/
+					SELECT /* 년도 데이터 */
+							/* DIMENSION 시작*/
+							${DIMORG}
+							/* DIMENSION 끝*/					
+				]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, MQHYT_GBN
+								, MQHYT
+								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
+				]]><if test="CHKYN == 'N'">
+					<![CDATA[
+							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
+							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
+							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
+					]]>				
+				</if>	
+				<if test="CHKYN == 'Y'">
+						<![CDATA[
+								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
+								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
+						]]>				
+					</if>
+					<![CDATA[								
+								, SUM(ORG_QTY ) AS ORG_QTY
+								, SUM(SOM_EQ_QTY ) AS SOM_EQ_QTY
+								, SUM(SOM_DIE_QTY ) AS SOM_DIE_QTY
+								, SUM(SALE_QTY) AS SALE_QTY
+								, SUM(COST_EQ_QTY) AS COST_EQ_QTY
+								, SUM(COST_DIE_QTY ) AS COST_DIE_QTY
+								, SUM(WF_CONV_QTY) AS WF_CONV_QTY
+								, SUM(SALE_AMT ) AS SALE_AMT
+								, SUM(VAR_COST ) AS VAR_COST
+								, SUM(CASH_COST) AS CASH_COST
+								, SUM(COGS_COST) AS COGS_COST
+								, SUM(COO_COST ) AS COO_COST
+								, SUM(VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS VAR_COST_YR_COST
+								, SUM(CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_COST_YR_COST
+								, SUM(COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COGS_COST_YR_COST
+								, SUM(COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS COO_COST_YR_COST								
+								, SUM(SALE_AMT - VAR_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CNTRB_PROF_YR_PROF
+								, SUM(SALE_AMT - CASH_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS CASH_PROF_YR_PROF
+								, SUM(SALE_AMT - COGS_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALE_PROF_YR_PROF
+								, SUM(SALE_AMT - COO_COST / NULLIF(COST_EQ_QTY,0) * SOM_EQ_QTY) AS SALES_PROF_YR_PROF	
+							FROM (
+								SELECT /* DIMENSION 시작*/
+										${DIMORG}
+										/* DIMENSION 끝*/
+					]]>
+				<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, 'YRAR' AS MQHYT_GBN
+								, TGT_YRAR AS MQHYT
+								/*기본정보*/
+								, NET_DIE_300_CNT
+					]]><if test="CHKYN == 'Y'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<![CDATA[	
+								, CUM2_YLD
+								, BP_EXR
+								/* 수량정보 */
+								, ORG_QTY
+								, SOM_EQ_QTY
+								, SOM_DIE_QTY
+								, SALE_QTY
+								, COST_EQ_QTY
+								, COST_DIE_QTY
+								/* WAFER 환산*/
+								, CASE WHEN NVL(NET_DIE_300_CNT, 0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD, 0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								/* 금액 정보(USD) */  
+								, SALE_AMT
+								/* 원가 정보(USD) */ 
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE VAR_COST / BP_EXR END AS VAR_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE CASH_COST / BP_EXR END AS CASH_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COGS_COST / BP_EXR END AS COGS_COST
+								, CASE WHEN NVL(BP_EXR, 0) = 0 THEN NULL
+								  ELSE COO_COST / BP_EXR END AS COO_COST 
+								FROM PMO_PROFBLT_IMPROV_PROD T1					
+					]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_QUARTER}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIMORG}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[								
+							, MQHYT_GBN
+							, MQHYT
+							/*============하단 체크박스 부분 시작 - 년도 데이터=========================*/							
+				]]><if test="CHKYN == 'Y'">
+					<![CDATA[
+						/*체크 박스의 디맨젼으로 감싼다*/
+						)
+						GROUP BY 	/* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, UPPER_CD1
+								, UPPER_CD2								
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+						]]>
+					</if><![CDATA[
+							, MQHYT_GBN
+							, MQHYT 
+							/*============조인 쿼리 부분 시작=========================*/	
+					) A
+					INNER JOIN
+					(
+						SELECT /* DIMENSION 시작*/ 
+									${DIM}
+								/* DIMENSION 끝*/							
+			]]><if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+							, MAX(SORT_SEQ) AS  SORT_SEQ
+					]]>
+				</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								, UPPER_CD1
+								, MAX(SORT_SEQ) AS  SORT_SEQ
+						]]>
+					</if><![CDATA[								
+								, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL
+							           WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
+								ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
+							  FROM (
+							  SELECT /* DIMENSION 시작*/ 
+										${DIM}
+									/* DIMENSION 끝*/	
+					]]><if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1
+								, T2.GTS_GVAL3 AS UPPER_CD2
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+						]]>
+					</if>	
+						<if test="SRCTYPE == 'COLCHG'">
+							<![CDATA[
+								, T2.GTS_GVAL2 AS UPPER_CD1								
+								, T2.GTS_GVAL4 AS UPPER_CD3
+								, T2.SORT_SEQ AS SORT_SEQ
+							]]>
+						</if>
+					<![CDATA[								
+								, FAB_DEN_CD
+								, 'YRAR' AS MQHYT_GBN
+								, TGT_YRAR AS MQHYT								
+								, NET_DIE_300_CNT					
+					]]><if test="TYPE == 'DRAM'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
+								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
+						]]>				
+					</if>
+					<if test="TYPE == 'NAND'">
+						<![CDATA[
+								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
+								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
+								ELSE (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+'))) / 8 END AS FAB_DEN_NUM
+						]]>				
+					</if>					
+						<![CDATA[
+								, CASE WHEN NVL(NET_DIE_300_CNT,0) = 0 THEN NULL
+									   WHEN NVL(CUM2_YLD,0) = 0 THEN NULL
+								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
+								FROM PMO_PROFBLT_IMPROV_PROD T1
+						]]>
+					<if test="SRCTYPE != 'BASE'">
+						<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_MODE'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
+						]]>	
+						</if>
+						<if test="CHKAPPYN == 'Y'">
+						<![CDATA[
+								LEFT OUTER JOIN (
+									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
+										FROM MAD_GTS
+										WHERE 1=1
+										AND SYS_TYP_CD = 'R'
+										AND GTS_ID = 'CODE'
+										AND GTS_TYP_CD = 'P-MIX_APP'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y'
+									) T2
+									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
+						]]>	
+						</if>
+					</if>
+				<![CDATA[
+								WHERE PLN_REV = #{PLN_VER}
+								AND (T1.SCM_FAMILY_CD, T1.TECH_CD, T1.FAB_DEN_CD, T1.CHG_PROD_MODE_CD, T1.SCM_PROD_VER_CD, T1.TGT_YEAR) NOT IN (SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, GTS_GVAL5, GTS_GVAL6
+									FROM MAD_GTS
+									WHERE SYS_TYP_CD = 'R'
+										AND GTS_ID = 'P-MIX EXPT_LIST'
+										AND GTS_ITEM_NM LIKE '##%'
+										AND USE_YN = 'Y')
+								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
+								AND SCM_FAMILY_CD = #{TYPE}
+								AND DATA_GBN_CD = 'ORG'
+								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
+								AND 'Y' = #{DISPLAY_YRAR}
+				]]>	
+					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+                        AND TECH_CD IN
+                        <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+                        AND FAB_DEN_CD IN
+                        <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+                        AND CHG_PROD_MODE_CD IN
+                        <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+                        AND APP_LVL_1_CD IN
+                        <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+                        AND PKG_TYP_CD2 IN
+                        <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					<if test="TYPE == 'NAND'">
+						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+                        AND CELL_LAYER_TYP_CD IN
+                        <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
+                    </if>
+					</if>
+				<![CDATA[
+								)
+						GROUP BY /* DIMENSION 시작*/
+									${DIM}
+								/* DIMENSION 끝*/
+				]]>
+			<if test="SRCTYPE == 'UPPER2'">
+					<![CDATA[
+							, UPPER_CD1
+							, UPPER_CD2
+					]]>
+			</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+							, UPPER_CD1	
+						]]>
+					</if>
+				<![CDATA[
+						) B
+				]]>
+				<if test="SRCTYPE == 'BASE'">
+					<if test="CHKTECHYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.TECH_CD = B.TECH_CD
+						]]>
+					</if>	
+					<if test="CHKMODEYN == 'Y'">
+						<![CDATA[
+							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
+						]]>
+					</if>
+				</if>									
+					<if test="SRCTYPE == 'UPPER2'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+								AND A.UPPER_CD2 = B.UPPER_CD2			
+						]]>
+					</if>	
+					<if test="SRCTYPE == 'COLCHG'">
+						<![CDATA[
+								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
+								AND A.UPPER_CD1 = B.UPPER_CD1
+						]]>
+					</if><![CDATA[
+						/*============조인 쿼리 부분 끝=========================*/	
+						]]>
+					</if><![CDATA[
+					/*============하단 체크박스 부분 끝 - 년도 데이터=========================*/	
+									)
+								)
+		        ]]> <if test="CHK_SSD_BUFFER_YN == 'N'">
+						<![CDATA[
+							WHERE UPPER_CD1 != 'SSD'
+						]]>	
+					</if>
+					<![CDATA[
+					)
+						PIVOT ( /* 기준정보 */
+								MAX(CUM2_YLD) AS CUM2_YLD_MASTER_DATA
+								, MAX(ODD_CUM2_YLD) AS ODD_CUM2_YLD_MASTER_DATA
+								, MAX(GOOD_DIE) AS GOOD_DIE_MASTER_DATA
+								, MAX(ODD_GOOD_DIE) AS ODD_GOOD_DIE_MASTER_DATA
+								, MAX(WF_CONV_QTY) AS WF_CONV_QTY_SALE_PLN
+								, MAX(SOM_EQ_QTY) AS SOM_EQ_QTY_SALE_PLN
+								, MAX(SOM_DIE_QTY) AS SOM_DIE_QTY_SALE_PLN
+								, MAX(ORG_QTY) AS ORG_QTY_SALE_PLN
+								, MAX(SALE_AMT) AS SALE_AMT_SALE_PLN
+								, MAX(ASP) AS ASP_SALE_PLN
+								, MAX(SALE_GRAV) AS SALE_GRAV_SALE_PLN
+								, MAX(QTY_GRAV) AS  QTY_GRAV_SALE_PLN
+								, MAX(SALES_PROF_GRAV) AS SALES_PROF_GRAV_SALE_PLN
+								
+								, MAX(SALE_WF_SLS_PROF) AS SALE_WF_SLS_PROF
+								, MAX(CNTRB_PROF_WF_SLS_PROF) AS CNTRB_PROF_WF_SLS_PROF
+								, MAX(CASH_PROF_WF_SLS_PROF) AS CASH_PROF_WF_SLS_PROF
+								, MAX(SALE_PROF_WF_SLS_PROF) AS SALE_PROF_WF_SLS_PROF
+								, MAX(SALES_PROF_WF_SLS_PROF) AS SALES_PROF_WF_SLS_PROF
+								
+								, MAX(SALE_EQ_PROF) AS SALE_EQ_PROF
+								, MAX(CNTRB_PROF_EQ_PROF) AS CNTRB_PROF_EQ_PROF
+								, MAX(CASH_PROF_EQ_PROF) AS CASH_PROF_EQ_PROF
+								, MAX(SALE_PROF_EQ_PROF) AS SALE_PROF_EQ_PROF
+								, MAX(SALES_PROF_EQ_PROF) AS SALES_PROF_EQ_PROF
+								
+								, MAX(SALE_DIE_PROF) AS SALE_DIE_PROF
+								, MAX(CNTRB_PROF_DIE_PROF) AS CNTRB_PROF_DIE_PROF
+								, MAX(CASH_PROF_DIE_PROF) AS CASH_PROF_DIE_PROF
+								, MAX(SALE_PROF_DIE_PROF) AS SALE_PROF_DIE_PROF
+								, MAX(SALES_PROF_DIE_PROF) AS SALES_PROF_DIE_PROF
+								
+								, MAX(SALE_PROD_PROF) AS SALE_PROD_PROF
+								, MAX(CNTRB_PROF_PROD_PROF) AS CNTRB_PROF_PROD_PROF
+								, MAX(CASH_PROF_PROD_PROF) AS CASH_PROF_PROD_PROF
+								, MAX(SALE_PROF_PROD_PROF) AS SALE_PROF_PROD_PROF
+								, MAX(SALES_PROF_PROD_PROF) AS SALES_PROF_PROD_PROF
+								
+								, MAX(SALE_YR_PROF) AS SALE_YR_PROF
+								, MAX(CNTRB_PROF_YR_PROF) AS CNTRB_PROF_YR_PROF
+								, MAX(CASH_PROF_YR_PROF) AS CASH_PROF_YR_PROF
+								, MAX(SALE_PROF_YR_PROF) AS SALE_PROF_YR_PROF
+								, MAX(SALES_PROF_YR_PROF) AS SALES_PROF_YR_PROF
+								
+								, MAX(VAR_COST_WF_SLS_COST) AS VAR_COST_WF_SLS_COST
+								, MAX(CASH_COST_WF_SLS_COST) AS CASH_COST_WF_SLS_COST
+								, MAX(COGS_COST_WF_SLS_COST) AS COGS_COST_WF_SLS_COST
+								, MAX(COO_COST_WF_SLS_COST) AS COO_COST_WF_SLS_COST
+								
+								, MAX(VAR_COST_EQ_COST) AS VAR_COST_EQ_COST
+								, MAX(CASH_COST_EQ_COST) AS CASH_COST_EQ_COST
+								, MAX(COGS_COST_EQ_COST) AS COGS_COST_EQ_COST
+								, MAX(COO_COST_EQ_COST) AS COO_COST_EQ_COST
+								
+								, MAX(VAR_COST_DIE_COST) AS VAR_COST_DIE_COST
+								, MAX(CASH_COST_DIE_COST) AS CASH_COST_DIE_COST
+								, MAX(COGS_COST_DIE_COST) AS COGS_COST_DIE_COST
+								, MAX(COO_COST_DIE_COST) AS COO_COST_DIE_COST
+								
+								, MAX(VAR_COST_PROD_COST) AS VAR_COST_PROD_COST
+								, MAX(CASH_COST_PROD_COST) AS CASH_COST_PROD_COST
+								, MAX(COGS_COST_PROD_COST) AS COGS_COST_PROD_COST
+								, MAX(COO_COST_PROD_COST) AS COO_COST_PROD_COST
+								
+								, MAX(VAR_COST_YR_COST) AS VAR_COST_YR_COST
+								, MAX(CASH_COST_YR_COST) AS CASH_COST_YR_COST
+								, MAX(COGS_COST_YR_COST) AS COGS_COST_YR_COST
+								, MAX(COO_COST_YR_COST) AS COO_COST_YR_COST
+					]]>	
+					</sql>
+
+</mapper>
