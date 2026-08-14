@@ -30,6 +30,8 @@ from skeleton_gen import generate_skeletons, to_prefix  # noqa: E402
 st.set_page_config(page_title="G-SCM AS-IS → TO-BE 변환", layout="wide")
 
 FILENAME_RE = re.compile(r"^([PFD])([A-Za-z0-9]+)\.(java|bizunit|xsql)$", re.IGNORECASE)
+# AS-IS 경로 gscm/r/{p1}/{p2}/{p2}b/... 에서 p1/p2를 최선 추정으로 뽑아본다(확정 아님).
+PACKAGE_HINT_RE = re.compile(r"[\\/]r[\\/]([a-z0-9]+)[\\/]([a-z0-9]+)[\\/]\2b(?:[\\/]|$)", re.IGNORECASE)
 
 
 def _categorize(files) -> tuple[dict[str, dict[str, str]], list[str]]:
@@ -52,6 +54,53 @@ def _categorize(files) -> tuple[dict[str, dict[str, str]], list[str]]:
         problems.append(f"화면ID가 여러 개 감지됨({list(ids_seen.keys())}) - 한 번에 한 화면씩 올려주세요. 가장 많이 등장한 걸 사용합니다.")
     screen_id = max(ids_seen, key=ids_seen.get) if ids_seen else ""
     return buckets, problems, screen_id
+
+
+def _scan_folder(folder: Path) -> tuple[dict[str, dict[str, dict[str, str]]], dict[str, dict[str, str]], list[str]]:
+    """폴더(하위 폴더 포함)를 뒤져서 화면ID별로 P/F/D 파일을 묶는다.
+
+    실제 AS-IS 저장소는 `.../plab/biz/`(java, bizunit)와 `.../plab/db/`(xsql)가 나뉘어 있어서
+    (CLAUDE.md "레거시 소스 정리" 참고) 한 화면이라도 폴더 하나로 안 끝날 수 있다 - 그래서
+    지정한 폴더 아래를 재귀적으로 훑는다. 여러 화면이 섞여 있어도 여기서 자동으로 다 변환하지
+    않는다 - CLAUDE.md 원칙("화면 단위로 검토, 일괄 처리 금지")대로 화면을 고르는 건 사람이 한다.
+    """
+    screens: dict[str, dict[str, dict[str, str]]] = {}
+    paths: dict[str, dict[str, str]] = {}
+    problems: list[str] = []
+
+    if not folder.exists():
+        problems.append(f"경로가 존재하지 않습니다: {folder}")
+        return screens, paths, problems
+    if not folder.is_dir():
+        problems.append(f"폴더가 아닙니다: {folder}")
+        return screens, paths, problems
+
+    matched = 0
+    for path in folder.rglob("*"):
+        if not path.is_file():
+            continue
+        m = FILENAME_RE.match(path.name)
+        if not m:
+            continue
+        matched += 1
+        layer, screen_id, kind = m.group(1).upper(), m.group(2), m.group(3).lower()
+        screens.setdefault(screen_id, {"P": {}, "F": {}, "D": {}})
+        screens[screen_id][layer][kind] = path.read_text(encoding="utf-8", errors="replace")
+        paths.setdefault(screen_id, {})[f"{layer}.{kind}"] = str(path)
+
+    if matched == 0:
+        problems.append(
+            "폴더(하위 폴더 포함)에서 P/F/D + 화면ID + .java/.bizunit/.xsql 패턴 파일을 하나도 못 찾았습니다."
+        )
+    return screens, paths, problems
+
+
+def _guess_package(paths_for_screen: dict[str, str]) -> tuple[str, str] | None:
+    for p in paths_for_screen.values():
+        m = PACKAGE_HINT_RE.search(p)
+        if m:
+            return m.group(1).lower(), m.group(2).lower()
+    return None
 
 
 st.title("G-SCM AS-IS → TO-BE 변환 (v0)")
@@ -79,19 +128,51 @@ with st.sidebar:
     package_p2 = st.text_input("패키지 p2 (예: pla)", value="")
     st.caption("AS-IS 경로 gscm/r/{p1}/{p2}/{p2}b/... 기준. 파일 내용만으로는 알 수 없어 직접 입력해야 합니다.")
 
-uploaded = st.file_uploader(
-    "AS-IS 파일 업로드 (여러 개 선택 가능)",
-    type=["java", "bizunit", "xsql"],
-    accept_multiple_files=True,
+input_mode = st.radio(
+    "입력 방식", ["폴더 경로 지정", "파일 직접 업로드"], horizontal=True,
+    help="로컬 전용 앱이라 폴더 경로를 직접 읽을 수 있습니다. 폴더 안에 화면이 여러 개 섞여 있어도 "
+         "한 번에 전부 변환하지 않고 화면을 골라서 하나씩 처리합니다(CLAUDE.md 원칙).",
 )
 
-if uploaded:
-    buckets, problems, screen_id = _categorize(uploaded)
+buckets: dict[str, dict[str, str]] = {"P": {}, "F": {}, "D": {}}
+screen_id = ""
+as_is_paths: dict[str, str] = {}
 
-    for p in problems:
-        st.warning(p)
+if input_mode == "폴더 경로 지정":
+    folder_str = st.text_input(
+        "AS-IS 폴더 경로",
+        placeholder=r"예: C:\Users\10982\project\TransGscm\legacy 또는 ...\r\pm\pla\plab",
+        help="하위 폴더까지 재귀적으로 뒤집니다 - biz/와 db/가 나뉘어 있어도 됩니다.",
+    )
+    if folder_str:
+        screens, all_paths, problems = _scan_folder(Path(folder_str))
+        for p in problems:
+            st.warning(p)
 
-    if not screen_id:
+        if screens:
+            screen_ids = sorted(screens.keys())
+            if len(screen_ids) > 1:
+                st.info(f"폴더에서 화면 {len(screen_ids)}개 발견: {', '.join(screen_ids)} — 한 번에 하나씩 처리합니다.")
+            screen_id = st.selectbox("변환할 화면 선택", screen_ids)
+            buckets = screens[screen_id]
+            as_is_paths = all_paths.get(screen_id, {})
+
+            guess = _guess_package(as_is_paths)
+            if guess:
+                st.caption(f"경로에서 패키지 추정: p1=`{guess[0]}`, p2=`{guess[1]}` — 사이드바에 그대로 입력하거나 필요하면 수정하세요.")
+else:
+    uploaded = st.file_uploader(
+        "AS-IS 파일 업로드 (여러 개 선택 가능)",
+        type=["java", "bizunit", "xsql"],
+        accept_multiple_files=True,
+    )
+    if uploaded:
+        buckets, problems, screen_id = _categorize(uploaded)
+        for p in problems:
+            st.warning(p)
+
+if screen_id:
+    if not any(buckets[layer] for layer in buckets):
         st.error("화면ID를 인식하지 못했습니다. 파일명이 P/F/D + 화면ID + 확장자 형태인지 확인하세요 (예: PPLA047.java).")
         st.stop()
 
@@ -202,7 +283,7 @@ if uploaded:
                     if buckets["P"].get("java"):
                         p_file_id = db.upsert_conv_file(
                             screen_id=sid, as_is_layer="P(JAVA)",
-                            as_is_filename=f"P{sid}.java", as_is_path=None,
+                            as_is_filename=f"P{sid}.java", as_is_path=as_is_paths.get("P.java"),
                             tobe_filename=f"{to_prefix(sid)}Api.java", tobe_path=str(out_dir),
                             conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
                         )
@@ -211,7 +292,7 @@ if uploaded:
                     if buckets["D"].get("xsql"):
                         d_file_id = db.upsert_conv_file(
                             screen_id=sid, as_is_layer="XSQL",
-                            as_is_filename=f"D{sid}.xsql", as_is_path=None,
+                            as_is_filename=f"D{sid}.xsql", as_is_path=as_is_paths.get("D.xsql"),
                             tobe_filename=f"{to_prefix(sid)}Mapper.xml", tobe_path=str(out_dir),
                             conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
                         )
@@ -221,4 +302,4 @@ if uploaded:
                 except Exception as e:
                     st.error(f"DB 기록 실패: {e}")
 else:
-    st.info("화면 1개 분량의 P/F/D .java, .bizunit, XSQL 파일을 올려주세요.")
+    st.info("폴더 경로를 입력하거나 화면 1개 분량의 P/F/D .java, .bizunit, XSQL 파일을 올려주세요.")

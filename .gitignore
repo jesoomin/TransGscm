@@ -14,10 +14,12 @@ build/
 __pycache__/
 *.pyc
 
-# IDE
+# IDE / 로컬 AI 코딩 도구 설정 (harness가 로컬에 자동 생성, 프로젝트 소스 아님)
 .idea/
 .vscode/
 *.iml
+.claude/
+.agents/
 
 # OS
 .DS_Store
