@@ -2537,7 +2537,7 @@
 								, MAX(COGS_COST_YR_COST) AS COGS_COST_YR_COST
 								, MAX(COO_COST_YR_COST) AS COO_COST_YR_COST
 						
-					</sql>
+	</sql>
 	<select id="S001" parameterType="map" resultType="hashmap" fetchSize="50">
 	
 	/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S001 REV 조회 */
@@ -4693,7 +4693,6 @@
 									ELSE COO_COST / BP_EXR END AS COO_COST 
 									FROM PMO_PROFBLT_IMPROV_PROD T1	
 										
-								</if>
 								<if test="CHKMODEYN == 'Y'">
 								
 										LEFT OUTER JOIN (
