@@ -14,11 +14,17 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from converters import ConversionIssue
+
 
 @dataclass
 class SkeletonResult:
     files: dict[str, str] = field(default_factory=dict)
-    warnings: list[str] = field(default_factory=list)
+    issues: list[ConversionIssue] = field(default_factory=list)
+
+    @property
+    def warnings(self) -> list[str]:
+        return [i.message for i in self.issues]
 
 
 def to_prefix(screen_id: str) -> str:
@@ -93,10 +99,14 @@ def generate_skeletons(
     if p_bizunit_text:
         nctrid_map = extract_nctrid_map(p_bizunit_text)
         if not nctrid_map:
-            result.warnings.append(
-                ".bizunit에서 <method>/<transactionId> 쌍을 찾지 못했습니다 "
-                "(XML이 심하게 깨져있거나 구조가 예상과 다를 수 있음) - Api 골격에 nctRid 주석이 비어있을 수 있습니다."
-            )
+            result.issues.append(ConversionIssue(
+                issue_type="NCTRID_MAP_EMPTY",
+                severity="WARNING",
+                message=(
+                    ".bizunit에서 <method>/<transactionId> 쌍을 찾지 못했습니다 "
+                    "(XML이 심하게 깨져있거나 구조가 예상과 다를 수 있음) - Api 골격에 nctRid 주석이 비어있을 수 있습니다."
+                ),
+            ))
 
     f_methods_for_delegation = extract_methods(f_java_text) if f_java_text else []
 
@@ -105,7 +115,10 @@ def generate_skeletons(
         p_methods = extract_methods(p_java_text)
         p_bodies = extract_method_bodies(p_java_text)
         if not p_methods:
-            result.warnings.append("P 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.")
+            result.issues.append(ConversionIssue(
+                issue_type="NO_METHODS_FOUND", severity="BLOCKER",
+                message="P 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.",
+            ))
         lines = [
             f"package {base_pkg}.Controller;",
             "",
@@ -137,10 +150,14 @@ def generate_skeletons(
                 slug = (stripped or method).lower()
             delegate = find_delegate_call(p_bodies.get(method, ""), f_methods_for_delegation)
             if delegate is None and f_methods_for_delegation:
-                result.warnings.append(
-                    f"{method}의 본문에서 F 메서드 호출을 찾지 못했습니다 - Api가 존재하지 않을 수도 있는 "
-                    f"service.{method}(...)를 임시로 호출하도록 생성했습니다. 원본을 직접 대조해서 고치세요."
-                )
+                result.issues.append(ConversionIssue(
+                    issue_type="DELEGATE_CALL_NOT_FOUND",
+                    severity="WARNING",
+                    message=(
+                        f"{method}의 본문에서 F 메서드 호출을 찾지 못했습니다 - Api가 존재하지 않을 수도 있는 "
+                        f"service.{method}(...)를 임시로 호출하도록 생성했습니다. 원본을 직접 대조해서 고치세요."
+                    ),
+                ))
             call_target = delegate or method
             lines += [
                 f"    // nctRid: {nctrid or '미확인 - .bizunit에서 못 찾음'}",
@@ -153,13 +170,19 @@ def generate_skeletons(
         lines.append("}")
         result.files[f"{prefix}Api.java"] = "\n".join(lines)
     else:
-        result.warnings.append("P(Java) 파일이 없어 Api 골격을 생성하지 않았습니다.")
+        result.issues.append(ConversionIssue(
+            issue_type="MISSING_INPUT_FILE", severity="INFO",
+            message="P(Java) 파일이 없어 Api 골격을 생성하지 않았습니다.",
+        ))
 
     # ---- Service ----
     if f_java_text:
         f_methods = extract_methods(f_java_text)
         if not f_methods:
-            result.warnings.append("F 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.")
+            result.issues.append(ConversionIssue(
+                issue_type="NO_METHODS_FOUND", severity="BLOCKER",
+                message="F 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.",
+            ))
         lines = [
             f"package {base_pkg}.service;",
             "",
@@ -187,13 +210,19 @@ def generate_skeletons(
         lines.append("}")
         result.files[f"{prefix}Service.java"] = "\n".join(lines)
     else:
-        result.warnings.append("F(Java) 파일이 없어 Service 골격을 생성하지 않았습니다.")
+        result.issues.append(ConversionIssue(
+            issue_type="MISSING_INPUT_FILE", severity="INFO",
+            message="F(Java) 파일이 없어 Service 골격을 생성하지 않았습니다.",
+        ))
 
     # ---- Store ----
     if d_java_text:
         d_methods = extract_methods(d_java_text)
         if not d_methods:
-            result.warnings.append("D 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.")
+            result.issues.append(ConversionIssue(
+                issue_type="NO_METHODS_FOUND", severity="BLOCKER",
+                message="D 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.",
+            ))
         # dbSelect("S00N", ...) 호출에서 실제 매핑 statement id를 뽑아 Store가 참조할 수 있게 한다.
         stmt_ids = dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
         lines = [
@@ -226,6 +255,9 @@ def generate_skeletons(
         lines.append("}")
         result.files[f"{prefix}Store.java"] = "\n".join(lines)
     else:
-        result.warnings.append("D(Java) 파일이 없어 Store 골격을 생성하지 않았습니다.")
+        result.issues.append(ConversionIssue(
+            issue_type="MISSING_INPUT_FILE", severity="INFO",
+            message="D(Java) 파일이 없어 Store 골격을 생성하지 않았습니다.",
+        ))
 
     return result

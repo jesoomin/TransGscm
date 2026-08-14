@@ -35,6 +35,12 @@
 ## 사용 방법
 `/tracking/conversion-verification.csv`를 화면 작업할 때마다 갱신한다. 화면 1개 = 보통 7~9행(P/F/D의 .java·.bizunit + XSQL + 파생 DTO/메시지). 파일럿 20~30화면이 끝나면 이 CSV가 "화면 유형별 실측 커버리지"를 그대로 보여주는 산출물이 된다 (@docs/03-kickoff-plan.md Phase 3).
 
+## DB 버전 (2026-08-14 추가)
+같은 정보를 사람이 보는 CSV 말고 **DB(로컬 Oracle)에도 자동으로 쌓을 수 있게** `agents/db_schema.sql`(`CONV_FILE`/`CONV_ISSUE` 테이블)과 `agents/db.py`(연결·삽입 함수)를 추가했다. `chatui/app.py`에서 변환을 돌리고 "DB에도 기록" 체크박스를 켜면 그 화면에서 발견된 이슈(태그 불일치, 미지원 태그, remapresults 등)가 `CONV_ISSUE`에 개별 행으로 쌓인다.
+- 실제 로컬 Oracle DB(`RPLS_ADM`/`xe`)에 테이블 생성 + insert + select까지 end-to-end로 검증 완료.
+- CSV와 DB는 지금은 서로 자동 동기화되지 않는다 — CSV는 사람이 화면 리뷰하며 채우는 요약본, DB는 변환기가 실행될 때마다 쌓이는 원시 로그에 가깝다. 화면 수가 늘면 CSV를 DB에서 뽑아내는 쪽으로 정리하는 게 맞다(아직 안 함).
+- v0 한계: 골격(P/F/D) 관련 이슈는 파일별로 정확히 귀속하지 못하고 P(JAVA) 행에 대표로 붙인다. XSQL 이슈는 정확히 귀속된다.
+
 ## PLA047으로 시드한 초기 데이터
 이번 세션에서 실제로 확인한 상태를 그대로 첫 9행에 기록했다(추측치 없음):
 - P/F/D `.bizunit` 3개 전부 XML 선언 손상 — 파싱 실패

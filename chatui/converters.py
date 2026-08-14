@@ -8,9 +8,13 @@ CLAUDE.md 핵심 원칙: 결정론적으로 풀리는 변환에는 LLM을 쓰지
     <isEqual>/<isNotEqual>/<isNull>/<isNotNull>/<isGreaterThan> 등 -> <if test="...">
     <isNotEmpty>+<iterate> -> <if>+<foreach>
     <dynamic prepend="WHERE"> -> <where>,  <dynamic prepend="SET"> -> <set>
+    <![CDATA[ ... ]]> 제거 (사내 컨벤션) - 내용에 남아있는 & < > 는 엔티티로 이스케이프
 
 PLA047 화면 XSQL(3,405행)에서 실제로 검증된 것은 isEqual/isNotEqual/isNotEmpty+iterate 뿐이고
 나머지 태그는 이번 화면엔 없어서 룰만 준비해뒀다 - 다른 화면에 적용할 때 결과를 반드시 확인할 것.
+
+발견한 이슈는 문자열 경고가 아니라 ConversionIssue로 구조화해서 만든다 - tracking/conversion-verification.csv
+나 DB(agents/db.py의 CONV_ISSUE 테이블)로 그대로 옮길 수 있게 하기 위함.
 """
 from __future__ import annotations
 
@@ -20,9 +24,22 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class ConversionIssue:
+    issue_type: str  # 예: TAG_MISMATCH, UNSUPPORTED_TAG, REMAPRESULTS_DROPPED, CDATA_ESCAPED, XML_PARSE_ERROR
+    severity: str  # BLOCKER | WARNING | INFO
+    message: str
+    line_no: int | None = None
+
+
+@dataclass
 class ConversionResult:
     mybatis_xml: str
-    warnings: list[str] = field(default_factory=list)
+    issues: list[ConversionIssue] = field(default_factory=list)
+
+    @property
+    def warnings(self) -> list[str]:
+        """app.py 등에서 문자열 목록만 필요할 때 쓰는 뷰. issues가 원본이다."""
+        return [i.message for i in self.issues]
 
 
 _NUMERIC_RE = re.compile(r"^-?\d+(\.\d+)?$")
@@ -58,17 +75,20 @@ def _replace_isnotempty_iterate(text: str) -> str:
 
 
 # --- 2) 단순 비교 태그: isEqual/isNotEqual/isGreaterThan/isGreaterEqual/isLessThan/isLessEqual --
+# XML 속성값 안에서 <, &는 이스케이프해야 한다(>는 스펙상 필수는 아니지만 관례상 같이 이스케이프).
+# isLessThan/isLessEqual을 &lt;/&lt;= 없이 그대로 넣으면(<if test="X < 5">) 안 닫힌 태그로
+# 오인되어 파싱이 깨진다 - 실제로 겪은 버그라 항상 이스케이프한다.
 _COMPARISON_OPS = {
     "isEqual": "==",
     "isNotEqual": "!=",
-    "isGreaterThan": ">",
-    "isGreaterEqual": ">=",
-    "isLessThan": "<",
-    "isLessEqual": "<=",
+    "isGreaterThan": "&gt;",
+    "isGreaterEqual": "&gt;=",
+    "isLessThan": "&lt;",
+    "isLessEqual": "&lt;=",
 }
 
 
-def _replace_comparison_tags(text: str, warnings: list[str]) -> str:
+def _replace_comparison_tags(text: str) -> str:
     for tag, op in _COMPARISON_OPS.items():
         open_re = re.compile(rf'<{tag}\s+property="([A-Za-z0-9_.]+)"\s+compareValue="([^"]*)"\s*>')
 
@@ -97,13 +117,17 @@ def _replace_null_tags(text: str) -> str:
 
 
 # --- 4) isEmpty / isNotEmpty (단순형, iterate 없이 쓰인 경우) -------------------------------
-def _replace_simple_empty_tags(text: str, warnings: list[str]) -> str:
+def _replace_simple_empty_tags(text: str, issues: list[ConversionIssue]) -> str:
     prepend_leftover = re.findall(r'<isNotEmpty\s+prepend="([^"]*)"\s+property="([A-Za-z0-9_.]+)"\s*>', text)
     for prepend, prop in prepend_leftover:
-        warnings.append(
-            f'<isNotEmpty prepend="{prepend}" property="{prop}"> - iterate 없이 쓰인 prepend 패턴은 '
-            f"자동 변환 안 함(원본 유지). MyBatis는 prepend를 지원하지 않으니 <if>+<where> 조합으로 수동 변환 필요"
-        )
+        issues.append(ConversionIssue(
+            issue_type="UNSUPPORTED_TAG",
+            severity="WARNING",
+            message=(
+                f'<isNotEmpty prepend="{prepend}" property="{prop}"> - iterate 없이 쓰인 prepend 패턴은 '
+                f"자동 변환 안 함(원본 유지). MyBatis는 prepend를 지원하지 않으니 <if>+<where> 조합으로 수동 변환 필요"
+            ),
+        ))
     text = re.sub(
         r'<isEmpty\s+property="([A-Za-z0-9_.]+)"\s*>',
         r'<if test="\1 == null or \1 == \'\'">',
@@ -158,6 +182,35 @@ def _replace_bind_vars(text: str) -> str:
     return text
 
 
+# --- 8) CDATA 섹션 제거 (사내 컨벤션 요청) ---------------------------------------------------
+def _strip_cdata(text: str, issues: list[ConversionIssue]) -> str:
+    """<![CDATA[ ... ]]> 마커를 없애고 내용을 일반 XML 텍스트로 바꾼다.
+
+    SQL 안에 비교연산자(<, >)나 &가 그대로 들어있는 경우가 실제로 있어서(GRP_ID > 0 등),
+    마커만 지우면 XML이 깨진다 - & < > 를 엔티티로 이스케이프해서 함께 처리한다.
+    """
+    had_special_chars = False
+
+    def _sub(m: re.Match) -> str:
+        nonlocal had_special_chars
+        inner = m.group(1)
+        if re.search(r"[&<>]", inner):
+            had_special_chars = True
+        return inner.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    result = re.sub(r"<!\[CDATA\[(.*?)\]\]>", _sub, text, flags=re.DOTALL)
+    if had_special_chars:
+        issues.append(ConversionIssue(
+            issue_type="CDATA_ESCAPED",
+            severity="INFO",
+            message=(
+                "CDATA 제거 과정에서 SQL 본문의 &/</> 를 엔티티(&amp;/&lt;/&gt;)로 이스케이프했습니다 - "
+                "SQL 텍스트 자체(의미)는 그대로고 XML 표기만 바뀐 것이니 DB에 실제로 나가는 쿼리와는 무관합니다."
+            ),
+        ))
+    return result
+
+
 _KNOWN_REMAINING_TAGS = [
     "isEqual",
     "isNotEqual",
@@ -179,29 +232,36 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
 
     SQL 자체(컬럼/조건/조인)는 절대 건드리지 않는다 - 태그와 바인드 변수 문법만 치환한다.
     """
-    warnings: list[str] = []
+    issues: list[ConversionIssue] = []
     text = xsql_text
 
     text = _replace_isnotempty_iterate(text)
-    text = _replace_comparison_tags(text, warnings)
+    text = _replace_comparison_tags(text)
     text = _replace_null_tags(text)
-    text = _replace_simple_empty_tags(text, warnings)
+    text = _replace_simple_empty_tags(text, issues)
     text = _replace_dynamic_tags(text)
     text = _replace_standalone_iterate(text)
     text = _replace_bind_vars(text)
+    text = _strip_cdata(text, issues)
 
     for tag in _KNOWN_REMAINING_TAGS:
         if re.search(rf"</?{tag}\b", text):
-            warnings.append(
-                f"<{tag}> 태그가 변환 후에도 남아있습니다 - 자동 규칙이 이 화면의 실제 사용 패턴과 "
-                f"다를 수 있으니 원본과 대조해서 수동 확인하세요."
-            )
+            issues.append(ConversionIssue(
+                issue_type="UNSUPPORTED_TAG",
+                severity="WARNING",
+                message=(
+                    f"<{tag}> 태그가 변환 후에도 남아있습니다 - 자동 규칙이 이 화면의 실제 사용 패턴과 "
+                    f"다를 수 있으니 원본과 대조해서 수동 확인하세요."
+                ),
+            ))
 
     # remapresults 등 iBatis 전용 속성은 MyBatis에 대응이 없어 제거하고 경고만 남긴다.
     if "remapresults" in text:
-        warnings.append(
-            "remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요"
-        )
+        issues.append(ConversionIssue(
+            issue_type="REMAPRESULTS_DROPPED",
+            severity="WARNING",
+            message="remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요",
+        ))
         text = re.sub(r'\s*remapresults="[^"]*"', "", text)
     if 'parameterClass="' in text:
         text = text.replace('parameterClass="', 'parameterType="')
@@ -210,18 +270,26 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
     elif 'resultClass="' in text:
         text = re.sub(r'resultClass="([^"]*)"', r'resultType="\1"', text)
 
-    xml_error = _check_well_formed(text)
+    xml_error, line_no = _check_well_formed(text)
     if xml_error:
-        warnings.append(
-            f"변환 결과가 유효한 XML이 아닙니다: {xml_error}. 원본 XSQL 자체의 태그 짝이 안 맞을 수 있습니다 "
-            f"(문법 치환 규칙 문제가 아니라 원본 데이터 문제일 가능성이 높음) - 원본과 대조해서 확인하세요."
-        )
+        issues.append(ConversionIssue(
+            issue_type="XML_PARSE_ERROR",
+            severity="BLOCKER",
+            line_no=line_no,
+            message=(
+                f"변환 결과가 유효한 XML이 아닙니다: {xml_error}. 원본 XSQL 자체의 태그 짝이 안 맞을 수 있습니다 "
+                f"(문법 치환 규칙 문제가 아니라 원본 데이터 문제일 가능성이 높음) - 원본과 대조해서 확인하세요."
+            ),
+        ))
 
-    return ConversionResult(mybatis_xml=text, warnings=warnings)
+    return ConversionResult(mybatis_xml=text, issues=issues)
 
 
-def _check_well_formed(text: str) -> str | None:
-    """변환 결과의 태그 짝이 맞는지 확인한다. 이 함수는 결과를 바꾸지 않고 오류 메시지만 돌려준다.
+_LINE_NO_RE = re.compile(r"line (\d+)")
+
+
+def _check_well_formed(text: str) -> tuple[str | None, int | None]:
+    """변환 결과의 태그 짝이 맞는지 확인한다. 이 함수는 결과를 바꾸지 않고 (오류메시지, 줄번호)만 돌려준다.
 
     입력이 전체 문서(<?xml ...?>/<!DOCTYPE ...> 포함)든 <select> 하나짜리 조각이든 상관없이
     확인할 수 있도록, 선언부를 떼어내고 더미 루트로 감싸서 검사한다.
@@ -230,6 +298,9 @@ def _check_well_formed(text: str) -> str | None:
     body = re.sub(r"<!DOCTYPE[^>]*>", "", body)
     try:
         minidom.parseString(f"<root>{body}</root>".encode("utf-8"))
-        return None
+        return None, None
     except Exception as e:  # noqa: BLE001 - 사용자에게 그대로 보여줄 진단 메시지라 광범위하게 잡는다
-        return str(e)
+        msg = str(e)
+        m = _LINE_NO_RE.search(msg)
+        # <root> 래퍼 한 줄을 앞에 안 붙였으므로(f-string이라 줄바꿈 없음) 원본 줄번호와 그대로 대응한다.
+        return msg, (int(m.group(1)) if m else None)

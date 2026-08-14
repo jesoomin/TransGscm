@@ -6,9 +6,12 @@ CLAUDE.md 핵심 원칙에 따라:
   - 결정론적으로 되는 부분(골격, iBatis->MyBatis 문법)은 규칙 기반으로만 처리한다.
   - Service 메서드 "본문"(업무 로직 포팅)만 선택적으로 LLM Gateway를 쓴다 - 기본은 꺼져있다.
   - 아무것도 자동으로 커밋하지 않는다. 로컬 pilot/ 폴더에 "저장" 버튼을 눌러야만 파일이 생긴다.
+  - 발견한 이슈(문법 오류 등)는 체크박스를 켜면 agents/db.py로 CONV_FILE/CONV_ISSUE 테이블(로컬
+    Oracle)에도 기록한다 - 이 두 테이블과 insert 로직은 실제 DB로 검증 완료.
 
 실행: (프로젝트 루트에서) streamlit run chatui/app.py
-이 개발 환경엔 Python/Streamlit이 없어 작성만 했고 로컬 실행 검증은 못 했다.
+converters.py/skeleton_gen.py/db.py는 실제 PLA047 소스 + 실제 로컬 Oracle DB로 검증했다.
+app.py(Streamlit 화면) 자체는 이 환경에 브라우저가 없어 직접 렌더링 확인은 못 했다.
 """
 from __future__ import annotations
 
@@ -116,21 +119,28 @@ if uploaded:
             mapper_result = convert_xsql_fragment(buckets["D"]["xsql"])
 
         st.session_state["skeleton_files"] = skel.files
-        st.session_state["skeleton_warnings"] = skel.warnings
+        st.session_state["skeleton_issues"] = list(skel.issues)
+        st.session_state["mapper_issues"] = list(mapper_result.issues) if mapper_result else []
         if mapper_result:
             st.session_state["skeleton_files"][f"{to_prefix(screen_id)}Mapper.xml"] = mapper_result.mybatis_xml
-            st.session_state["skeleton_warnings"] += mapper_result.warnings
         st.session_state["screen_id"] = screen_id
 
     if "skeleton_files" in st.session_state:
         st.divider()
         st.subheader("변환 결과 (검토 전 - 아직 저장 안 됨)")
 
-        warnings = st.session_state.get("skeleton_warnings", [])
-        if warnings:
-            with st.expander(f"⚠️ 주의/미변환 항목 {len(warnings)}건 - 반드시 확인", expanded=True):
-                for w in warnings:
-                    st.warning(w)
+        all_issues = st.session_state.get("skeleton_issues", []) + st.session_state.get("mapper_issues", [])
+        if all_issues:
+            with st.expander(f"⚠️ 주의/미변환 항목 {len(all_issues)}건 - 반드시 확인", expanded=True):
+                for issue in all_issues:
+                    label = f"[{issue.severity}/{issue.issue_type}]"
+                    if issue.line_no:
+                        label += f" (원본 {issue.line_no}행)"
+                    text = f"{label} {issue.message}"
+                    if issue.severity == "BLOCKER":
+                        st.error(text)
+                    else:
+                        st.warning(text)
 
         files = st.session_state["skeleton_files"]
         tabs = st.tabs(list(files.keys()))
@@ -169,11 +179,46 @@ if uploaded:
                     st.error(f"LLM 호출 실패: {e}")
 
         st.divider()
+        save_to_db = st.checkbox(
+            "DB에도 기록 (agents/db_schema.sql의 CONV_FILE/CONV_ISSUE, 로컬 Oracle)",
+            value=False,
+        )
         if st.button("검토 완료 - pilot/{screen}/ 에 저장", type="primary"):
             out_dir = PROJECT_ROOT / "pilot" / st.session_state["screen_id"]
             out_dir.mkdir(parents=True, exist_ok=True)
             for fname, content in files.items():
                 (out_dir / fname).write_text(content, encoding="utf-8")
             st.success(f"저장됨: {out_dir} ({len(files)}개 파일). git add/commit은 별도로 직접 하세요.")
+
+            if save_to_db:
+                try:
+                    from agents import db
+
+                    db.ensure_schema()
+                    sid = st.session_state["screen_id"]
+
+                    # 골격(P/F/D) 관련 이슈는 화면 단위로만 구분 가능해서 P(JAVA) 파일에 대표로 붙인다 -
+                    # 정확한 파일별 귀속은 v0 범위 밖(추후 개선 지점).
+                    if buckets["P"].get("java"):
+                        p_file_id = db.upsert_conv_file(
+                            screen_id=sid, as_is_layer="P(JAVA)",
+                            as_is_filename=f"P{sid}.java", as_is_path=None,
+                            tobe_filename=f"{to_prefix(sid)}Api.java", tobe_path=str(out_dir),
+                            conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
+                        )
+                        db.record_issues(p_file_id, st.session_state.get("skeleton_issues", []), "chatui/skeleton_gen.py")
+
+                    if buckets["D"].get("xsql"):
+                        d_file_id = db.upsert_conv_file(
+                            screen_id=sid, as_is_layer="XSQL",
+                            as_is_filename=f"D{sid}.xsql", as_is_path=None,
+                            tobe_filename=f"{to_prefix(sid)}Mapper.xml", tobe_path=str(out_dir),
+                            conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
+                        )
+                        db.record_issues(d_file_id, st.session_state.get("mapper_issues", []), "chatui/converters.py")
+
+                    st.success("DB에 기록했습니다 (CONV_FILE/CONV_ISSUE).")
+                except Exception as e:
+                    st.error(f"DB 기록 실패: {e}")
 else:
     st.info("화면 1개 분량의 P/F/D .java, .bizunit, XSQL 파일을 올려주세요.")
