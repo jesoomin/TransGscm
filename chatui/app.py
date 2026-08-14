@@ -217,8 +217,9 @@ as_is_paths: dict[str, str] = {}
 if input_mode == "폴더 경로 지정":
     folder_str = st.text_input(
         "AS-IS 폴더 경로",
+        value=r"C:\project\gscm\workspace\dev-rp-online\src\java\gscm",
         placeholder=r"예: C:\Users\10982\project\TransGscm\legacy 또는 ...\r\pm\pla\plab",
-        help="하위 폴더까지 재귀적으로 뒤집니다 - biz/와 db/가 나뉘어 있어도 됩니다.",
+        help="하위 폴더까지 재귀적으로 뒤집니다 - biz/와 db/가 나뉘어 있어도 됩니다. 필요하면 직접 수정하세요.",
     )
     if folder_str:
         screens, all_paths, problems = _scan_folder(Path(folder_str))
