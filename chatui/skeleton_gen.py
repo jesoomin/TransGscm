@@ -33,6 +33,33 @@ def to_prefix(screen_id: str) -> str:
     return screen_id[:1].upper() + screen_id[1:].lower()
 
 
+def tobe_relpath(filename: str, package_p1: str, package_p2: str) -> str:
+    """docs/07-tobe-structure.xlsx로 확정된 TO-BE 폴더 구조에 맞는 상대경로를 만든다.
+
+        gscm/src/main/java/com/skhynix/gscm/r/{p1}/{p2}/Controller/{화면}Api.java
+        gscm/src/main/java/com/skhynix/gscm/r/{p1}/{p2}/dto/{화면}Dto.java
+        gscm/src/main/java/com/skhynix/gscm/r/{p1}/{p2}/service/{화면}Service.java
+        gscm/src/main/java/com/skhynix/gscm/r/{p1}/{p2}/store/{화면}Store.java
+        gscm/src/main/resources/mapper/r/{p1}/{p2}/{화면}Mapper.xml
+
+    CLAUDE.md AS-IS->TO-BE 매핑표 그대로: Controller만 대문자로 시작하고 dto/service/store는
+    소문자다(엑셀 원본 표기 그대로, 임의로 통일하지 않음).
+    """
+    java_base = f"gscm/src/main/java/com/skhynix/gscm/r/{package_p1}/{package_p2}"
+    if filename.endswith("Api.java"):
+        return f"{java_base}/Controller/{filename}"
+    if filename.endswith("Dto.java"):
+        return f"{java_base}/dto/{filename}"
+    if filename.endswith("Service.java"):
+        return f"{java_base}/service/{filename}"
+    if filename.endswith("Store.java"):
+        return f"{java_base}/store/{filename}"
+    if filename.endswith("Mapper.xml"):
+        return f"gscm/src/main/resources/mapper/r/{package_p1}/{package_p2}/{filename}"
+    # 알 수 없는 파일 종류는 추측해서 위치를 정하지 않고 루트에 그대로 둔다
+    return filename
+
+
 _METHOD_SIG_RE = re.compile(
     r"public\s+IDataSet\s+(\w+)\s*\(([^)]*)\)", re.DOTALL
 )

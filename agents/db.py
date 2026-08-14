@@ -77,8 +77,13 @@ def upsert_conv_file(
     conversion_method: str | None = None,
     track: str = "UNDECIDED",
     conversion_status: str = "NOT_STARTED",
+    build_check: str = "NOT_RUN",
 ) -> int:
-    """CONV_FILE 행을 만들거나(없으면) 갱신하고(있으면) FILE_ID를 돌려준다."""
+    """CONV_FILE 행을 만들거나(없으면) 갱신하고(있으면) FILE_ID를 돌려준다.
+
+    build_check는 chatui/validators.py의 정적 검증 결과(PASS/FAIL/NOT_RUN/NA)를 담는다 -
+    진짜 컴파일/실행 검증은 아직 없어서(Maven/Spring 빌드 환경 미구축) 이 값이 그 대리 지표다.
+    """
     with get_connection() as conn:
         cur = conn.cursor()
         cur.execute(
@@ -98,13 +103,14 @@ def upsert_conv_file(
                     TOBE_FILENAME = :tobe_filename, TOBE_PATH = :tobe_path,
                     PARSE_STATUS = :parse_status, COMPILE_STATUS = :compile_status,
                     CONVERSION_METHOD = :conversion_method, TRACK = :track,
-                    CONVERSION_STATUS = :conversion_status, UPDATED_AT = SYSTIMESTAMP
+                    CONVERSION_STATUS = :conversion_status, BUILD_CHECK = :build_check,
+                    UPDATED_AT = SYSTIMESTAMP
                 WHERE FILE_ID = :file_id
                 """,
                 tobe_filename=tobe_filename, tobe_path=tobe_path,
                 parse_status=parse_status, compile_status=compile_status,
                 conversion_method=conversion_method, track=track,
-                conversion_status=conversion_status, file_id=file_id,
+                conversion_status=conversion_status, build_check=build_check, file_id=file_id,
             )
         else:
             file_id_var = cur.var(int)
@@ -113,11 +119,11 @@ def upsert_conv_file(
                 INSERT INTO CONV_FILE (
                     SCREEN_ID, AS_IS_LAYER, AS_IS_FILENAME, AS_IS_PATH,
                     TOBE_FILENAME, TOBE_PATH, PARSE_STATUS, COMPILE_STATUS,
-                    CONVERSION_METHOD, TRACK, CONVERSION_STATUS
+                    CONVERSION_METHOD, TRACK, CONVERSION_STATUS, BUILD_CHECK
                 ) VALUES (
                     :screen_id, :layer, :filename, :path,
                     :tobe_filename, :tobe_path, :parse_status, :compile_status,
-                    :conversion_method, :track, :conversion_status
+                    :conversion_method, :track, :conversion_status, :build_check
                 )
                 RETURNING FILE_ID INTO :file_id
                 """,
@@ -125,7 +131,7 @@ def upsert_conv_file(
                 tobe_filename=tobe_filename, tobe_path=tobe_path,
                 parse_status=parse_status, compile_status=compile_status,
                 conversion_method=conversion_method, track=track,
-                conversion_status=conversion_status, file_id=file_id_var,
+                conversion_status=conversion_status, build_check=build_check, file_id=file_id_var,
             )
             file_id = file_id_var.getvalue()[0]
         conn.commit()
