@@ -219,11 +219,6 @@ with st.sidebar:
     except Exception as e:  # pragma: no cover - 진단용
         st.error(f"agents.llm_gateway 로드 실패: {e}")
 
-    st.divider()
-    package_p1 = st.text_input("패키지 p1 (예: pm)", value="")
-    package_p2 = st.text_input("패키지 p2 (예: pla)", value="")
-    st.caption("AS-IS 경로 gscm/r/{p1}/{p2}/{p2}b/... 기준. 파일 내용만으로는 알 수 없어 직접 입력해야 합니다.")
-
 input_mode = st.radio(
     "입력 방식", ["폴더 경로 지정", "파일 직접 업로드"], horizontal=True,
     help="로컬 전용 앱이라 폴더 경로를 직접 읽을 수 있습니다. 폴더 안에 화면이 여러 개 섞여 있어도 "
@@ -233,6 +228,7 @@ input_mode = st.radio(
 buckets: dict[str, dict[str, str]] = {"P": {}, "F": {}, "D": {}}
 screen_id = ""
 as_is_paths: dict[str, str] = {}
+package_p1, package_p2 = "TODO", "TODO"
 
 if input_mode == "폴더 경로 지정":
     folder_str = st.text_input(
@@ -254,9 +250,17 @@ if input_mode == "폴더 경로 지정":
             buckets = screens[screen_id]
             as_is_paths = all_paths.get(screen_id, {})
 
+            # 패키지 p1/p2는 AS-IS 경로 .../r/{p1}/{p2}/{p2}b/...에서 자동으로 뽑는다(docs/07-tobe-structure.xlsx
+            # AS_IS 시트의 폴더8=p1, 폴더9=p2로 실제 확인된 규칙) - 입력받지 않는다.
             guess = _guess_package(as_is_paths)
             if guess:
-                st.caption(f"경로에서 패키지 추정: p1=`{guess[0]}`, p2=`{guess[1]}` — 사이드바에 그대로 입력하거나 필요하면 수정하세요.")
+                package_p1, package_p2 = guess
+                st.caption(f"경로에서 패키지 자동 인식: p1=`{package_p1}`, p2=`{package_p2}`")
+            else:
+                st.warning(
+                    "경로에서 패키지 p1/p2를 자동으로 인식하지 못했습니다 "
+                    "(.../r/{p1}/{p2}/{p2}b/... 패턴이 아닌 경로) - TO-BE 패키지가 com.skhynix.gscm.r.TODO.TODO로 생성됩니다."
+                )
 else:
     uploaded = st.file_uploader(
         "AS-IS 파일 업로드 (여러 개 선택 가능)",
@@ -267,6 +271,12 @@ else:
         buckets, problems, screen_id = _categorize(uploaded)
         for p in problems:
             st.warning(p)
+        if screen_id:
+            st.warning(
+                "파일 직접 업로드 모드는 원본 경로 정보가 없어 패키지 p1/p2를 자동 인식할 수 없습니다 "
+                "(TO-BE 패키지가 com.skhynix.gscm.r.TODO.TODO로 생성됩니다) - 정확한 패키지가 필요하면 "
+                "'폴더 경로 지정' 모드를 쓰세요."
+            )
 
 if screen_id:
     if not any(buckets[layer] for layer in buckets):
@@ -292,8 +302,8 @@ if screen_id:
         progress.progress(15, text="1/4 골격(Api/Service/Store) 생성 중...")
         skel = generate_skeletons(
             screen_id=screen_id,
-            package_p1=package_p1 or "TODO",
-            package_p2=package_p2 or "TODO",
+            package_p1=package_p1,
+            package_p2=package_p2,
             p_java_text=buckets["P"].get("java"),
             f_java_text=buckets["F"].get("java"),
             d_java_text=buckets["D"].get("java"),
@@ -310,8 +320,8 @@ if screen_id:
         if buckets["P"].get("java"):
             dto = generate_dto(
                 screen_id=screen_id,
-                package_p1=package_p1 or "TODO",
-                package_p2=package_p2 or "TODO",
+                package_p1=package_p1,
+                package_p2=package_p2,
                 p_java_text=buckets["P"].get("java"),
                 f_java_text=buckets["F"].get("java"),
                 p_bizunit_text=buckets["P"].get("bizunit"),
@@ -512,8 +522,7 @@ if screen_id:
         )
         if st.button("검토 완료 - pilot/{screen}/ 에 TO-BE 폴더 구조로 저장", type="primary"):
             out_dir = PROJECT_ROOT / "pilot" / st.session_state["screen_id"]
-            p1 = package_p1 or "TODO"
-            p2 = package_p2 or "TODO"
+            p1, p2 = package_p1, package_p2
             saved_paths: dict[str, Path] = {}
             for fname, content in files.items():
                 rel = tobe_relpath(fname, p1, p2)
