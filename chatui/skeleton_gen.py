@@ -74,6 +74,25 @@ def find_delegate_call(p_method_body: str, f_method_names: list[str]) -> str | N
     return None
 
 
+def splice_ported_method(service_java: str, method: str, ported_body_code: str) -> str:
+    """generate_skeletons가 만든 스텁(PORT_START/PORT_END 마커 사이)을 LLM이 포팅한 코드로 교체한다.
+
+    마커를 못 찾으면(수동 편집 등으로 지워진 경우) 원본을 그대로 돌려주고 아무 것도 하지 않는다 -
+    엉뚱한 위치에 잘못 끼워 넣는 것보다 안전하다.
+    """
+    pattern = re.compile(
+        rf"    // PORT_START:{re.escape(method)}\n.*?    // PORT_END:{re.escape(method)}\n",
+        re.DOTALL,
+    )
+    if not pattern.search(service_java):
+        return service_java
+    replacement = (
+        f"    // LLM 포팅됨 - 사람 리뷰 필요(CLAUDE.md: 리뷰 없는 커밋 금지)\n"
+        f"{ported_body_code.rstrip()}\n"
+    )
+    return pattern.sub(lambda _m: replacement, service_java, count=1)
+
+
 def extract_nctrid_map(bizunit_text: str) -> dict[str, str]:
     """.bizunit에서 method id -> transactionId(nctRid 또는 내부 트랜잭션 ID) 매핑을 뽑는다.
 
@@ -200,11 +219,13 @@ def generate_skeletons(
         ]
         for method in f_methods:
             lines += [
+                f"    // PORT_START:{method}",
                 f"    // TODO(LLM 포팅 필요): 원본 F{screen_id}.{method}의 계산/분기 로직을 그대로 옮길 것.",
                 f"    // NEXCORE 의존(IDataSet/IOnlineContext/lookupDataUnit)만 제거하고 로직은 새로 짜지 않는다.",
                 f"    public Map<String, Object> {method}(Map<String, Object> request) {{",
                 f"        throw new UnsupportedOperationException(\"TODO: {method} 포팅 필요\");",
                 f"    }}",
+                f"    // PORT_END:{method}",
                 "",
             ]
         lines.append("}")

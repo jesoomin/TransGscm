@@ -25,7 +25,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from converters import convert_xsql_fragment  # noqa: E402
-from skeleton_gen import generate_skeletons, to_prefix  # noqa: E402
+from skeleton_gen import (  # noqa: E402
+    extract_method_bodies,
+    extract_methods,
+    generate_skeletons,
+    splice_ported_method,
+    to_prefix,
+)
+
+
+def _strip_code_fence(text: str) -> str:
+    """LLM이 하지 말라고 해도 ```java ... ``` 로 감싸서 줄 때가 있어 방어적으로 벗겨낸다."""
+    text = text.strip()
+    m = re.match(r"^```[a-zA-Z]*\n(.*)\n```$", text, re.DOTALL)
+    return m.group(1) if m else text
 
 st.set_page_config(page_title="G-SCM AS-IS → TO-BE 변환", layout="wide")
 
@@ -231,33 +244,69 @@ if screen_id:
                 st.code(content, language=lang)
 
         st.divider()
-        st.subheader("2단계 (선택, 실험적): LLM으로 Service 로직 초안 작성")
+        st.subheader("2단계 (선택, 실험적): LLM으로 Service 로직 포팅")
         st.caption(
-            "F BizUnit의 실제 계산/분기 로직을 Service 메서드 본문으로 포팅하는 초안을 LLM Gateway로 생성합니다. "
-            "결과는 반드시 사람이 검토해야 하며, 이 앱이 자동으로 신뢰하지 않습니다."
+            "F BizUnit의 실제 계산/분기 로직을 메서드 단위로 LLM Gateway에 보내, Service 파일의 스텁 "
+            "(`throw new UnsupportedOperationException`)을 실제 포팅된 코드로 바로 교체합니다. "
+            "메서드가 크면(예: 500줄 넘는 로직) 한 번에 정확히 옮겨진다는 보장이 없으니, "
+            "포팅 후 반드시 원본과 줄 단위로 대조해서 검토하세요 - 이 앱은 자동으로 완료 처리하지 않습니다."
         )
-        if st.button("Service 로직 초안 생성 (LLM 호출)"):
-            f_java = buckets["F"].get("java")
-            if not f_java:
-                st.error("F(Java) 원본이 없어 포팅할 대상이 없습니다.")
-            else:
-                try:
-                    from agents.llm_gateway import chat
+        f_java = buckets["F"].get("java")
+        service_fname = f"{to_prefix(screen_id)}Service.java"
+        if f_java and service_fname in files:
+            f_methods = extract_methods(f_java)
+            f_bodies = extract_method_bodies(f_java)
+            ported_key = f"ported_methods_{screen_id}"
+            ported: set[str] = st.session_state.setdefault(ported_key, set())
 
-                    prompt = (
-                        "다음은 NEXCORE(BizUnit) 프레임워크로 작성된 Java 업무 로직이다. "
-                        "이 로직의 계산/분기를 그대로 유지하면서, IDataSet/IOnlineContext/lookupDataUnit 같은 "
-                        "NEXCORE 프레임워크 의존만 제거하고 Spring 서비스 클래스 메서드로 옮겨라. "
-                        "SQL이나 업무 규칙을 새로 설계하지 말고 원본 그대로 포팅만 해라. "
-                        "원본에 컴파일 에러가 있다면 그 부분은 고치지 말고 // FIXME 주석과 함께 표시해라.\n\n"
-                        f"```java\n{f_java}\n```"
-                    )
-                    with st.spinner("LLM 호출 중..."):
-                        draft = chat(messages=[{"role": "user", "content": prompt}])
-                    st.code(draft, language="java")
-                    st.info("이 초안은 그대로 저장되지 않습니다. 검토 후 Service 파일에 직접 반영하세요.")
-                except Exception as e:
-                    st.error(f"LLM 호출 실패: {e}")
+            def _port_method(method: str) -> None:
+                from agents.llm_gateway import chat
+
+                body = f_bodies.get(method, "")
+                prompt = (
+                    f"다음은 NEXCORE(BizUnit) F(Function) 계층 Java 메서드 {method}의 본문이다. "
+                    "이 로직(계산/분기/문자열 처리 등)을 하나도 빠짐없이 그대로 유지하면서, "
+                    "IDataSet/IOnlineContext/lookupDataUnit/lookupFunctionUnit 같은 NEXCORE 프레임워크 "
+                    "의존만 제거하고 Spring 서비스 메서드로 옮겨라. "
+                    "D BizUnit 호출(du.dXXXX(...))은 store.dXXXX(...) 형태로 바꿔라 (Service에 이미 "
+                    "`store` 필드가 있다). SQL이나 업무 규칙을 새로 설계하지 말고 원본 그대로 포팅만 해라. "
+                    "원본에 컴파일 에러나 미선언 변수가 있어도 그 부분을 고치지 말고 원본 그대로 옮긴 뒤 "
+                    "`// FIXME(원본 버그): ...` 로 표시해라. "
+                    f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 "
+                    "완성된 메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라.\n\n"
+                    f"원본 메서드 본문:\n```\n{body}\n```"
+                )
+                ported_code = chat(messages=[{"role": "user", "content": prompt}])
+                ported_code = _strip_code_fence(ported_code)
+                st.session_state["skeleton_files"][service_fname] = splice_ported_method(
+                    st.session_state["skeleton_files"][service_fname], method, ported_code
+                )
+                ported.add(method)
+
+            if st.button(f"전체 포팅 ({len(f_methods)}개 메서드, LLM {len(f_methods)}회 호출)"):
+                progress = st.progress(0.0)
+                for i, method in enumerate(f_methods):
+                    try:
+                        with st.spinner(f"{method} 포팅 중... ({i + 1}/{len(f_methods)})"):
+                            _port_method(method)
+                    except Exception as e:
+                        st.error(f"{method} 포팅 실패: {e}")
+                    progress.progress((i + 1) / len(f_methods))
+                st.rerun()
+
+            for method in f_methods:
+                status = "✅ 포팅됨 (검토 필요)" if method in ported else "⏳ 스텁"
+                c1, c2 = st.columns([5, 1])
+                c1.write(f"`{method}` — {status} ({len(f_bodies.get(method, ''))}자)")
+                if c2.button("포팅", key=f"port_{screen_id}_{method}"):
+                    try:
+                        with st.spinner(f"{method} 포팅 중..."):
+                            _port_method(method)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"{method} 포팅 실패: {e}")
+        elif not f_java:
+            st.info("F(Java) 원본이 없어 포팅할 대상이 없습니다.")
 
         st.divider()
         save_to_db = st.checkbox(
