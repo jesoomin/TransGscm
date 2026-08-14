@@ -101,6 +101,156 @@ def extract_nctrid_map(bizunit_text: str) -> dict[str, str]:
     return {m.group(1): m.group(2) for m in _BIZUNIT_METHOD_RE.finditer(bizunit_text)}
 
 
+_GETFIELD_RE = re.compile(r'\.getField\("([A-Za-z0-9_]+)"\)')
+_PUTRECORDSET_RE = re.compile(r'\.putRecordset\("([A-Za-z0-9_]+)"')
+
+
+def _snake_to_camel(name: str) -> str:
+    parts = [p for p in name.split("_") if p]
+    if not parts:
+        return name.lower()
+    return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
+
+
+def _snake_to_pascal(name: str) -> str:
+    camel = _snake_to_camel(name)
+    return camel[:1].upper() + camel[1:]
+
+
+def extract_dto_fields(
+    p_java_text: str,
+    f_java_text: str | None,
+    p_bizunit_text: str | None,
+) -> list[dict]:
+    """P 메서드(=nctRid 1개=엔드포인트 1개) 단위로 요청/응답 필드를 역추출한다.
+
+    .BIZUNIT의 <fields/>가 비어있을 때 쓰는 대체 규칙(CLAUDE.md AS-IS->TO-BE 매핑표 참고):
+    요청 필드는 P가 위임하는 F 메서드 본문의 `.getField("X")` 실사용값, 응답 필드는 P 메서드
+    본문의 `.putRecordset("X", ...)` 실사용값에서 뽑는다. 추측하지 않고 코드에 없으면 issue로 남긴다.
+    """
+    entries: list[dict] = []
+    p_methods = extract_methods(p_java_text)
+    p_bodies = extract_method_bodies(p_java_text)
+    f_methods = extract_methods(f_java_text) if f_java_text else []
+    f_bodies = extract_method_bodies(f_java_text) if f_java_text else {}
+    nctrid_map = extract_nctrid_map(p_bizunit_text) if p_bizunit_text else {}
+
+    for p_method in p_methods:
+        p_body = p_bodies.get(p_method, "")
+        delegate = find_delegate_call(p_body, f_methods)
+        request_fields: list[str] = []
+        issues: list[str] = []
+        if delegate:
+            request_fields = sorted(set(_GETFIELD_RE.findall(f_bodies.get(delegate, ""))))
+            if not request_fields:
+                issues.append(
+                    f"{delegate}에서 개별 getField 호출을 찾지 못했습니다 "
+                    "(getFieldMap()으로 통째로 넘기는 구조일 수 있음) - 요청 필드를 수동으로 확인하세요."
+                )
+        else:
+            issues.append(f"{p_method}의 delegate F 메서드를 찾지 못해 요청 필드를 추출하지 못했습니다.")
+        response_fields = sorted(set(_PUTRECORDSET_RE.findall(p_body)))
+        if not response_fields:
+            issues.append(f"{p_method}에서 putRecordset 호출을 찾지 못했습니다 - 응답 필드를 수동으로 확인하세요.")
+        entries.append({
+            "p_method": p_method,
+            "nctrid": nctrid_map.get(p_method, ""),
+            "request_fields": request_fields,
+            "response_fields": response_fields,
+            "issues": issues,
+        })
+    return entries
+
+
+def generate_dto(
+    screen_id: str,
+    package_p1: str,
+    package_p2: str,
+    p_java_text: str | None,
+    f_java_text: str | None,
+    p_bizunit_text: str | None,
+) -> SkeletonResult:
+    """nctRid(P 메서드)별 Request/Response 이너 클래스를 담은 `{화면}Dto.java`를 생성한다.
+
+    필드 타입은 전부 String(응답 레코드셋은 List<Map<String, Object>>)으로 잠정 지정한다 -
+    NEXCORE Dataset 컬럼의 실제 타입이 원본 어디에도 선언돼 있지 않아 추측하지 않기 위함이다.
+    """
+    result = SkeletonResult()
+    prefix = to_prefix(screen_id)
+    base_pkg = f"com.skhynix.gscm.r.{package_p1}.{package_p2}"
+
+    if not p_java_text:
+        result.issues.append(ConversionIssue(
+            issue_type="MISSING_INPUT_FILE", severity="INFO",
+            message="P(Java) 파일이 없어 Dto를 생성하지 않았습니다.",
+        ))
+        return result
+
+    entries = extract_dto_fields(p_java_text, f_java_text, p_bizunit_text)
+    if not entries:
+        result.issues.append(ConversionIssue(
+            issue_type="NO_METHODS_FOUND", severity="BLOCKER",
+            message="P 파일에서 메서드를 찾지 못해 Dto를 생성하지 않았습니다.",
+        ))
+        return result
+
+    lines = [
+        f"package {base_pkg}.dto;",
+        "",
+        "import java.util.List;",
+        "import java.util.Map;",
+        "",
+        "// .BIZUNIT의 <fields/>가 비어있어 AS-IS 코드의 getField/putRecordset 실사용값에서",
+        "// 역추출했다(CLAUDE.md AS-IS->TO-BE 매핑표 참고). 필드 타입은 전부 String/List<Map<>>로",
+        "// 잠정 지정했다 - 원본에 실제 타입이 선언돼 있지 않아 사람 확인이 필요하다.",
+        f"public class {prefix}Dto {{",
+        "",
+    ]
+    for entry in entries:
+        p_method = entry["p_method"]
+        nctrid = entry["nctrid"]
+        class_base = _snake_to_pascal(nctrid) if nctrid and re.match(r"^[A-Za-z0-9_]+$", nctrid) else _snake_to_pascal(p_method)
+        for msg in entry["issues"]:
+            result.issues.append(ConversionIssue(
+                issue_type="DTO_FIELD_EXTRACT_INCOMPLETE", severity="WARNING",
+                message=f"{p_method}: {msg}",
+            ))
+
+        lines.append(f"    // ===== {nctrid or '(nctRid 미확인)'} ({p_method}) =====")
+        lines.append(f"    public static class {class_base}Request {{")
+        if entry["request_fields"]:
+            for f in entry["request_fields"]:
+                lines.append(f"        private String {_snake_to_camel(f)}; // AS-IS: {f}")
+            lines.append("")
+            for f in entry["request_fields"]:
+                camel = _snake_to_camel(f)
+                pascal = camel[:1].upper() + camel[1:]
+                lines.append(f"        public String get{pascal}() {{ return {camel}; }}")
+                lines.append(f"        public void set{pascal}(String {camel}) {{ this.{camel} = {camel}; }}")
+        else:
+            lines.append("        // TODO: 요청 필드 자동 추출 실패 - 원본 대조해서 수동으로 채울 것")
+        lines.append("    }")
+        lines.append("")
+
+        lines.append(f"    public static class {class_base}Response {{")
+        if entry["response_fields"]:
+            for f in entry["response_fields"]:
+                lines.append(f"        private List<Map<String, Object>> {_snake_to_camel(f)}; // AS-IS recordset: {f}")
+            lines.append("")
+            for f in entry["response_fields"]:
+                camel = _snake_to_camel(f)
+                pascal = camel[:1].upper() + camel[1:]
+                lines.append(f"        public List<Map<String, Object>> get{pascal}() {{ return {camel}; }}")
+                lines.append(f"        public void set{pascal}(List<Map<String, Object>> {camel}) {{ this.{camel} = {camel}; }}")
+        else:
+            lines.append("        // TODO: 응답 필드 자동 추출 실패 - 원본 대조해서 수동으로 채울 것")
+        lines.append("    }")
+        lines.append("")
+    lines.append("}")
+    result.files[f"{prefix}Dto.java"] = "\n".join(lines)
+    return result
+
+
 def generate_skeletons(
     screen_id: str,
     package_p1: str,

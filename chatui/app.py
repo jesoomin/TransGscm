@@ -28,6 +28,7 @@ from converters import convert_xsql_fragment  # noqa: E402
 from skeleton_gen import (  # noqa: E402
     extract_method_bodies,
     extract_methods,
+    generate_dto,
     generate_skeletons,
     splice_ported_method,
     to_prefix,
@@ -212,11 +213,25 @@ if screen_id:
         if buckets["D"].get("xsql"):
             mapper_result = convert_xsql_fragment(buckets["D"]["xsql"])
 
+        dto = None
+        if buckets["P"].get("java"):
+            dto = generate_dto(
+                screen_id=screen_id,
+                package_p1=package_p1 or "TODO",
+                package_p2=package_p2 or "TODO",
+                p_java_text=buckets["P"].get("java"),
+                f_java_text=buckets["F"].get("java"),
+                p_bizunit_text=buckets["P"].get("bizunit"),
+            )
+
         st.session_state["skeleton_files"] = skel.files
         st.session_state["skeleton_issues"] = list(skel.issues)
         st.session_state["mapper_issues"] = list(mapper_result.issues) if mapper_result else []
         if mapper_result:
             st.session_state["skeleton_files"][f"{to_prefix(screen_id)}Mapper.xml"] = mapper_result.mybatis_xml
+        if dto:
+            st.session_state["skeleton_files"].update(dto.files)
+            st.session_state["skeleton_issues"].extend(dto.issues)
         st.session_state["screen_id"] = screen_id
 
     if "skeleton_files" in st.session_state:
