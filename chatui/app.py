@@ -432,12 +432,14 @@ if screen_id:
                         if total_lines > PREVIEW_LINES else True
                     )
                 lang = "xml" if fname.endswith(".xml") else "java"
+                # line_numbers=True로 왼쪽에 줄번호를 붙인다 - 위 검증 결과의 "L123" 같은 표시를
+                # 실제 소스에서 바로 찾을 수 있게 하기 위함.
                 if show_full or total_lines <= PREVIEW_LINES:
-                    st.code(content, language=lang)
+                    st.code(content, language=lang, line_numbers=True)
                 else:
-                    st.code("\n".join(lines_list[:PREVIEW_LINES]), language=lang)
+                    st.code("\n".join(lines_list[:PREVIEW_LINES]), language=lang, line_numbers=True)
                     st.caption(
-                        f"총 {total_lines}줄 중 {PREVIEW_LINES}줄만 표시했습니다 - "
+                        f"총 {total_lines}줄 중 {PREVIEW_LINES}줄만 표시했습니다(줄번호는 원본 기준 그대로) - "
                         "소스가 길어 변환 결과를 한눈에 보기 어려우니 필요할 때만 위 '펼치기'를 누르세요."
                     )
 
@@ -451,11 +453,13 @@ if screen_id:
         )
         f_java = buckets["F"].get("java")
         service_fname = f"{to_prefix(screen_id)}Service.java"
+        f_methods: list[str] = []
+        ported: set[str] = set()
         if f_java and service_fname in files:
             f_methods = extract_methods(f_java)
             f_bodies = extract_method_bodies(f_java)
             ported_key = f"ported_methods_{screen_id}"
-            ported: set[str] = st.session_state.setdefault(ported_key, set())
+            ported = st.session_state.setdefault(ported_key, set())
 
             def _port_method(method: str) -> None:
                 from agents.llm_gateway import chat
@@ -516,11 +520,22 @@ if screen_id:
             st.info("F(Java) 원본이 없어 포팅할 대상이 없습니다.")
 
         st.divider()
+        porting_complete = not f_methods or len(ported) >= len(f_methods)
+        if not porting_complete:
+            st.warning(
+                f"⏳ 2단계 포팅이 아직 끝나지 않았습니다({len(ported)}/{len(f_methods)}개 메서드 완료) - "
+                "F 메서드를 전부 포팅해야 저장 버튼이 활성화됩니다. 원본 F 로직 없이 스텁 상태로 저장하면 "
+                "포팅했다는 착각을 줄 수 있어서 막아뒀습니다."
+            )
         save_to_db = st.checkbox(
             "DB에도 기록 (agents/db_schema.sql의 CONV_FILE/CONV_ISSUE, 로컬 Oracle - 정적 검증 결과 BUILD_CHECK 포함)",
             value=True,
         )
-        if st.button("검토 완료 - pilot/{screen}/ 에 TO-BE 폴더 구조로 저장", type="primary"):
+        if st.button(
+            "검토 완료 - pilot/{screen}/ 에 TO-BE 폴더 구조로 저장",
+            type="primary",
+            disabled=not porting_complete,
+        ):
             out_dir = PROJECT_ROOT / "pilot" / st.session_state["screen_id"]
             p1, p2 = package_p1, package_p2
             saved_paths: dict[str, Path] = {}

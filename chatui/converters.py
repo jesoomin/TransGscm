@@ -118,13 +118,15 @@ def _replace_null_tags(text: str) -> str:
 
 # --- 4) isEmpty / isNotEmpty (단순형, iterate 없이 쓰인 경우) -------------------------------
 def _replace_simple_empty_tags(text: str, issues: list[ConversionIssue]) -> str:
-    prepend_leftover = re.findall(r'<isNotEmpty\s+prepend="([^"]*)"\s+property="([A-Za-z0-9_.]+)"\s*>', text)
-    for prepend, prop in prepend_leftover:
+    for m in re.finditer(r'<isNotEmpty\s+prepend="([^"]*)"\s+property="([A-Za-z0-9_.]+)"\s*>', text):
+        prepend, prop = m.group(1), m.group(2)
+        line_no = text.count("\n", 0, m.start()) + 1
         issues.append(ConversionIssue(
             issue_type="UNSUPPORTED_TAG",
             severity="WARNING",
+            line_no=line_no,
             message=(
-                f'<isNotEmpty prepend="{prepend}" property="{prop}"> - iterate 없이 쓰인 prepend 패턴은 '
+                f'{line_no}행: <isNotEmpty prepend="{prepend}" property="{prop}"> - iterate 없이 쓰인 prepend 패턴은 '
                 f"자동 변환 안 함(원본 유지). MyBatis는 prepend를 지원하지 않으니 <if>+<where> 조합으로 수동 변환 필요"
             ),
         ))
@@ -245,13 +247,16 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
     text = _strip_cdata(text, issues)
 
     for tag in _KNOWN_REMAINING_TAGS:
-        if re.search(rf"</?{tag}\b", text):
+        m = re.search(rf"</?{tag}\b", text)
+        if m:
+            line_no = text.count("\n", 0, m.start()) + 1
             issues.append(ConversionIssue(
                 issue_type="UNSUPPORTED_TAG",
                 severity="WARNING",
+                line_no=line_no,
                 message=(
-                    f"<{tag}> 태그가 변환 후에도 남아있습니다 - 자동 규칙이 이 화면의 실제 사용 패턴과 "
-                    f"다를 수 있으니 원본과 대조해서 수동 확인하세요."
+                    f"{line_no}행: <{tag}> 태그가 변환 후에도 남아있습니다(첫 등장 위치만 표시) - 자동 규칙이 "
+                    f"이 화면의 실제 사용 패턴과 다를 수 있으니 원본과 대조해서 수동 확인하세요."
                 ),
             ))
 
