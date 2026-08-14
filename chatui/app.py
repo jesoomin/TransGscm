@@ -103,6 +103,26 @@ def _copy_button(label: str, text: str, key: str) -> None:
     """
     components.html(html, height=36)
 
+
+def _scroll_to(anchor_id: str) -> None:
+    """부모 Streamlit 페이지에서 anchor_id 엘리먼트로 부드럽게 스크롤한다.
+
+    components.html은 iframe 안에서 실행되지만 Streamlit은 보통 동일 출처라 window.parent.document로
+    부모 DOM에 접근할 수 있다. 렌더링이 아직 안 끝났을 수 있어 짧게 지연 후 시도한다.
+    """
+    components.html(
+        f"""
+        <script>
+          setTimeout(function() {{
+            var el = window.parent.document.getElementById("{anchor_id}");
+            if (el) {{ el.scrollIntoView({{behavior: "smooth", block: "start"}}); }}
+          }}, 300);
+        </script>
+        """,
+        height=0,
+    )
+
+
 st.set_page_config(page_title="G-SCM AS-IS → TO-BE 변환", layout="wide")
 
 FILENAME_RE = re.compile(r"^([PFD])([A-Za-z0-9]+)\.(java|bizunit|xsql)$", re.IGNORECASE)
@@ -267,6 +287,9 @@ if screen_id:
         "1단계" 최초 실행과 "변환 재수행"(예: 원본 XSQL 태그 정정 후 다시 돌릴 때) 둘 다
         이 함수를 쓴다 - 두 버튼이 서로 다른 로직으로 갈라지지 않게 하기 위함.
         """
+        progress = st.progress(0, text="변환 시작...")
+
+        progress.progress(15, text="1/4 골격(Api/Service/Store) 생성 중...")
         skel = generate_skeletons(
             screen_id=screen_id,
             package_p1=package_p1 or "TODO",
@@ -277,10 +300,12 @@ if screen_id:
             p_bizunit_text=buckets["P"].get("bizunit"),
         )
 
+        progress.progress(40, text="2/4 XSQL → MyBatis Mapper 변환 중...")
         mapper_result = None
         if buckets["D"].get("xsql"):
             mapper_result = convert_xsql_fragment(buckets["D"]["xsql"])
 
+        progress.progress(65, text="3/4 Dto(요청/응답 필드) 생성 중...")
         dto = None
         if buckets["P"].get("java"):
             dto = generate_dto(
@@ -305,9 +330,12 @@ if screen_id:
         # 다시 만들고 이미 포팅된 Service 스텁을 덮어쓰긴 하지만, 사용자가 재수행 의도를 명확히 알 수
         # 있도록 아래 캡션에 경고를 남긴다.
         st.session_state[f"ported_methods_{screen_id}"] = set()
+
+        progress.progress(90, text="4/4 실행 가능성 정적 검증 중...")
         st.session_state["validation_results"] = validate_screen(
             st.session_state["skeleton_files"], to_prefix(screen_id)
         )
+        progress.progress(100, text="완료")
 
     c1, c2 = st.columns([3, 2])
     with c1:
@@ -348,6 +376,9 @@ if screen_id:
 
         validation_results = st.session_state.get("validation_results", [])
         blocker_files = [r for r in validation_results if not r.passed]
+        st.markdown('<div id="validation-anchor"></div>', unsafe_allow_html=True)
+        if st.session_state.pop("scroll_to_validation", False):
+            _scroll_to("validation-anchor")
         with st.expander(
             f"🔍 실행 가능성 정적 검증 결과 - {len(validation_results) - len(blocker_files)}/{len(validation_results)} 통과"
             + (f", {len(blocker_files)}건 실패" if blocker_files else ""),
@@ -376,11 +407,29 @@ if screen_id:
 
         files = st.session_state["skeleton_files"]
         tabs = st.tabs(list(files.keys()))
+        PREVIEW_LINES = 40
         for tab, (fname, content) in zip(tabs, files.items()):
             with tab:
-                _copy_button(f"📋 {fname} 복사", content, key=f"copy_{screen_id}_{fname}")
+                lines_list = content.split("\n")
+                total_lines = len(lines_list)
+                c1, c2 = st.columns([4, 1])
+                with c1:
+                    _copy_button(f"📋 {fname} 복사", content, key=f"copy_{screen_id}_{fname}")
+                with c2:
+                    expand_key = f"expand_{screen_id}_{fname}"
+                    show_full = (
+                        st.checkbox("펼치기 (전체 보기)", key=expand_key)
+                        if total_lines > PREVIEW_LINES else True
+                    )
                 lang = "xml" if fname.endswith(".xml") else "java"
-                st.code(content, language=lang)
+                if show_full or total_lines <= PREVIEW_LINES:
+                    st.code(content, language=lang)
+                else:
+                    st.code("\n".join(lines_list[:PREVIEW_LINES]), language=lang)
+                    st.caption(
+                        f"총 {total_lines}줄 중 {PREVIEW_LINES}줄만 표시했습니다 - "
+                        "소스가 길어 변환 결과를 한눈에 보기 어려우니 필요할 때만 위 '펼치기'를 누르세요."
+                    )
 
         st.divider()
         st.subheader("2단계 (선택, 실험적): LLM으로 Service 로직 포팅")
@@ -427,14 +476,19 @@ if screen_id:
                 )
 
             if st.button(f"전체 포팅 ({len(f_methods)}개 메서드, LLM {len(f_methods)}회 호출)"):
-                progress = st.progress(0.0)
+                progress = st.progress(0.0, text=f"0/{len(f_methods)} (0%)")
                 for i, method in enumerate(f_methods):
                     try:
                         with st.spinner(f"{method} 포팅 중... ({i + 1}/{len(f_methods)})"):
                             _port_method(method)
                     except Exception as e:
                         st.error(f"{method} 포팅 실패: {e}")
-                    progress.progress((i + 1) / len(f_methods))
+                    pct = int((i + 1) / len(f_methods) * 100)
+                    progress.progress((i + 1) / len(f_methods), text=f"{i + 1}/{len(f_methods)} ({pct}%) - 마지막: {method}")
+                # 전체 포팅이 끝난 뒤 BLOCKER가 남아있으면 정적 검증 결과 쪽으로 바로 포커스시킨다.
+                final_results = st.session_state.get("validation_results", [])
+                if any(not r.passed for r in final_results):
+                    st.session_state["scroll_to_validation"] = True
                 st.rerun()
 
             for method in f_methods:

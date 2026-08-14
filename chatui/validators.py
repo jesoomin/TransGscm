@@ -38,9 +38,13 @@ class ValidationResult:
 
 
 def _check_brace_balance(java_text: str) -> list[ValidationIssue]:
-    """문자열/문자 리터럴, 라인/블록 주석 안의 중괄호는 건너뛰고 짝을 맞춘다."""
+    """문자열/문자 리터럴, 라인/블록 주석 안의 중괄호는 건너뛰고 짝을 맞춘다.
+
+    닫히지 않은 '{'는 여는 위치를 스택으로 추적해서 정확히 몇 행에서 시작됐는지 알려준다 -
+    "N개가 안 닫혔다"는 메시지만으로는 원본에서 어디를 봐야 할지 알 수 없기 때문이다.
+    """
     issues: list[ValidationIssue] = []
-    depth = 0
+    open_line_stack: list[int] = []
     i = 0
     n = len(java_text)
     line = 1
@@ -94,31 +98,40 @@ def _check_brace_balance(java_text: str) -> list[ValidationIssue]:
             i += 1
             continue
         if c == "{":
-            depth += 1
+            open_line_stack.append(line)
         elif c == "}":
-            depth -= 1
-            if depth < 0:
+            if open_line_stack:
+                open_line_stack.pop()
+            else:
                 issues.append(ValidationIssue(
                     issue_type="BRACE_MISMATCH", severity="BLOCKER",
-                    message=f"{line}행 부근에서 짝이 맞지 않는 '}}'를 발견했습니다.",
+                    message=f"{line}행에서 짝이 맞지 않는 '}}'를 발견했습니다.",
                     line_no=line,
                 ))
-                depth = 0
         i += 1
-    if depth > 0:
+    if open_line_stack:
+        shown = open_line_stack[:5]
+        more = f" 외 {len(open_line_stack) - 5}개" if len(open_line_stack) > 5 else ""
+        lines_str = ", ".join(f"{ln}행" for ln in shown)
         issues.append(ValidationIssue(
             issue_type="BRACE_MISMATCH", severity="BLOCKER",
-            message=f"닫히지 않은 중괄호 '{{'가 {depth}개 있습니다 - 이 파일은 컴파일되지 않습니다.",
+            message=(
+                f"닫히지 않은 중괄호 '{{' {len(open_line_stack)}개가 있습니다(시작 위치: {lines_str}{more}) - "
+                "이 파일은 컴파일되지 않습니다."
+            ),
+            line_no=open_line_stack[0],
         ))
     return issues
 
 
 def _check_unspliced_markers(java_text: str) -> list[ValidationIssue]:
     issues = []
-    for method in re.findall(r"// PORT_START:(\w+)", java_text):
+    for m in re.finditer(r"// PORT_START:(\w+)", java_text):
+        line_no = java_text.count("\n", 0, m.start()) + 1
         issues.append(ValidationIssue(
             issue_type="PORTING_INCOMPLETE", severity="WARNING",
-            message=f"{method}가 아직 LLM 포팅되지 않고 스텁(UnsupportedOperationException) 상태입니다.",
+            message=f"{m.group(1)}가 아직 LLM 포팅되지 않고 스텁(UnsupportedOperationException) 상태입니다.",
+            line_no=line_no,
         ))
     return issues
 
@@ -153,28 +166,46 @@ def check_cross_layer_refs(
     mapper_ids = set(_MAPPER_STMT_ID_RE.findall(mapper_xml)) if mapper_xml else set()
 
     if api_java and service_java:
-        for called in sorted(set(_SERVICE_CALL_RE.findall(api_java))):
-            if called not in service_methods:
-                issues.append(ValidationIssue(
-                    issue_type="UNRESOLVED_SERVICE_CALL", severity="BLOCKER",
-                    message=f"Api가 호출하는 service.{called}(...)가 Service에 정의돼 있지 않습니다.",
-                ))
+        reported: set[str] = set()
+        for m in _SERVICE_CALL_RE.finditer(api_java):
+            called = m.group(1)
+            if called in service_methods or called in reported:
+                continue
+            reported.add(called)
+            line_no = api_java.count("\n", 0, m.start()) + 1
+            issues.append(ValidationIssue(
+                issue_type="UNRESOLVED_SERVICE_CALL", severity="BLOCKER",
+                message=f"{line_no}행: Api가 호출하는 service.{called}(...)가 Service에 정의돼 있지 않습니다.",
+                line_no=line_no,
+            ))
 
     if service_java and store_java:
-        for called in sorted(set(_STORE_CALL_RE.findall(service_java))):
-            if called not in store_methods:
-                issues.append(ValidationIssue(
-                    issue_type="UNRESOLVED_STORE_CALL", severity="BLOCKER",
-                    message=f"Service가 호출하는 store.{called}(...)가 Store에 정의돼 있지 않습니다.",
-                ))
+        reported = set()
+        for m in _STORE_CALL_RE.finditer(service_java):
+            called = m.group(1)
+            if called in store_methods or called in reported:
+                continue
+            reported.add(called)
+            line_no = service_java.count("\n", 0, m.start()) + 1
+            issues.append(ValidationIssue(
+                issue_type="UNRESOLVED_STORE_CALL", severity="BLOCKER",
+                message=f"{line_no}행: Service가 호출하는 store.{called}(...)가 Store에 정의돼 있지 않습니다.",
+                line_no=line_no,
+            ))
 
     if store_java and mapper_xml:
-        for stmt in sorted(set(_MAPPER_REF_RE.findall(store_java))):
-            if stmt not in mapper_ids:
-                issues.append(ValidationIssue(
-                    issue_type="MISSING_STATEMENT", severity="BLOCKER",
-                    message=f"Store가 참조하는 매퍼 statement id '{stmt}'가 Mapper.xml에 없습니다.",
-                ))
+        reported = set()
+        for m in _MAPPER_REF_RE.finditer(store_java):
+            stmt = m.group(1)
+            if stmt in mapper_ids or stmt in reported:
+                continue
+            reported.add(stmt)
+            line_no = store_java.count("\n", 0, m.start()) + 1
+            issues.append(ValidationIssue(
+                issue_type="MISSING_STATEMENT", severity="BLOCKER",
+                message=f"{line_no}행: Store가 참조하는 매퍼 statement id '{stmt}'가 Mapper.xml에 없습니다.",
+                line_no=line_no,
+            ))
     return issues
 
 
@@ -193,14 +224,21 @@ def check_mapper_xml(mapper_xml: str) -> list[ValidationIssue]:
             line_no=int(m.group(1)) if m else None,
         ))
 
-    seen: set[str] = set()
-    for stmt_id in re.findall(r'<(?:select|insert|update|delete)\s+id="([^"]+)"', mapper_xml):
-        if stmt_id in seen:
+    first_seen: dict[str, int] = {}
+    for m in re.finditer(r'<(?:select|insert|update|delete)\s+id="([^"]+)"', mapper_xml):
+        stmt_id = m.group(1)
+        line_no = mapper_xml.count("\n", 0, m.start()) + 1
+        if stmt_id in first_seen:
             issues.append(ValidationIssue(
                 issue_type="DUPLICATE_STATEMENT_ID", severity="BLOCKER",
-                message=f"statement id '{stmt_id}'가 중복 정의되어 있습니다 - MyBatis 로드 시 오류가 납니다.",
+                message=(
+                    f"{line_no}행: statement id '{stmt_id}'가 중복 정의되어 있습니다"
+                    f"(처음 정의: {first_seen[stmt_id]}행) - MyBatis 로드 시 오류가 납니다."
+                ),
+                line_no=line_no,
             ))
-        seen.add(stmt_id)
+        else:
+            first_seen[stmt_id] = line_no
 
     for m in re.finditer(r"[#$]\{", mapper_xml):
         if mapper_xml.find("}", m.end()) == -1:
