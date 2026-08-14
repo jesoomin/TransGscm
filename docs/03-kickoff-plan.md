@@ -13,7 +13,7 @@
 - [ ] 소스코드 외부 LLM 전송 관련 사내 보안 정책 확인 (폐쇄망/사내 LLM 게이트웨이 필요 여부)
 - [ ] 1,416개 전체 화면 목록·메뉴구조 전체본 확보 — 현재 `docs/메뉴구조.xlsx`(v1, xfdl 포함)와 `docs/07-tobe-structure.xlsx`(v2, PLA047 AS-IS/TO-BE 1건)만 있음, 전체본 아님
 - [x] AS-IS 원본 소스를 `/legacy` 폴더에 정리 — PLA047 세트(P/F/D BizUnit + XSQL) 확보됨
-- [ ] **`/legacy`의 PLA047 소스 무결성 문제 해결** — `.bizunit` XML 3종은 아직 XML 선언 손상(따옴표 불일치, `<description>`/`</dedication>` 태그 불일치)으로 파싱 불가. `FPLA047.java`/`PPLA047.java`는 아직 컴파일 에러 다수(중괄호 누락, 미선언 변수 `du`, `ArrayList<object>` 등). **`DPLA047.xsql`은 2026-08-14 중 갱신되어 `S001~S006`이 전부 정의되고 `</sqlMap>`으로 닫히는 등 대폭 개선됨(git 미커밋 상태)** — 단 아직 `S004`(4718행 `<isNotEqual property="CHKDASHBOARDYN">`가 4840행에서 `</isEqual>`로 잘못 닫힘, 태그명 불일치 1건)으로 여전히 전체 XML 파싱은 실패. 이 1건만 고치면 XSQL은 유효해질 가능성이 높음
+- [ ] **`/legacy`의 PLA047 소스 무결성 문제 해결** — `.bizunit` XML 3종은 아직 XML 선언 손상(따옴표 불일치, `<description>`/`</dedication>` 태그 불일치)으로 파싱 불가. `FPLA047.java`/`PPLA047.java`는 아직 컴파일 에러 다수(중괄호 누락, 미선언 변수 `du`, `ArrayList<object>` 등). **`DPLA047.xsql`은 2026-08-14 중 갱신되어 `S001~S006`이 전부 정의되고 `</sqlMap>`으로 닫히는 등 대폭 개선됨** — `chatui/converters.py`에 넣은 스택 기반 태그 검사로 확인한 결과 태그 불일치 2건 확정: ① 4718행 `<isNotEqual property="CHKDASHBOARDYN">`가 4840행에서 `</isEqual>`로 잘못 닫힘 ② 5179행 `</isNotEqual>`가 매칭되는 여는 태그 없이 단독 존재. 이 2곳만 고치면 XSQL은 유효한 XML이 될 가능성이 높다(EOF까지 태그 총량은 우연히 맞음)
 - [x] `.bizunit` 3종 + `FPLA047.java`/`PPLA047.java`도 변환 대상에서 제외하지 않는다 — 확인됨(아래 참고). 원본이 깨져 있어도 스킵하지 않고 `.BIZUNIT`은 코드 실사용값(getField/putField) 역추출로, Java는 원본 정정 후 포팅으로 진행
 - [x] 로컬 Oracle DB(`RPLS_ADM`, localhost:1521, SID=`xe`) 접속 확인 — `sqlplus`로 검증 완료(2026-08-14): 로그인 성공, 실제 SERVICE_NAME도 `xe`, DB_NAME=`XE`. **주의: 사용자가 전달한 "service_name=GSCM"은 Oracle 서비스명이 아니라 DB 접속 도구에 저장된 연결 프로파일 이름이었음** — `GSCM`을 서비스명으로 접속 시도하면 ORA-12514(서비스 없음) 발생, 실제로는 SID `xe` 사용. `.env`에 검증된 JDBC URL(`jdbc:oracle:thin:@localhost:1521:xe`) 반영 완료. 스키마 접근 권한(테이블 조회 등)은 아직 세부 검증 안 함
 
@@ -30,11 +30,11 @@
 화면 하나를 통째로 넣지 않는다 — `.BIZUNIT`/P/F/D/XSQL 5개 fragment로 나눠 처리하고, **콜그래프 역순(XSQL → Store → Service → Api)** 으로 하위부터 확정한다. 상위(Api) 시그니처를 먼저 잡고 하위를 끼워 맞추지 않는다.
 - [ ] 공통 응답/예외 처리 규약 확정 (사람이 먼저 설계 — 화면마다 에이전트가 제각각 만들지 않도록)
 - [ ] 메시지 코드 표준화: AS-IS 하드코딩 코드(`E0052`, `W0024`, `I0016` 등) → `errors.properties`/`errors_en.properties` 추출 규칙
-- [ ] iBatis → MyBatis 변환 모듈 일반화 (PLA047 1건에서 검증한 규칙 4종을 다른 화면 XSQL로 확장 검증) — `pilot/PLA047/DPLA047-mapper.xml` 참고
-- [ ] BizUnit 메서드 시그니처 → Controller(`{화면}Api`)/Service/Store 골격 생성기 — `docs/07-tobe-structure.xlsx` 명명 규칙 그대로 적용. **골격은 100% 규칙 기반으로 확정하고 LLM은 빈 메서드 본문만 채운다**
-- [ ] `.BIZUNIT` 필드 → DTO 생성기, 필드가 비어있을 때 `getField`/`putField` 실사용 값에서 역추출하는 보조 규칙
+- [x] iBatis → MyBatis 변환 모듈 v0 — `chatui/converters.py`. PLA047에서 검증한 4종 규칙(`isEqual`/`isNotEqual`/`isNotEmpty`+`iterate`/바인드 변수) + 멘토 코멘트의 `isNull`/`isNotNull`/`isGreaterThan` 등/`dynamic prepend`도 규칙만 준비. **실제로 검증된 건 PLA047뿐**이라 다른 화면 XSQL에 돌려서 결과를 반드시 확인할 것. 변환 후 XML well-formed 여부까지 자동 체크해서 경고로 보여줌(원본 태그 불일치를 여기서 잡아냄)
+- [x] BizUnit 메서드 시그니처 → Controller(`{화면}Api`)/Service/Store 골격 생성기 v0 — `chatui/skeleton_gen.py`. PLA047 실 소스로 동작 검증: P 메서드가 실제로 호출하는 F 메서드를 본문에서 찾아 Api→Service 연결까지 정확히 맞춤(단순 이름 매칭이 아님). D 메서드는 `dbSelect("S00N", ...)` 호출에서 매퍼 statement id를 뽑아 Store가 참조하도록 생성. **골격만 규칙 기반, Service 메서드 본문은 항상 TODO 스텁 — LLM 포팅은 별도 단계**
+- [ ] `.BIZUNIT` 필드 → DTO 생성기, 필드가 비어있을 때 `getField`/`putField` 실사용 값에서 역추출하는 보조 규칙 (아직 미구현)
 - [ ] 화면별 변환 전에 `conversion-plan.json`(대상 fragment, 트랙(Refactor/Reimagine), 예상 산출 파일 목록)을 먼저 생성해 고정 — 계획 없이 바로 코드 생성하지 않는다
-- [ ] **업로드→변환 챗팅 UI**: `docs/07-tobe-structure.xlsx` AS_IS 시트 폴더6(`gscm`, 즉 `dev-rp-online/src/java/gscm/` 이하)부터 파일/폴더를 업로드하면 위 결정론적 변환기 + LLM 포팅을 거쳐 TO-BE 구조 파일을 생성해주는 대화형 도구. 화면 단위로 결과를 보여주고 승인 전까지 커밋하지 않는다 (핵심 원칙 참고)
+- [x] **업로드→변환 챗팅 UI v0** — `chatui/app.py` (Streamlit, 로컬 전용). 화면 1개 분량 P/F/D `.java`/`.bizunit`+XSQL을 업로드하면 위 결정론적 변환기를 돌려 결과를 화면에 보여주고, "저장" 버튼을 눌러야만 `pilot/{screen}/`에 파일이 생긴다(자동 커밋 없음). Service 로직 LLM 포팅은 별도 버튼으로 분리(실험적, 결과 검토 필수 문구 표시). 실행: `pip install -r requirements.txt` 후 `streamlit run chatui/app.py` → `http://localhost:8501`. 이 개발 환경엔 Streamlit이 없어 UI 자체는 실행 검증 못 함(내부 변환 로직만 PLA047 실 소스로 검증됨)
 - [ ] Validation: 생성된 코드에 대해 빌드(Maven/Gradle) 자동 실행
 
 ## Phase 3 — 파일럿 20~30화면 (자체 벤치마크 구축 겸함)

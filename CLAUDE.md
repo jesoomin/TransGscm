@@ -65,7 +65,8 @@ gscm/src/main/resources/
 
 ## 프로젝트 구조 (제안 — 실제 착수 시 조정)
 ```
-/agents        Parsing / Conversion / Validation Agent 구현
+/agents        Parsing / Conversion / Validation Agent 구현, LLM Gateway 클라이언트(llm_gateway.py)
+/chatui        업로드→변환 챗팅 UI (Streamlit, 로컬 전용) - converters.py(iBatis→MyBatis), skeleton_gen.py(Api/Service/Store 골격), app.py
 /parsers       .BIZUNIT XML, Java, XSQL 파서 (xfdl 파서는 범위 아님)
 /templates     Controller/Service/Store/Mapper 코드 생성 템플릿
 /pilot         파일럿 화면 20~30건 변환 결과물 (유형별 4~5개씩)
