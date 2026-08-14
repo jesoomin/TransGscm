@@ -1,0 +1,24 @@
+# 로컬 개발 환경 - 민감정보 (커밋 금지, CLAUDE.md "로컬 개발 환경" 참고)
+.env
+.env.*
+!.env.example
+*.local.yml
+*.local.yaml
+application-local.yml
+application-local.yaml
+
+# 빌드 산출물
+target/
+build/
+*.class
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

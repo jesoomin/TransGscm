@@ -1,37 +1,66 @@
-# 착수 세부 실행 계획
+# 착수 세부 실행 계획 (v2 — 백엔드 전용 범위)
 
-이 문서는 실제 코드 작업을 시작하기 전에 무엇부터, 어떤 순서로 할지를 정리한다. Phase 0이 끝나지 않으면 Phase 1 이후 작업 대부분이 가정(assumption) 위에 쌓이게 되므로, Phase 0을 건너뛰지 않는다.
+이 문서는 실제 코드 작업을 시작하기 전에 무엇부터, 어떤 순서로 할지를 정리한다. **순서는 @docs/06-mentor-feedback.md §J "적용 우선순위"를 그대로 따른다: 1~4번이 프로젝트 성패의 80%이고 LLM은 6번에서야 등장한다.** 이 순서를 바꾸지 않는다.
+
+> v2 변경사항: UI(xfdl→React) 전환이 범위에서 빠지고 서버(Java/XSQL) 전환만 남았다. 이전 Phase 0~3(v1)에서 확보한 사실은 대부분 유효해 아래로 이관했다.
 
 ## Phase 0 — 사전 확보 (착수 즉시, 코드 작성 전)
 - [ ] UIAdapter의 서블릿/URL 패턴 및 nctRid 라우팅 코드 확보
-- [ ] `.BIZUNIT` XML 샘플 1세트 확보 및 스키마(필드/타입 정의 포맷) 파악
-- [x] PPLA047.JAVA / FPLA047.JAVA / DPLA047.JAVA / DPLA047.XSQL 실제 소스 1세트 확보 — `/legacy`에 확보됨. 단, **소스 자체에 무결성 문제 발견** (아래 참고), 재확보 또는 원본 대조 필요
-- [x] P BizUnit이 순수 진입점인지, 화면별 검증 로직이 섞여 있는지 코드로 확인 — PPLA047.java 확인 결과 **순수 위임(delegation)만 수행**, 검증 로직 없음. `PLA047` 1건 기준 확인, 나머지 화면은 표본 확대 필요
+- [ ] `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 확인 (UI는 전환 안 하지만 화면↔nctRid 대응은 여전히 필요)
+- [ ] `.BIZUNIT` XML 샘플 1세트 확보 및 스키마(필드/타입 정의 포맷) 파악 — 지금까지 본 3개(PLA047)는 전부 `<fields/>` 비어있음, 실제로 항상 비는지 다른 화면으로 확인 필요
+- [x] PPLA047.JAVA / FPLA047.JAVA / DPLA047.JAVA / DPLA047.XSQL 실제 소스 1세트 확보 — `/legacy`에 확보됨. **소스 자체에 무결성 문제 있음** (아래 참고), 재확보 또는 원본 대조 필요
+- [x] P BizUnit이 순수 진입점인지, 화면별 검증 로직이 섞여 있는지 코드로 확인 — PPLA047.java 확인 결과 **순수 위임(delegation)만 수행**, 검증 로직 없음. `PLA047` 1건 기준, 나머지 화면은 표본 확대 필요
 - [ ] 소스코드 외부 LLM 전송 관련 사내 보안 정책 확인 (폐쇄망/사내 LLM 게이트웨이 필요 여부)
-- [ ] 1,416개 전체 화면 목록·메뉴구조 전체본 확보 — 현재 `docs/메뉴구조.xlsx`에 화면(xfdl) 42건 + PLA047/COT998 백엔드 경로 세트만 확보된 상태, 전체본 아님
-- [x] AS-IS 원본 소스를 `/legacy` 폴더에 정리 — PLA047 세트(P/F/D BizUnit + XSQL) 확보됨, 단 아직 플랫 구조라 CLAUDE.md의 원본 경로 구조로 재정리 필요
-- [ ] **(신규, 2026-08-12 발견) `/legacy`의 PLA047 소스 무결성 문제 해결** — `.bizunit` XML 3종 모두 XML 선언 손상으로 파싱 불가(닫는/여는 따옴표 불일치, `<description>`/`</dedication>` 태그 불일치), `FPLA047.java`/`PPLA047.java`는 컴파일 에러 다수(중괄호 누락, 미선언 변수 `du`, `ArrayList<object>` 등), `DPLA047.xsql`은 `S002`가 2706행에서 열려 2850행에서 `</isEqual>`로 잘못 닫히고 `S003~S006`이 아예 정의되어 있지 않음(D BizUnit이 호출하는 6개 중 2개만 존재). 원본 재확보 또는 원인 확인 전까지 이 화면의 F/D 로직 재사용을 신뢰할 수 없음
+- [ ] 1,416개 전체 화면 목록·메뉴구조 전체본 확보 — 현재 `docs/메뉴구조.xlsx`(v1, xfdl 포함)와 `docs/07-tobe-structure.xlsx`(v2, PLA047 AS-IS/TO-BE 1건)만 있음, 전체본 아님
+- [x] AS-IS 원본 소스를 `/legacy` 폴더에 정리 — PLA047 세트(P/F/D BizUnit + XSQL) 확보됨
+- [ ] **`/legacy`의 PLA047 소스 무결성 문제 해결** — `.bizunit` XML 3종은 아직 XML 선언 손상(따옴표 불일치, `<description>`/`</dedication>` 태그 불일치)으로 파싱 불가. `FPLA047.java`/`PPLA047.java`는 아직 컴파일 에러 다수(중괄호 누락, 미선언 변수 `du`, `ArrayList<object>` 등). **`DPLA047.xsql`은 2026-08-14 중 갱신되어 `S001~S006`이 전부 정의되고 `</sqlMap>`으로 닫히는 등 대폭 개선됨(git 미커밋 상태)** — 단 아직 `S004`(4718행 `<isNotEqual property="CHKDASHBOARDYN">`가 4840행에서 `</isEqual>`로 잘못 닫힘, 태그명 불일치 1건)으로 여전히 전체 XML 파싱은 실패. 이 1건만 고치면 XSQL은 유효해질 가능성이 높음
+- [x] `.bizunit` 3종 + `FPLA047.java`/`PPLA047.java`도 변환 대상에서 제외하지 않는다 — 확인됨(아래 참고). 원본이 깨져 있어도 스킵하지 않고 `.BIZUNIT`은 코드 실사용값(getField/putField) 역추출로, Java는 원본 정정 후 포팅으로 진행
+- [x] 로컬 Oracle DB(`RPLS_ADM`, localhost:1521, SID=`xe`) 접속 확인 — `sqlplus`로 검증 완료(2026-08-14): 로그인 성공, 실제 SERVICE_NAME도 `xe`, DB_NAME=`XE`. **주의: 사용자가 전달한 "service_name=GSCM"은 Oracle 서비스명이 아니라 DB 접속 도구에 저장된 연결 프로파일 이름이었음** — `GSCM`을 서비스명으로 접속 시도하면 ORA-12514(서비스 없음) 발생, 실제로는 SID `xe` 사용. `.env`에 검증된 JDBC URL(`jdbc:oracle:thin:@localhost:1521:xe`) 반영 완료. 스키마 접근 권한(테이블 조회 등)은 아직 세부 검증 안 함
 
-## Phase 1 — 파일럿 샘플 선정 및 소규모 실험 (1주차)
-- [ ] 화면 유형별(단순조회 / 그리드 / 입력폼 / 복합화면) 대표 화면 10~20개 선정
-- [ ] xfdl 파서 프로토타입 (lxml) — 화면 구조를 중간표현(IR)으로 추출
-- [ ] `.BIZUNIT` XML 파서 프로토타입 — 입출력 필드/타입 스키마 추출
-- [ ] 사내 GaiA 프레임워크로 "파일 읽기 → 분석 → 구조화 출력" Agent 최소 실험 — 기존 Orchestrator를 코드 변환 도메인에 그대로 적용할 수 있는지 검증
-- [ ] 실험 결과를 바탕으로 GaiA 재사용 가능 여부 1차 결론 — 안 되면 LangGraph 등 대안 검토로 조기 전환
+## Phase 1 — nctRid 매핑 그래프 + 차등 테스트 하네스 (변환기보다 먼저)
+멘토 코멘트 §1, §3. 이게 없으면 에이전트가 화면마다 코드베이스를 헤매며 환각을 낸다.
+- [ ] `.xjs` → `transaction()` 호출부 → nctRid 추출 (정적 분석, LLM 아님). 동적 문자열 조합이면 부분 평가/상수 전파 필요
+- [ ] NEXCORE 설정에서 nctRid → P BizUnit 클래스 매핑 추출
+- [ ] JavaParser로 P → F → D 콜그래프 추적
+- [ ] D BizUnit → XSQL namespace + queryId 매핑
+- [ ] 위 4단계를 이어 화면↔API↔SQL 전체 그래프를 DB(또는 구조화 파일)로 구축. 자동 추출 실패 케이스(문자열 규칙 불일치, 경험상 전체 10~20%)는 사람이 채운다
+- [ ] 차등 테스트 하네스 구축: 동일 입력 → 레거시 nctRid 호출 / 신규 REST 호출 → 정규화 후 diff. 로컬 Oracle DB(`.env`)에 두 경로를 붙여서 파일럿 전에 먼저 동작 확인
 
-## Phase 2 — 변환 엔진 골격 구현 (2주차)
-- [ ] Parsing Agent: xfdl / `.BIZUNIT` / XSQL → IR 생성 로직 구현
-- [x] Conversion Agent: IR → React 컴포넌트 + REST Controller 스켈레톤 생성 (Claude API 연동) — PLA047 한정 REST Controller 초안 작성(`pilot/PLA047/Pla047Controller.java`). 수작업 1건 검증 단계, Agent화는 아직. FPLA047 컴파일 에러로 실제 빌드는 안 됨
-- [x] iBatis → MyBatis 문법 변환 규칙 기반 모듈 구현 (표 기반 치환 — 우선 자동화율 가장 높은 영역) — PowerShell 정규식 스크립트로 규칙 4종(`isEqual`→`if`, `isNotEqual`→`if`, `isNotEmpty`+`iterate`→`if`+`foreach`, `#x#`/`$x$`→`#{x}`/`${x}`) 기계적 치환 검증. PLA047의 `queryCommon` 프래그먼트(2,680행) + `S001`에 적용해 XML 파서로 결과물 유효성 확인(`pilot/PLA047/DPLA047-mapper.xml`). 화면 1건 표본 — 일반화된 Agent/모듈로 만들려면 더 많은 화면으로 규칙 검증 필요
-- [ ] Validation Agent: 생성된 코드에 대해 빌드(Maven/Gradle)·린트(ESLint/tsc) 자동 실행
+## Phase 2 — 공통 규약 + 결정론적 변환기 + 업로드→변환 챗팅 UI
+화면 하나를 통째로 넣지 않는다 — `.BIZUNIT`/P/F/D/XSQL 5개 fragment로 나눠 처리하고, **콜그래프 역순(XSQL → Store → Service → Api)** 으로 하위부터 확정한다. 상위(Api) 시그니처를 먼저 잡고 하위를 끼워 맞추지 않는다.
+- [ ] 공통 응답/예외 처리 규약 확정 (사람이 먼저 설계 — 화면마다 에이전트가 제각각 만들지 않도록)
+- [ ] 메시지 코드 표준화: AS-IS 하드코딩 코드(`E0052`, `W0024`, `I0016` 등) → `errors.properties`/`errors_en.properties` 추출 규칙
+- [ ] iBatis → MyBatis 변환 모듈 일반화 (PLA047 1건에서 검증한 규칙 4종을 다른 화면 XSQL로 확장 검증) — `pilot/PLA047/DPLA047-mapper.xml` 참고
+- [ ] BizUnit 메서드 시그니처 → Controller(`{화면}Api`)/Service/Store 골격 생성기 — `docs/07-tobe-structure.xlsx` 명명 규칙 그대로 적용. **골격은 100% 규칙 기반으로 확정하고 LLM은 빈 메서드 본문만 채운다**
+- [ ] `.BIZUNIT` 필드 → DTO 생성기, 필드가 비어있을 때 `getField`/`putField` 실사용 값에서 역추출하는 보조 규칙
+- [ ] 화면별 변환 전에 `conversion-plan.json`(대상 fragment, 트랙(Refactor/Reimagine), 예상 산출 파일 목록)을 먼저 생성해 고정 — 계획 없이 바로 코드 생성하지 않는다
+- [ ] **업로드→변환 챗팅 UI**: `docs/07-tobe-structure.xlsx` AS_IS 시트 폴더6(`gscm`, 즉 `dev-rp-online/src/java/gscm/` 이하)부터 파일/폴더를 업로드하면 위 결정론적 변환기 + LLM 포팅을 거쳐 TO-BE 구조 파일을 생성해주는 대화형 도구. 화면 단위로 결과를 보여주고 승인 전까지 커밋하지 않는다 (핵심 원칙 참고)
+- [ ] Validation: 생성된 코드에 대해 빌드(Maven/Gradle) 자동 실행
 
-## Phase 3 — 파일럿 검증 및 KPI 재조정
-- [ ] Phase 1에서 선정한 화면 10~20건에 대해 실제 변환 실행
-- [ ] 화면당 소요시간, 자동변환 커버리지(빌드/린트 통과율) 실측
-- [ ] 실측치를 기준으로 @docs/01-project-plan.md의 KPI(화면당 2일, 커버리지 70% 등) 재조정
-- [ ] 리뷰 대시보드(Streamlit) 초안 — diff 확인, 자동 통과/부분 검토/수동 검토 분류
+## Phase 3 — 파일럿 20~30화면 (자체 벤치마크 구축 겸함)
+- [ ] 전체 화면을 컴포넌트 구성 + transaction 개수 + 그리드 유무 기준으로 구조적 클러스터링
+- [ ] 유형별 대표 화면 4~5개씩, 총 20~30개 선정 (단순조회/그리드, 조회+상세+CRUD, 복합화면·리포트·특수로직)
+- [ ] 화면별로 **Refactor(1:1 구조보존) / Reimagine(업무규칙만 추출해 재설계) 트랙**을 사람이 결정 — 단순조회·CRUD는 대부분 Refactor, 복합화면·원본 자체가 망가진 화면(예: PLA047의 FPLA047처럼 컴파일도 안 되는 경우)은 Reimagine 후보로 분류
+- [ ] Phase 1~2 결과로 실제 변환 실행, `/tracking` 검증 테이블(@docs/08-conversion-verification.md)에 화면별 결과 기록 — 특히 **사람 수정 라인 비율**(자동 생성 대비 리뷰 중 수정한 라인 비율)을 반드시 기록. 이게 실제 공수 절감률의 대리 지표(@docs/06-mentor-feedback.md §H)
+- [ ] 변환 규칙·프롬프트·공통 컴포넌트를 자산화 (이후 RAG 코퍼스로 사용)
+- [ ] 유형별 실측 공수로 전체 계획 재산정 — 목표는 "화면이 돌아간다"가 아니라 "유형별 변환 레시피와 실측 공수 확보". @docs/01-project-plan.md의 v2 KPI 조정치(평균 3일, 65~70% 절감)와 실측을 비교
+
+## Phase 4 — LLM 에이전트 파이프라인
+- [ ] Analyzer / Planner / Translator / Validator 역할 분리 (ReCodeAgent 구조 차용, @docs/06-mentor-feedback.md §B)
+- [ ] 화면 유형별 프롬프트 분기 (단일 프롬프트로 전체 처리 시도하지 않음)
+- [ ] 유사 화면 벡터 검색 → few-shot 주입 (RAG, 파일럿 결과물이 코퍼스)
+
+## Phase 5 — Reflection·수리 루프
+- [ ] 컴파일 에러 / 빌드 에러를 피드백으로 재생성, 재시도 상한 2~3회
+- [ ] 검증(Validator)과 수리(Fix) 역할 분리, 최종 판정자 별도
+
+## 로컬 Oracle DB
+- 호스트/포트/계정/비밀번호는 `.env`(프로젝트 루트, 커밋 제외)에 설정. `.env.example`에 키 이름만 공유.
+- 용도: Phase 1의 차등 테스트 하네스(레거시 vs 신규 API 응답 비교), Phase 2 이후 Store 계층 실제 쿼리 동작 확인.
+- 실제 커넥션 테스트(JDBC 접속 확인)는 아직 실행 안 함 — 다음 세션에서 확인 필요.
 
 ## 진행 시 유의사항
-- Phase 0에서 확인한 사실이 @docs/02-architecture.md의 가정과 다르면, 코드를 먼저 짜지 말고 문서부터 갱신한다
-- 화면 10~20건 파일럿 전까지는 전체 1,416개 화면에 대한 일괄 처리 스크립트를 만들지 않는다
+- Phase 0~1에서 확인한 사실이 @docs/02-architecture.md의 가정과 다르면, 코드를 먼저 짜지 말고 문서부터 갱신한다
+- 화면 20~30건 파일럿 전까지는 전체 1,416개 화면에 대한 일괄 처리 스크립트를 만들지 않는다
+- 결정론적으로 풀리는 변환에 LLM을 쓰지 않는다 (CLAUDE.md "하지 말아야 할 것" 참고)
 - 매 Phase 종료 시 이 문서의 체크박스를 갱신해 진행 상황을 추적한다
