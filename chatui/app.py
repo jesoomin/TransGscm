@@ -677,11 +677,14 @@ if screen_id:
             value=True,
         )
         if st.button(
-            "검토 완료 - pilot/{screen}/ 에 TO-BE 폴더 구조로 저장",
+            "검토 완료 - pilot/ 에 TO-BE 폴더 구조로 저장",
             type="primary",
             disabled=not porting_complete,
         ):
-            out_dir = PROJECT_ROOT / "pilot" / st.session_state["screen_id"]
+            # pilot/ 바로 아래에 실제 TO-BE 트리(gscm/src/main/...)를 만든다 - 화면별 하위 폴더를
+            # 두지 않는다. 파일명 자체가 이미 화면 접두어(Pla047Api.java 등)로 구분되고, 이렇게 해야
+            # 나중에 여러 화면이 쌓였을 때 실제 프로젝트에 그대로 병합할 수 있는 구조가 된다.
+            out_dir = PROJECT_ROOT / "pilot"
             p1, p2 = package_p1, package_p2
             saved_paths: dict[str, Path] = {}
             for fname, content in files.items():

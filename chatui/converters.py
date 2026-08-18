@@ -8,7 +8,9 @@ CLAUDE.md 핵심 원칙: 결정론적으로 풀리는 변환에는 LLM을 쓰지
     <isEqual>/<isNotEqual>/<isNull>/<isNotNull>/<isGreaterThan> 등 -> <if test="...">
     <isNotEmpty>+<iterate> -> <if>+<foreach>
     <dynamic prepend="WHERE"> -> <where>,  <dynamic prepend="SET"> -> <set>
-    <![CDATA[ ... ]]> 제거 (사내 컨벤션) - 내용에 남아있는 & < > 는 엔티티로 이스케이프
+    <![CDATA[ ... ]]> 는 꼭 필요한 곳(안에 &/</> 같은 XML 예약문자가 실제로 있는 경우)에만 남긴다.
+    MyBatis는 CDATA를 그대로 지원하니 그런 경우는 억지로 엔티티 이스케이프로 바꾸지 않는다 -
+    특수문자가 하나도 없어서 애초에 CDATA가 불필요했던 블록만 벗겨내서 정리한다.
 
 PLA047 화면 XSQL(3,405행)에서 실제로 검증된 것은 isEqual/isNotEqual/isNotEmpty+iterate 뿐이고
 나머지 태그는 이번 화면엔 없어서 룰만 준비해뒀다 - 다른 화면에 적용할 때 결과를 반드시 확인할 것.
@@ -25,7 +27,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class ConversionIssue:
-    issue_type: str  # 예: TAG_MISMATCH, UNSUPPORTED_TAG, REMAPRESULTS_DROPPED, CDATA_ESCAPED, XML_PARSE_ERROR
+    issue_type: str  # 예: TAG_MISMATCH, UNSUPPORTED_TAG, REMAPRESULTS_DROPPED, CDATA_SIMPLIFIED, XML_PARSE_ERROR
     severity: str  # BLOCKER | WARNING | INFO
     message: str
     line_no: int | None = None
@@ -184,30 +186,35 @@ def _replace_bind_vars(text: str) -> str:
     return text
 
 
-# --- 8) CDATA 섹션 제거 (사내 컨벤션 요청) ---------------------------------------------------
+# --- 8) CDATA 섹션 - 꼭 필요한 곳만 남기고 정리 ------------------------------------------------
 def _strip_cdata(text: str, issues: list[ConversionIssue]) -> str:
-    """<![CDATA[ ... ]]> 마커를 없애고 내용을 일반 XML 텍스트로 바꾼다.
+    """<![CDATA[ ... ]]> 를 무조건 다 벗기지 않는다 - 안에 & < > 같은 XML 예약문자가 실제로 있어서
+    CDATA가 진짜 필요한 블록은 그대로 둔다(MyBatis는 CDATA를 그대로 지원한다).
 
-    SQL 안에 비교연산자(<, >)나 &가 그대로 들어있는 경우가 실제로 있어서(GRP_ID > 0 등),
-    마커만 지우면 XML이 깨진다 - & < > 를 엔티티로 이스케이프해서 함께 처리한다.
+    특수문자가 하나도 없어서 애초에 CDATA로 감쌀 이유가 없었던 블록만 마커를 벗겨내고 일반
+    텍스트로 정리한다 - 이 경우는 이스케이프도 필요 없다(벗겨낼 내용에 이스케이프 대상이 없으므로).
     """
-    had_special_chars = False
+    stripped_count = 0
+    kept_count = 0
 
     def _sub(m: re.Match) -> str:
-        nonlocal had_special_chars
+        nonlocal stripped_count, kept_count
         inner = m.group(1)
         if re.search(r"[&<>]", inner):
-            had_special_chars = True
-        return inner.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            kept_count += 1
+            return m.group(0)  # 특수문자가 있어 CDATA가 실제로 필요함 - 그대로 유지
+        stripped_count += 1
+        return inner  # 특수문자 없음 - CDATA가 애초에 불필요했으므로 벗겨내도 안전
 
     result = re.sub(r"<!\[CDATA\[(.*?)\]\]>", _sub, text, flags=re.DOTALL)
-    if had_special_chars:
+    if stripped_count:
         issues.append(ConversionIssue(
-            issue_type="CDATA_ESCAPED",
+            issue_type="CDATA_SIMPLIFIED",
             severity="INFO",
             message=(
-                "CDATA 제거 과정에서 SQL 본문의 &/</> 를 엔티티(&amp;/&lt;/&gt;)로 이스케이프했습니다 - "
-                "SQL 텍스트 자체(의미)는 그대로고 XML 표기만 바뀐 것이니 DB에 실제로 나가는 쿼리와는 무관합니다."
+                f"특수문자(&/</>)가 없어 불필요했던 CDATA 블록 {stripped_count}개를 일반 텍스트로 "
+                f"정리했습니다. 특수문자가 있어 실제로 필요한 CDATA {kept_count}개는 MyBatis가 CDATA를 "
+                "그대로 지원하므로 그대로 유지했습니다(엔티티 이스케이프로 억지 변환하지 않음)."
             ),
         ))
     return result
