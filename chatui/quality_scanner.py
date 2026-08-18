@@ -20,6 +20,17 @@ _SQL_KEYWORDS_RE = re.compile(
 _STRING_CONCAT_RE = re.compile(r'"[^"]*"\s*\+\s*\w')
 _MYBATIS_TEXT_SUBST_RE = re.compile(r"\$\{([A-Za-z0-9_.]+)\}")
 _FIXME_RE = re.compile(r"//\s*FIXME\(원본 버그\):\s*(.+)")
+# 변수명에 password/secret/apikey류가 들어가고 오른쪽이 리터럴 문자열인 대입만 잡는다 - 값을 DB/설정에서
+# 읽어오는 코드(getConfig(...) 등)는 매칭되지 않는다(false positive를 줄이려고 리터럴 대입만 본다).
+_HARDCODED_CREDENTIAL_RE = re.compile(
+    r'\b(\w*(?:password|passwd|pwd|secret|api[_]?key|access[_]?key)\w*)\s*=\s*"([^"]+)"',
+    re.IGNORECASE,
+)
+# 포팅 후에도 NEXCORE 프레임워크 의존이 남아있으면 안 된다(CLAUDE.md 핵심 원칙: "NEXCORE 프레임워크
+# 의존 코드는 Spring/MyBatis 방식으로 치환해야 한다") - 남아있으면 포팅이 불완전하다는 신호다.
+_DEPRECATED_NEXCORE_API_RE = re.compile(
+    r"\b(lookupFunctionUnit|lookupDataUnit|lookupProcessUnit|IOnlineContext|IDataSet|dbSelect|dbExecute)\b"
+)
 
 
 def scan_mapper_sql_injection(mapper_xml: str) -> list[ConversionIssue]:
@@ -65,6 +76,50 @@ def scan_dynamic_sql_concat(java_text: str) -> list[ConversionIssue]:
     return issues
 
 
+def scan_hardcoded_credentials(java_text: str) -> list[ConversionIssue]:
+    """비밀번호/API 키로 보이는 변수에 문자열 리터럴이 직접 대입된 곳을 찾는다.
+
+    BLOCKER로 잡는다 - 다른 스캔 결과(SQL 인젝션 후보 등)와 달리 이건 "즉시 사람이 확인해야
+    하는" 성격이라, CLAUDE.md의 "원본 버그는 FIXME로 남기고 넘어간다" 원칙과 별개로 취급한다
+    (자동 포팅 파이프라인이 조용히 지나치면 안 되는 항목).
+    """
+    issues: list[ConversionIssue] = []
+    for m in _HARDCODED_CREDENTIAL_RE.finditer(java_text):
+        var_name, value = m.group(1), m.group(2)
+        line_no = java_text.count("\n", 0, m.start()) + 1
+        issues.append(ConversionIssue(
+            issue_type="HARDCODED_CREDENTIAL", severity="BLOCKER", line_no=line_no,
+            message=(
+                f"{line_no}행: {var_name}에 문자열이 그대로 대입되어 있습니다 - 비밀번호/키로 보이는 "
+                "값이 하드코딩됐을 수 있습니다. 즉시 사람이 확인해서 설정 파일/시크릿 저장소로 옮길지 "
+                "판단하세요(원본 버그라도 FIXME로 넘기지 않고 이 항목은 바로 검토 대상입니다)."
+            ),
+        ))
+    return issues
+
+
+def scan_deprecated_nexcore_calls(java_text: str) -> list[ConversionIssue]:
+    """포팅됐어야 할 Java 파일에 NEXCORE 프레임워크 의존이 아직 남아있는지 찾는다.
+
+    CLAUDE.md 핵심 원칙: "NEXCORE 프레임워크 의존 코드(IDataSet/IOnlineContext/lookupFunctionUnit
+    등)는 Spring/MyBatis 방식으로 치환해야 한다." 이게 남아있다는 건 포팅이 불완전하다는 신호다 -
+    validators.py의 계층 간 참조 체크와는 다른 각도(그쪽은 "존재하는 대상을 부르는가", 이쪽은
+    "애초에 있으면 안 되는 게 남아있는가")라 여기서 별도로 잡는다.
+    """
+    issues: list[ConversionIssue] = []
+    for m in _DEPRECATED_NEXCORE_API_RE.finditer(java_text):
+        api_name = m.group(1)
+        line_no = java_text.count("\n", 0, m.start()) + 1
+        issues.append(ConversionIssue(
+            issue_type="DEPRECATED_NEXCORE_API", severity="WARNING", line_no=line_no,
+            message=(
+                f"{line_no}행: NEXCORE 프레임워크 의존({api_name})이 아직 남아있습니다 - 포팅이 "
+                "불완전할 수 있습니다. Spring/MyBatis 방식으로 치환됐는지 확인하세요."
+            ),
+        ))
+    return issues
+
+
 def aggregate_original_bugs(service_java: str) -> list[ConversionIssue]:
     """포팅 시 `// FIXME(원본 버그): ...`로 표시해둔 것들을 모아 화면 단위 리포트로 만든다.
 
@@ -85,7 +140,7 @@ def run_review(files: dict[str, str], prefix: str) -> dict[str, list[ConversionI
     """generate_skeletons/convert_xsql_fragment 등이 만든 파일 dict를 규칙 기반으로 스캔한다.
 
     반환값은 {파일명: [ConversionIssue, ...]} - app.py의 다른 이슈 목록들과 같은 방식으로
-    DB(CONV_ISSUE, detected_by='chatui/reviewer.py')에 그대로 넣을 수 있다.
+    DB(CONV_ISSUE, detected_by='chatui/quality_scanner.py')에 그대로 넣을 수 있다.
     """
     result: dict[str, list[ConversionIssue]] = {}
 
@@ -98,15 +153,30 @@ def run_review(files: dict[str, str], prefix: str) -> dict[str, list[ConversionI
     service_name = f"{prefix}Service.java"
     if service_name in files:
         service_java = files[service_name]
-        found = scan_dynamic_sql_concat(service_java) + aggregate_original_bugs(service_java)
+        found = (
+            scan_dynamic_sql_concat(service_java)
+            + scan_hardcoded_credentials(service_java)
+            + scan_deprecated_nexcore_calls(service_java)
+            + aggregate_original_bugs(service_java)
+        )
         if found:
             result[service_name] = found
 
     store_name = f"{prefix}Store.java"
     if store_name in files:
-        found = scan_dynamic_sql_concat(files[store_name])
+        found = (
+            scan_dynamic_sql_concat(files[store_name])
+            + scan_hardcoded_credentials(files[store_name])
+            + scan_deprecated_nexcore_calls(files[store_name])
+        )
         if found:
             result[store_name] = found
+
+    api_name = f"{prefix}Api.java"
+    if api_name in files:
+        found = scan_hardcoded_credentials(files[api_name]) + scan_deprecated_nexcore_calls(files[api_name])
+        if found:
+            result[api_name] = found
 
     return result
 

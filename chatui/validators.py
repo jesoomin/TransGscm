@@ -141,6 +141,9 @@ _STORE_CALL_RE = re.compile(r"store\.(\w+)\s*\(")
 _METHOD_DEF_RE = re.compile(r"public\s+[\w<>\[\],\s]+?\s(\w+)\s*\(")
 _MAPPER_REF_RE = re.compile(r'sqlSession\.\w+\(\s*"[\w]+\.(\w+)"')
 _MAPPER_STMT_ID_RE = re.compile(r'<(?:select|insert|update|delete)\s+id="([^"]+)"')
+# converters.py의 동일 이름 패턴과 같은 것 - 여기서 다시 정의하는 이유는 이 검증기가 converters.py의
+# 변환 결과와 독립적으로 동작해야 하기 때문(CLAUDE.md "변환기/검증기 분리" 원칙, import로 결합하지 않음).
+_DYNAMIC_TAG_MARKER_RE = re.compile(r"</?(?:if|where|foreach|choose|when|otherwise)\b")
 
 
 def _defined_methods(java_text: str | None) -> set[str]:
@@ -246,6 +249,21 @@ def check_mapper_xml(mapper_xml: str) -> list[ValidationIssue]:
             issues.append(ValidationIssue(
                 issue_type="UNCLOSED_BIND_EXPR", severity="BLOCKER",
                 message=f"{line_no}행: '#{{'/'${{' 바인드 표현식이 닫히지 않았습니다.",
+                line_no=line_no,
+            ))
+
+    # 이중 안전장치: converters.py가 놓쳐도 여기서 다시 잡는다. CDATA 블록 안에 <if>/<where>/
+    # <foreach>/<choose> 같은 동적 태그가 남아있으면 XML 파서가 그걸 문자 그대로 취급해서 실행
+    # 시점에 SQL이 깨진다 - well-formed 검사만으로는 못 잡는 "빌드는 통과하는데 의미가 틀린" 버그.
+    for m in re.finditer(r"<!\[CDATA\[(.*?)\]\]>", mapper_xml, flags=re.DOTALL):
+        if _DYNAMIC_TAG_MARKER_RE.search(m.group(1)):
+            line_no = mapper_xml.count("\n", 0, m.start()) + 1
+            issues.append(ValidationIssue(
+                issue_type="DYNAMIC_TAG_INSIDE_CDATA", severity="BLOCKER",
+                message=(
+                    f"{line_no}행: CDATA 블록 안에 동적 태그(<if>/<where>/<foreach>/<choose> 등)가 "
+                    "남아있습니다 - CDATA 안에서는 태그로 해석되지 않고 문자 그대로 SQL에 섞여 들어갑니다."
+                ),
                 line_no=line_no,
             ))
     return issues

@@ -45,7 +45,7 @@ from skeleton_gen import (  # noqa: E402
     tobe_relpath,
 )
 from validators import validate_screen  # noqa: E402
-from reviewer import run_review, llm_review  # noqa: E402
+from quality_scanner import run_review, llm_review  # noqa: E402
 from cross_analysis import analyze_pilot_folder  # noqa: E402
 
 # TO-BE AS_IS_LAYER 값(agents/db_schema.sql의 CONV_FILE.AS_IS_LAYER) - 생성 파일 접미사 -> 계층 매핑.
@@ -356,27 +356,46 @@ if screen_id:
     st.markdown("\n".join(detected))
 
     # 작업 상태 요약 - 아래로 스크롤해서 2/3단계를 보는 동안에도 핵심 진행 상황을 다시 위로
-    # 올라오지 않고 확인할 수 있게, 화면 선택 직후(스크롤 맨 위 근처)에 고정적으로 보여준다.
-    status_cols = st.columns(4)
-    status_cols[0].metric("화면ID", screen_id)
-    val_results = st.session_state.get("validation_results", [])
-    if val_results:
-        passed_n = sum(1 for r in val_results if r.passed)
-        status_cols[1].metric("정적 검증", f"{passed_n}/{len(val_results)} 통과")
-    else:
-        status_cols[1].metric("정적 검증", "미실행")
-    f_java_present = bool(buckets["F"].get("java"))
-    if f_java_present:
-        total_f = len(extract_methods(buckets["F"]["java"]))
-        ported_n = len(st.session_state.get(f"ported_methods_{screen_id}", set()))
-        status_cols[2].metric("F 포팅 진행", f"{ported_n}/{total_f}")
-    else:
-        status_cols[2].metric("F 포팅 진행", "N/A")
-    if "review_findings" in st.session_state:
-        review_n = sum(len(v) for v in st.session_state["review_findings"].values())
-        status_cols[3].metric("품질/취약점 스캔", f"{review_n}건")
-    else:
-        status_cols[3].metric("품질/취약점 스캔", "미실행")
+    # 올라오지 않고 확인할 수 있게, position: sticky로 상단에 고정한다. st.container(key=...)가
+    # 만드는 "st-key-{key}" 클래스를 CSS로 targeting하는 방식 - Streamlit 내부 DOM 구조를 추측해서
+    # 짜맞춘 선택자보다 안정적이다(공식 지원되는 key 기능 기반). 다만 이 개발 환경엔 브라우저가
+    # 없어 실제 렌더링/스크롤 동작은 직접 확인하지 못했다 - 사용해보고 어긋나면 알려달라.
+    st.markdown(
+        """
+        <style>
+        div.st-key-status_bar {
+            position: sticky;
+            top: 2.875rem;
+            z-index: 999;
+            background-color: var(--background-color, inherit);
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.container(key="status_bar"):
+        status_cols = st.columns(4)
+        status_cols[0].metric("화면ID", screen_id)
+        val_results = st.session_state.get("validation_results", [])
+        if val_results:
+            passed_n = sum(1 for r in val_results if r.passed)
+            status_cols[1].metric("정적 검증", f"{passed_n}/{len(val_results)} 통과")
+        else:
+            status_cols[1].metric("정적 검증", "미실행")
+        f_java_present = bool(buckets["F"].get("java"))
+        if f_java_present:
+            total_f = len(extract_methods(buckets["F"]["java"]))
+            ported_n = len(st.session_state.get(f"ported_methods_{screen_id}", set()))
+            status_cols[2].metric("F 포팅 진행", f"{ported_n}/{total_f}")
+        else:
+            status_cols[2].metric("F 포팅 진행", "N/A")
+        if "review_findings" in st.session_state:
+            review_n = sum(len(v) for v in st.session_state["review_findings"].values())
+            status_cols[3].metric("품질/취약점 스캔", f"{review_n}건")
+        else:
+            status_cols[3].metric("품질/취약점 스캔", "미실행")
 
     def _run_conversion() -> None:
         """규칙 기반 골격/Mapper/Dto 생성 + 정적 검증까지 한 번에 실행한다.
@@ -747,7 +766,7 @@ if screen_id:
                         if vr and vr.issues:
                             db.record_issues(file_id, vr.issues, "chatui/validators.py")
                         if review_findings.get(fname):
-                            db.record_issues(file_id, review_findings[fname], "chatui/reviewer.py")
+                            db.record_issues(file_id, review_findings[fname], "chatui/quality_scanner.py")
 
                     # 계층 간 참조(Api->Service->Store->Mapper) 검증은 파일 하나에 속하지 않아
                     # 별도 DERIVED 행으로 기록한다(AS_IS_FILENAME을 고유하게 둬서 위 Dto 파생 행과

@@ -186,6 +186,15 @@ def _replace_bind_vars(text: str) -> str:
     return text
 
 
+# CDATA 블록 안에 이게 있으면 정확성 버그다: <![CDATA[...]]> 안에서는 XML 파서가 <if>/<where>/
+# <foreach>/<choose> 같은 태그를 더 이상 태그로 해석하지 않고 문자 그대로 취급한다. 앞선 단계에서
+# isNotEmpty/isEqual/dynamic 등을 이 태그들로 막 변환했는데 그 결과가 CDATA 안에 남아있다면,
+# 정적 XML 검증(well-formed)은 통과해도 실행 시점에 SQL 안에 태그 텍스트가 그대로 섞여 들어가는
+# "빌드는 통과하는데 의미가 틀린" 버그가 된다 - 원본 iBatis에서도 이 조합은 애초에 동작하지
+# 않았을 조합이라 실제로는 드물어야 하지만, 방어적으로 반드시 잡아낸다.
+_DYNAMIC_TAG_MARKER_RE = re.compile(r"</?(?:if|where|foreach|choose|when|otherwise)\b")
+
+
 # --- 8) CDATA 섹션 - 꼭 필요한 곳만 남기고 정리 ------------------------------------------------
 def _strip_cdata(text: str, issues: list[ConversionIssue]) -> str:
     """<![CDATA[ ... ]]> 를 무조건 다 벗기지 않는다 - 안에 & < > 같은 XML 예약문자가 실제로 있어서
@@ -193,6 +202,10 @@ def _strip_cdata(text: str, issues: list[ConversionIssue]) -> str:
 
     특수문자가 하나도 없어서 애초에 CDATA로 감쌀 이유가 없었던 블록만 마커를 벗겨내고 일반
     텍스트로 정리한다 - 이 경우는 이스케이프도 필요 없다(벗겨낼 내용에 이스케이프 대상이 없으므로).
+
+    예외: 그 블록 안에 우리가 방금 만든 동적 태그(<if>/<where>/<foreach>/<choose> 등)가 섞여
+    있으면 CDATA로 남겨두면 안 된다(태그가 무력화됨) - 이 경우는 강제로 벗겨내고 이스케이프하되,
+    사람이 반드시 확인하도록 BLOCKER를 남긴다.
     """
     stripped_count = 0
     kept_count = 0
@@ -200,6 +213,22 @@ def _strip_cdata(text: str, issues: list[ConversionIssue]) -> str:
     def _sub(m: re.Match) -> str:
         nonlocal stripped_count, kept_count
         inner = m.group(1)
+        has_dynamic_tag = _DYNAMIC_TAG_MARKER_RE.search(inner)
+        if has_dynamic_tag:
+            line_no = text.count("\n", 0, m.start()) + 1
+            issues.append(ConversionIssue(
+                issue_type="DYNAMIC_TAG_INSIDE_CDATA",
+                severity="BLOCKER",
+                line_no=line_no,
+                message=(
+                    f"{line_no}행: CDATA 블록 안에 동적 태그(<if>/<where>/<foreach>/<choose> 등)가 "
+                    "섞여 있습니다 - CDATA 안에서는 XML 파서가 이 태그를 해석하지 않고 문자 그대로 "
+                    "취급해 실행 시점에 SQL이 깨집니다. 강제로 CDATA를 벗기고 특수문자만 이스케이프"
+                    "했지만, 원본 구조 자체가 비정상일 수 있으니 반드시 원본과 대조해서 확인하세요."
+                ),
+            ))
+            stripped_count += 1
+            return inner.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         if re.search(r"[&<>]", inner):
             kept_count += 1
             return m.group(0)  # 특수문자가 있어 CDATA가 실제로 필요함 - 그대로 유지
