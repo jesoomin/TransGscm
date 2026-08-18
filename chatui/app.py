@@ -369,24 +369,47 @@ if screen_id:
     with st.container(key="status_bar"):
         status_cols = st.columns(4)
         status_cols[0].metric("화면ID", screen_id)
-        val_results = st.session_state.get("validation_results", [])
-        if val_results:
-            passed_n = sum(1 for r in val_results if r.passed)
-            status_cols[1].metric("정적 검증", f"{passed_n}/{len(val_results)} 통과")
-        else:
-            status_cols[1].metric("정적 검증", "미실행")
-        f_java_present = bool(buckets["F"].get("java"))
-        if f_java_present:
-            total_f = len(extract_methods(buckets["F"]["java"]))
-            ported_n = len(st.session_state.get(f"ported_methods_{screen_id}", set()))
-            status_cols[2].metric("F 포팅 진행", f"{ported_n}/{total_f}")
-        else:
-            status_cols[2].metric("F 포팅 진행", "N/A")
-        if "review_findings" in st.session_state:
-            review_n = sum(len(v) for v in st.session_state["review_findings"].values())
-            status_cols[3].metric("품질/취약점 스캔", f"{review_n}건")
-        else:
-            status_cols[3].metric("품질/취약점 스캔", "미실행")
+
+        has_skeleton = "skeleton_files" in st.session_state
+        service_fname_quick = f"{to_prefix(screen_id)}Service.java"
+
+        with status_cols[1]:
+            val_results = st.session_state.get("validation_results", [])
+            if val_results:
+                passed_n = sum(1 for r in val_results if r.passed)
+                st.metric("정적 검증", f"{passed_n}/{len(val_results)} 통과")
+            else:
+                st.metric("정적 검증", "미실행")
+            if has_skeleton and st.button("🔍 재검증", key=f"quick_revalidate_{screen_id}"):
+                st.session_state["validation_results"] = validate_screen(
+                    st.session_state["skeleton_files"], to_prefix(screen_id)
+                )
+                st.rerun()
+
+        with status_cols[2]:
+            f_java_present = bool(buckets["F"].get("java"))
+            total_f = len(extract_methods(buckets["F"]["java"])) if f_java_present else 0
+            if f_java_present:
+                ported_n = len(st.session_state.get(f"ported_methods_{screen_id}", set()))
+                st.metric("F 포팅 진행", f"{ported_n}/{total_f}")
+            else:
+                st.metric("F 포팅 진행", "N/A")
+            if has_skeleton and total_f > 0 and service_fname_quick in st.session_state["skeleton_files"]:
+                if st.button("▶️ 전체 포팅 실행", key=f"quick_port_all_{screen_id}"):
+                    st.session_state["_trigger_bulk_porting"] = True
+                    st.rerun()
+
+        with status_cols[3]:
+            if "review_findings" in st.session_state:
+                review_n = sum(len(v) for v in st.session_state["review_findings"].values())
+                st.metric("품질/취약점 스캔", f"{review_n}건")
+            else:
+                st.metric("품질/취약점 스캔", "미실행")
+            if has_skeleton and st.button("🛡️ 재스캔", key=f"quick_rescan_{screen_id}"):
+                st.session_state["review_findings"] = run_review(
+                    st.session_state["skeleton_files"], to_prefix(screen_id)
+                )
+                st.rerun()
 
     def _run_conversion() -> None:
         """규칙 기반 골격/Mapper/Dto 생성 + 정적 검증까지 한 번에 실행한다.
@@ -658,7 +681,8 @@ if screen_id:
                         st.session_state["skeleton_files"], to_prefix(screen_id)
                     )
 
-                if st.button(f"전체 포팅 ({len(f_methods)}개 메서드, LLM {len(f_methods)}회 호출)"):
+                triggered_from_top = st.session_state.pop("_trigger_bulk_porting", False)
+                if triggered_from_top or st.button(f"전체 포팅 ({len(f_methods)}개 메서드, LLM {len(f_methods)}회 호출)"):
                     progress = st.progress(0.0, text=f"0/{len(f_methods)} (0%)")
                     for i, method in enumerate(f_methods):
                         try:
