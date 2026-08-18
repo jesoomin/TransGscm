@@ -349,12 +349,6 @@ if screen_id:
 
     st.success(f"화면ID: **{screen_id}** (TO-BE 접두어: `{to_prefix(screen_id)}`)")
 
-    detected = []
-    for layer in ("P", "F", "D"):
-        kinds = ", ".join(sorted(buckets[layer].keys())) or "없음"
-        detected.append(f"- **{layer}**: {kinds}")
-    st.markdown("\n".join(detected))
-
     # 작업 상태 요약 - 아래로 스크롤해서 2/3단계를 보는 동안에도 핵심 진행 상황을 다시 위로
     # 올라오지 않고 확인할 수 있게, position: sticky로 상단에 고정한다. st.container(key=...)가
     # 만드는 "st-key-{key}" 클래스를 CSS로 targeting하는 방식 - Streamlit 내부 DOM 구조를 추측해서
@@ -473,318 +467,329 @@ if screen_id:
         )
 
     if "skeleton_files" in st.session_state:
-        st.divider()
-        st.subheader("변환 결과 (검토 전 - 아직 저장 안 됨)")
+        files = st.session_state["skeleton_files"]
 
         all_issues = (
             st.session_state.get("skeleton_issues", [])
             + st.session_state.get("mapper_issues", [])
             + st.session_state.get("dto_issues", [])
         )
-        if all_issues:
-            with st.expander(f"⚠️ 주의/미변환 항목 {len(all_issues)}건 - 반드시 확인", expanded=True):
-                for issue in all_issues:
-                    label = f"[{issue.severity}/{issue.issue_type}]"
-                    if issue.line_no:
-                        label += f" (원본 {issue.line_no}행)"
-                    text = f"{label} {issue.message}"
-                    if issue.severity == "BLOCKER":
-                        st.error(text)
-                    else:
-                        st.warning(text)
-
-        files = st.session_state["skeleton_files"]
-
         validation_results = st.session_state.get("validation_results", [])
         blocker_files = [r for r in validation_results if not r.passed]
-        st.markdown('<div id="validation-anchor"></div>', unsafe_allow_html=True)
-        if st.session_state.pop("scroll_to_validation", False):
-            _scroll_to("validation-anchor")
-        with st.expander(
-            f"🔍 실행 가능성 정적 검증 결과 - {len(validation_results) - len(blocker_files)}/{len(validation_results)} 통과"
-            + (f", {len(blocker_files)}건 실패" if blocker_files else ""),
-            expanded=bool(blocker_files),
-        ):
-            st.caption(
-                "실제 Maven/Spring 빌드 환경이 아직 없어 진짜 컴파일은 못 합니다 - 대신 중괄호 균형, "
-                "LLM 포팅 미완료 스텁, 계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), "
-                "Mapper.xml well-formed 여부를 정적으로 확인합니다. PASS는 \"돌아간다\"가 아니라 "
-                "\"이 정적 검사를 통과했다\"는 뜻입니다."
-            )
-            for r in validation_results:
-                icon = "✅" if r.passed else "❌"
-                st.markdown(f"{icon} **{r.file_name}** ({r.check})")
-                for issue in r.issues:
-                    label = f"[{issue.severity}/{issue.issue_type}]"
-                    if issue.line_no:
-                        label += f" (L{issue.line_no})"
-                    text = f"{label} {issue.message}"
-                    if issue.severity == "BLOCKER":
-                        st.error(text)
-                    elif issue.severity == "WARNING":
-                        st.warning(text)
-                    else:
-                        st.info(text)
-
         review_findings: dict[str, list] = st.session_state.get("review_findings", {})
         total_review = sum(len(v) for v in review_findings.values())
-        with st.expander(f"🛡️ 코드 품질/취약점 스캔 (규칙 기반) - {total_review}건", expanded=False):
-            st.caption(
-                "정규식 기반 규칙 스캔입니다(LLM 아님) - 확정된 취약점이 아니라 '검토가 필요한 후보'를 "
-                "표시합니다: ${...}(MyBatis 텍스트 치환, 값에 따라 SQL 인젝션 가능), 문자열 연결로 "
-                "조립되는 SQL, 포팅 시 보존된 원본 버그(FIXME) 집계."
-            )
-            if not review_findings:
-                st.write("발견된 항목이 없습니다.")
-            for fname, findings in review_findings.items():
-                by_type: dict[str, list] = {}
-                for f in findings:
-                    by_type.setdefault(f.issue_type, []).append(f)
-                st.markdown(f"**{fname}** — {len(findings)}건")
-                for issue_type, items in by_type.items():
-                    severity = items[0].severity
-                    show_key = f"review_expand_{screen_id}_{fname}_{issue_type}"
-                    show_all = (
-                        st.checkbox(f"[{severity}/{issue_type}] {len(items)}건 전체 보기", key=show_key)
-                        if len(items) > 5 else True
-                    )
-                    if not show_all:
-                        st.write(f"[{severity}/{issue_type}] {len(items)}건 (아래 예시 5건, 체크박스로 전체 보기)")
-                    sample = items if show_all else items[:5]
-                    for it in sample:
-                        text = f"L{it.line_no}: {it.message}" if it.line_no else it.message
-                        if severity == "BLOCKER":
-                            st.error(text)
-                        elif severity == "WARNING":
-                            st.warning(text)
-                        else:
-                            st.info(text)
 
-            service_fname_for_review = f"{to_prefix(screen_id)}Service.java"
-            if service_fname_for_review in files:
-                st.divider()
-                llm_review_key = f"llm_review_{screen_id}"
-                if st.button("🤖 LLM 코드 리뷰 (선택, 실험적 - 코드는 수정하지 않음)", key=f"llmreview_btn_{screen_id}"):
-                    with st.spinner("LLM이 Service 코드를 리뷰하는 중..."):
-                        try:
-                            st.session_state[llm_review_key] = llm_review(files[service_fname_for_review])
-                        except Exception as e:
-                            st.error(f"LLM 리뷰 실패: {e}")
-                if llm_review_key in st.session_state:
-                    st.markdown("**LLM 리뷰 결과 (참고용 - 코드에는 반영되지 않았습니다):**")
-                    st.markdown(st.session_state[llm_review_key])
-
-        tabs = st.tabs(list(files.keys()))
-        PREVIEW_LINES = 40
-        for tab, (fname, content) in zip(tabs, files.items()):
-            with tab:
-                lines_list = content.split("\n")
-                total_lines = len(lines_list)
-                c1, c2 = st.columns([4, 1])
-                with c1:
-                    _copy_button(f"📋 {fname} 복사", content, key=f"copy_{screen_id}_{fname}")
-                with c2:
-                    expand_key = f"expand_{screen_id}_{fname}"
-                    show_full = (
-                        st.checkbox("펼치기 (전체 보기)", key=expand_key)
-                        if total_lines > PREVIEW_LINES else True
-                    )
-                lang = "xml" if fname.endswith(".xml") else "java"
-                # line_numbers=True로 왼쪽에 줄번호를 붙인다 - 위 검증 결과의 "L123" 같은 표시를
-                # 실제 소스에서 바로 찾을 수 있게 하기 위함.
-                if show_full or total_lines <= PREVIEW_LINES:
-                    # 전체 보기일 때는 높이 고정 스크롤 박스 안에 넣는다 - 5000줄짜리 Mapper.xml도
-                    # 페이지 전체를 끝없이 스크롤하지 않고 이 박스 안에서만 스크롤하면 되게 하기 위함.
-                    with st.container(height=450):
-                        st.code(content, language=lang, line_numbers=True)
-                else:
-                    st.code("\n".join(lines_list[:PREVIEW_LINES]), language=lang, line_numbers=True)
-                    st.caption(
-                        f"총 {total_lines}줄 중 {PREVIEW_LINES}줄만 표시했습니다(줄번호는 원본 기준 그대로) - "
-                        "소스가 길어 변환 결과를 한눈에 보기 어려우니 필요할 때만 위 '펼치기'를 누르세요."
-                    )
-
-        st.divider()
-        st.subheader("2단계 (선택, 실험적): LLM으로 Service 로직 포팅")
-        st.caption(
-            "F BizUnit의 실제 계산/분기 로직을 메서드 단위로 LLM Gateway에 보내, Service 파일의 스텁 "
-            "(`throw new UnsupportedOperationException`)을 실제 포팅된 코드로 바로 교체합니다. "
-            "메서드가 크면(예: 500줄 넘는 로직) 한 번에 정확히 옮겨진다는 보장이 없으니, "
-            "포팅 후 반드시 원본과 줄 단위로 대조해서 검토하세요 - 이 앱은 자동으로 완료 처리하지 않습니다."
-        )
         f_java = buckets["F"].get("java")
         service_fname = f"{to_prefix(screen_id)}Service.java"
         f_methods: list[str] = []
         ported: set[str] = set()
         if f_java and service_fname in files:
             f_methods = extract_methods(f_java)
-            f_bodies = extract_method_bodies(f_java)
-            ported_key = f"ported_methods_{screen_id}"
-            ported = st.session_state.setdefault(ported_key, set())
-
-            def _port_method(method: str) -> None:
-                from agents.llm_gateway import chat
-
-                body = f_bodies.get(method, "")
-                prompt = (
-                    f"다음은 NEXCORE(BizUnit) F(Function) 계층 Java 메서드 {method}의 본문이다. "
-                    "이 로직(계산/분기/문자열 처리 등)을 하나도 빠짐없이 그대로 유지하면서, "
-                    "IDataSet/IOnlineContext/lookupDataUnit/lookupFunctionUnit 같은 NEXCORE 프레임워크 "
-                    "의존만 제거하고 Spring 서비스 메서드로 옮겨라. "
-                    "D BizUnit 호출(du.dXXXX(...))은 store.dXXXX(...) 형태로 바꿔라 (Service에 이미 "
-                    "`store` 필드가 있다). SQL이나 업무 규칙을 새로 설계하지 말고 원본 그대로 포팅만 해라. "
-                    "원본에 컴파일 에러나 미선언 변수가 있어도 그 부분을 고치지 말고 원본 그대로 옮긴 뒤 "
-                    "`// FIXME(원본 버그): ...` 로 표시해라. "
-                    f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 "
-                    "완성된 메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라.\n\n"
-                    f"원본 메서드 본문:\n```\n{body}\n```"
-                )
-                ported_code = chat(messages=[{"role": "user", "content": prompt}])
-                ported_code = _strip_code_fence(ported_code)
-                st.session_state["skeleton_files"][service_fname] = splice_ported_method(
-                    st.session_state["skeleton_files"][service_fname], method, ported_code
-                )
-                ported.add(method)
-                # 포팅할 때마다 정적 검증 + 취약점 스캔을 다시 돌린다 - "함수별로 실행에 문제 없는지" 바로 확인하기 위함.
-                st.session_state["validation_results"] = validate_screen(
-                    st.session_state["skeleton_files"], to_prefix(screen_id)
-                )
-                st.session_state["review_findings"] = run_review(
-                    st.session_state["skeleton_files"], to_prefix(screen_id)
-                )
-
-            if st.button(f"전체 포팅 ({len(f_methods)}개 메서드, LLM {len(f_methods)}회 호출)"):
-                progress = st.progress(0.0, text=f"0/{len(f_methods)} (0%)")
-                for i, method in enumerate(f_methods):
-                    try:
-                        with st.spinner(f"{method} 포팅 중... ({i + 1}/{len(f_methods)})"):
-                            _port_method(method)
-                    except Exception as e:
-                        st.error(f"{method} 포팅 실패: {e}")
-                    pct = int((i + 1) / len(f_methods) * 100)
-                    progress.progress((i + 1) / len(f_methods), text=f"{i + 1}/{len(f_methods)} ({pct}%) - 마지막: {method}")
-                # 전체 포팅이 끝난 뒤 BLOCKER가 남아있으면 정적 검증 결과 쪽으로 바로 포커스시킨다.
-                final_results = st.session_state.get("validation_results", [])
-                if any(not r.passed for r in final_results):
-                    st.session_state["scroll_to_validation"] = True
-                st.rerun()
-
-            for method in f_methods:
-                status = "✅ 포팅됨 (검토 필요)" if method in ported else "⏳ 스텁"
-                c1, c2 = st.columns([5, 1])
-                c1.write(f"`{method}` — {status} ({len(f_bodies.get(method, ''))}자)")
-                if c2.button("포팅", key=f"port_{screen_id}_{method}"):
-                    try:
-                        with st.spinner(f"{method} 포팅 중..."):
-                            _port_method(method)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"{method} 포팅 실패: {e}")
-        elif not f_java:
-            st.info("F(Java) 원본이 없어 포팅할 대상이 없습니다.")
-
-        st.divider()
+            ported = st.session_state.setdefault(f"ported_methods_{screen_id}", set())
         porting_complete = not f_methods or len(ported) >= len(f_methods)
-        if not porting_complete:
-            st.warning(
-                f"⏳ 2단계 포팅이 아직 끝나지 않았습니다({len(ported)}/{len(f_methods)}개 메서드 완료) - "
-                "F 메서드를 전부 포팅해야 저장 버튼이 활성화됩니다. 원본 F 로직 없이 스텁 상태로 저장하면 "
-                "포팅했다는 착각을 줄 수 있어서 막아뒀습니다."
+
+        # 단계별로 탭을 나눠서, 소스 보기 -> 포팅 -> 저장으로 넘어갈 때마다 페이지 전체를
+        # 스크롤하지 않고 탭만 클릭하면 되게 한다. 탭 라벨에 진행 개수를 넣어서 굳이 안을
+        # 열어보지 않아도 상태를 알 수 있다.
+        result_label = "📄 변환 결과"
+        if validation_results:
+            result_label += f" ({len(validation_results) - len(blocker_files)}/{len(validation_results)} 통과)"
+        porting_label = "🔧 2단계 포팅"
+        if f_methods:
+            porting_label += f" ({len(ported)}/{len(f_methods)})"
+        save_label = "💾 3단계 저장" + (" (준비됨)" if porting_complete else " (포팅 필요)")
+
+        tab_result, tab_porting, tab_save = st.tabs([result_label, porting_label, save_label])
+
+        with tab_result:
+            if all_issues:
+                with st.expander(f"⚠️ 주의/미변환 항목 {len(all_issues)}건 - 반드시 확인", expanded=True):
+                    for issue in all_issues:
+                        label = f"[{issue.severity}/{issue.issue_type}]"
+                        if issue.line_no:
+                            label += f" (원본 {issue.line_no}행)"
+                        text = f"{label} {issue.message}"
+                        if issue.severity == "BLOCKER":
+                            st.error(text)
+                        else:
+                            st.warning(text)
+
+            st.markdown('<div id="validation-anchor"></div>', unsafe_allow_html=True)
+            if st.session_state.pop("scroll_to_validation", False):
+                _scroll_to("validation-anchor")
+            with st.expander(
+                f"🔍 실행 가능성 정적 검증 결과 - {len(validation_results) - len(blocker_files)}/{len(validation_results)} 통과"
+                + (f", {len(blocker_files)}건 실패" if blocker_files else ""),
+                expanded=bool(blocker_files),
+            ):
+                st.caption(
+                    "실제 Maven/Spring 빌드 환경이 아직 없어 진짜 컴파일은 못 합니다 - 대신 중괄호 균형, "
+                    "LLM 포팅 미완료 스텁, 계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), "
+                    "Mapper.xml well-formed 여부를 정적으로 확인합니다. PASS는 \"돌아간다\"가 아니라 "
+                    "\"이 정적 검사를 통과했다\"는 뜻입니다."
+                )
+                for r in validation_results:
+                    icon = "✅" if r.passed else "❌"
+                    st.markdown(f"{icon} **{r.file_name}** ({r.check})")
+                    for issue in r.issues:
+                        label = f"[{issue.severity}/{issue.issue_type}]"
+                        if issue.line_no:
+                            label += f" (L{issue.line_no})"
+                        text = f"{label} {issue.message}"
+                        if issue.severity == "BLOCKER":
+                            st.error(text)
+                        elif issue.severity == "WARNING":
+                            st.warning(text)
+                        else:
+                            st.info(text)
+
+            with st.expander(f"🛡️ 코드 품질/취약점 스캔 (규칙 기반) - {total_review}건", expanded=False):
+                st.caption(
+                    "정규식 기반 규칙 스캔입니다(LLM 아님) - 확정된 취약점이 아니라 '검토가 필요한 후보'를 "
+                    "표시합니다: ${...}(MyBatis 텍스트 치환, 값에 따라 SQL 인젝션 가능), 문자열 연결로 "
+                    "조립되는 SQL, 하드코딩된 비밀번호/키로 보이는 값, 남아있는 NEXCORE 의존, 포팅 시 "
+                    "보존된 원본 버그(FIXME) 집계."
+                )
+                if not review_findings:
+                    st.write("발견된 항목이 없습니다.")
+                for fname, findings in review_findings.items():
+                    by_type: dict[str, list] = {}
+                    for f in findings:
+                        by_type.setdefault(f.issue_type, []).append(f)
+                    st.markdown(f"**{fname}** — {len(findings)}건")
+                    for issue_type, items in by_type.items():
+                        severity = items[0].severity
+                        show_key = f"review_expand_{screen_id}_{fname}_{issue_type}"
+                        show_all = (
+                            st.checkbox(f"[{severity}/{issue_type}] {len(items)}건 전체 보기", key=show_key)
+                            if len(items) > 5 else True
+                        )
+                        if not show_all:
+                            st.write(f"[{severity}/{issue_type}] {len(items)}건 (아래 예시 5건, 체크박스로 전체 보기)")
+                        sample = items if show_all else items[:5]
+                        for it in sample:
+                            text = f"L{it.line_no}: {it.message}" if it.line_no else it.message
+                            if severity == "BLOCKER":
+                                st.error(text)
+                            elif severity == "WARNING":
+                                st.warning(text)
+                            else:
+                                st.info(text)
+
+                service_fname_for_review = f"{to_prefix(screen_id)}Service.java"
+                if service_fname_for_review in files:
+                    st.divider()
+                    llm_review_key = f"llm_review_{screen_id}"
+                    if st.button("🤖 LLM 코드 리뷰 (선택, 실험적 - 코드는 수정하지 않음)", key=f"llmreview_btn_{screen_id}"):
+                        with st.spinner("LLM이 Service 코드를 리뷰하는 중..."):
+                            try:
+                                st.session_state[llm_review_key] = llm_review(files[service_fname_for_review])
+                            except Exception as e:
+                                st.error(f"LLM 리뷰 실패: {e}")
+                    if llm_review_key in st.session_state:
+                        st.markdown("**LLM 리뷰 결과 (참고용 - 코드에는 반영되지 않았습니다):**")
+                        st.markdown(st.session_state[llm_review_key])
+
+            source_tabs = st.tabs(list(files.keys()))
+            PREVIEW_LINES = 40
+            for source_tab, (fname, content) in zip(source_tabs, files.items()):
+                with source_tab:
+                    lines_list = content.split("\n")
+                    total_lines = len(lines_list)
+                    fc1, fc2 = st.columns([4, 1])
+                    with fc1:
+                        _copy_button(f"📋 {fname} 복사", content, key=f"copy_{screen_id}_{fname}")
+                    with fc2:
+                        expand_key = f"expand_{screen_id}_{fname}"
+                        show_full = (
+                            st.checkbox("펼치기 (전체 보기)", key=expand_key)
+                            if total_lines > PREVIEW_LINES else True
+                        )
+                    lang = "xml" if fname.endswith(".xml") else "java"
+                    # line_numbers=True로 왼쪽에 줄번호를 붙인다 - 위 검증 결과의 "L123" 같은 표시를
+                    # 실제 소스에서 바로 찾을 수 있게 하기 위함.
+                    if show_full or total_lines <= PREVIEW_LINES:
+                        # 전체 보기일 때는 높이 고정 스크롤 박스 안에 넣는다 - 5000줄짜리 Mapper.xml도
+                        # 페이지 전체를 끝없이 스크롤하지 않고 이 박스 안에서만 스크롤하면 되게 하기 위함.
+                        with st.container(height=450):
+                            st.code(content, language=lang, line_numbers=True)
+                    else:
+                        st.code("\n".join(lines_list[:PREVIEW_LINES]), language=lang, line_numbers=True)
+                        st.caption(
+                            f"총 {total_lines}줄 중 {PREVIEW_LINES}줄만 표시했습니다(줄번호는 원본 기준 그대로) - "
+                            "소스가 길어 변환 결과를 한눈에 보기 어려우니 필요할 때만 위 '펼치기'를 누르세요."
+                        )
+
+        with tab_porting:
+            st.caption(
+                "F BizUnit의 실제 계산/분기 로직을 메서드 단위로 LLM Gateway에 보내, Service 파일의 스텁 "
+                "(`throw new UnsupportedOperationException`)을 실제 포팅된 코드로 바로 교체합니다. "
+                "메서드가 크면(예: 500줄 넘는 로직) 한 번에 정확히 옮겨진다는 보장이 없으니, "
+                "포팅 후 반드시 원본과 줄 단위로 대조해서 검토하세요 - 이 앱은 자동으로 완료 처리하지 않습니다."
             )
-        save_to_db = st.checkbox(
-            "DB에도 기록 (agents/db_schema.sql의 CONV_FILE/CONV_ISSUE, 로컬 Oracle - 정적 검증 결과 BUILD_CHECK 포함)",
-            value=True,
-        )
-        if st.button(
-            "검토 완료 - pilot/ 에 TO-BE 폴더 구조로 저장",
-            type="primary",
-            disabled=not porting_complete,
-        ):
-            # pilot/ 바로 아래에 실제 TO-BE 트리(gscm/src/main/...)를 만든다 - 화면별 하위 폴더를
-            # 두지 않는다. 파일명 자체가 이미 화면 접두어(Pla047Api.java 등)로 구분되고, 이렇게 해야
-            # 나중에 여러 화면이 쌓였을 때 실제 프로젝트에 그대로 병합할 수 있는 구조가 된다.
-            out_dir = PROJECT_ROOT / "pilot"
-            p1, p2 = package_p1, package_p2
-            saved_paths: dict[str, Path] = {}
-            for fname, content in files.items():
-                rel = tobe_relpath(fname, p1, p2)
-                full_path = out_dir / rel
-                full_path.parent.mkdir(parents=True, exist_ok=True)
-                full_path.write_text(content, encoding="utf-8")
-                saved_paths[fname] = full_path
-            tree = "\n".join(f"- `{saved_paths[f].relative_to(out_dir)}`" for f in files)
-            st.success(f"저장됨: {out_dir} ({len(files)}개 파일)\n\n{tree}\n\ngit add/commit은 별도로 직접 하세요.")
+            if f_java and service_fname in files:
+                f_bodies = extract_method_bodies(f_java)
 
-            if save_to_db:
-                try:
-                    from agents import db
+                def _port_method(method: str) -> None:
+                    from agents.llm_gateway import chat
 
-                    db.ensure_schema()
-                    sid = st.session_state["screen_id"]
-                    prefix = to_prefix(sid)
-                    validation_results = st.session_state.get("validation_results", [])
-                    by_file = {r.file_name: r for r in validation_results}
-                    review_findings = st.session_state.get("review_findings", {})
+                    body = f_bodies.get(method, "")
+                    prompt = (
+                        f"다음은 NEXCORE(BizUnit) F(Function) 계층 Java 메서드 {method}의 본문이다. "
+                        "이 로직(계산/분기/문자열 처리 등)을 하나도 빠짐없이 그대로 유지하면서, "
+                        "IDataSet/IOnlineContext/lookupDataUnit/lookupFunctionUnit 같은 NEXCORE 프레임워크 "
+                        "의존만 제거하고 Spring 서비스 메서드로 옮겨라. "
+                        "D BizUnit 호출(du.dXXXX(...))은 store.dXXXX(...) 형태로 바꿔라 (Service에 이미 "
+                        "`store` 필드가 있다). SQL이나 업무 규칙을 새로 설계하지 말고 원본 그대로 포팅만 해라. "
+                        "원본에 컴파일 에러나 미선언 변수가 있어도 그 부분을 고치지 말고 원본 그대로 옮긴 뒤 "
+                        "`// FIXME(원본 버그): ...` 로 표시해라. "
+                        f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 "
+                        "완성된 메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라.\n\n"
+                        f"원본 메서드 본문:\n```\n{body}\n```"
+                    )
+                    ported_code = chat(messages=[{"role": "user", "content": prompt}])
+                    ported_code = _strip_code_fence(ported_code)
+                    st.session_state["skeleton_files"][service_fname] = splice_ported_method(
+                        st.session_state["skeleton_files"][service_fname], method, ported_code
+                    )
+                    ported.add(method)
+                    # 포팅할 때마다 정적 검증 + 취약점 스캔을 다시 돌린다 - "함수별로 실행에 문제 없는지" 바로 확인하기 위함.
+                    st.session_state["validation_results"] = validate_screen(
+                        st.session_state["skeleton_files"], to_prefix(screen_id)
+                    )
+                    st.session_state["review_findings"] = run_review(
+                        st.session_state["skeleton_files"], to_prefix(screen_id)
+                    )
 
-                    # 생성 단계 이슈(문법/골격 관련)는 계층별로 정확히 나뉘지 않는 부분이 남아있다 -
-                    # skeleton_issues는 Api/Service/Store 골격 생성 전체에서 나온 걸 P(JAVA)에 대표로
-                    # 붙인다(v0 한계, tracking/conversion-verification.csv에도 명시). 반면 정적 검증
-                    # 결과(validation_results)는 파일 단위로 정확히 나오므로 계층마다 정확히 귀속시킨다.
-                    layer_meta = {
-                        "P(JAVA)": (f"P{sid}.java", as_is_paths.get("P.java"),
-                                    st.session_state.get("skeleton_issues", []), "chatui/skeleton_gen.py",
-                                    buckets["P"].get("java")),
-                        "F(JAVA)": (f"F{sid}.java", as_is_paths.get("F.java"), [], None,
-                                    buckets["F"].get("java")),
-                        "D(JAVA)": (f"D{sid}.java", as_is_paths.get("D.java"), [], None,
-                                    buckets["D"].get("java")),
-                        "XSQL": (f"D{sid}.xsql", as_is_paths.get("D.xsql"),
-                                 st.session_state.get("mapper_issues", []), "chatui/converters.py",
-                                 buckets["D"].get("xsql")),
-                        "DERIVED": (f"{sid}-dto-derived", None,
-                                    st.session_state.get("dto_issues", []), "chatui/skeleton_gen.py", None),
-                    }
+                if st.button(f"전체 포팅 ({len(f_methods)}개 메서드, LLM {len(f_methods)}회 호출)"):
+                    progress = st.progress(0.0, text=f"0/{len(f_methods)} (0%)")
+                    for i, method in enumerate(f_methods):
+                        try:
+                            with st.spinner(f"{method} 포팅 중... ({i + 1}/{len(f_methods)})"):
+                                _port_method(method)
+                        except Exception as e:
+                            st.error(f"{method} 포팅 실패: {e}")
+                        pct = int((i + 1) / len(f_methods) * 100)
+                        progress.progress((i + 1) / len(f_methods), text=f"{i + 1}/{len(f_methods)} ({pct}%) - 마지막: {method}")
+                    # 전체 포팅이 끝난 뒤 BLOCKER가 남아있으면 정적 검증 결과 쪽으로 바로 포커스시킨다.
+                    final_results = st.session_state.get("validation_results", [])
+                    if any(not r.passed for r in final_results):
+                        st.session_state["scroll_to_validation"] = True
+                    st.rerun()
 
-                    for suffix, layer in _LAYER_BY_SUFFIX:
-                        fname = f"{prefix}{suffix}"
-                        if fname not in files:
-                            continue
-                        as_is_filename, as_is_path, gen_issues, gen_detected_by, as_is_content = layer_meta[layer]
-                        vr = by_file.get(fname)
-                        build_check = "PASS" if vr and vr.passed else ("FAIL" if vr else "NOT_RUN")
-                        content_hash = db.content_hash(as_is_content) if as_is_content else None
+                for method in f_methods:
+                    status = "✅ 포팅됨 (검토 필요)" if method in ported else "⏳ 스텁"
+                    pc1, pc2 = st.columns([5, 1])
+                    pc1.write(f"`{method}` — {status} ({len(f_bodies.get(method, ''))}자)")
+                    if pc2.button("포팅", key=f"port_{screen_id}_{method}"):
+                        try:
+                            with st.spinner(f"{method} 포팅 중..."):
+                                _port_method(method)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"{method} 포팅 실패: {e}")
+            elif not f_java:
+                st.info("F(Java) 원본이 없어 포팅할 대상이 없습니다.")
 
-                        file_id = db.upsert_conv_file(
-                            screen_id=sid, as_is_layer=layer,
-                            as_is_filename=as_is_filename, as_is_path=as_is_path,
-                            tobe_filename=fname, tobe_path=str(saved_paths[fname].parent),
-                            conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
-                            build_check=build_check, as_is_content_hash=content_hash,
-                        )
-                        if gen_issues and gen_detected_by:
-                            db.record_issues(file_id, gen_issues, gen_detected_by)
-                        if vr and vr.issues:
-                            db.record_issues(file_id, vr.issues, "chatui/validators.py")
-                        if review_findings.get(fname):
-                            db.record_issues(file_id, review_findings[fname], "chatui/quality_scanner.py")
+        with tab_save:
+            if not porting_complete:
+                st.warning(
+                    f"⏳ 2단계 포팅이 아직 끝나지 않았습니다({len(ported)}/{len(f_methods)}개 메서드 완료) - "
+                    "F 메서드를 전부 포팅해야 저장 버튼이 활성화됩니다. 원본 F 로직 없이 스텁 상태로 저장하면 "
+                    "포팅했다는 착각을 줄 수 있어서 막아뒀습니다."
+                )
+            save_to_db = st.checkbox(
+                "DB에도 기록 (agents/db_schema.sql의 CONV_FILE/CONV_ISSUE, 로컬 Oracle - 정적 검증 결과 BUILD_CHECK 포함)",
+                value=True,
+            )
+            if st.button(
+                "검토 완료 - pilot/ 에 TO-BE 폴더 구조로 저장",
+                type="primary",
+                disabled=not porting_complete,
+            ):
+                # pilot/ 바로 아래에 실제 TO-BE 트리(gscm/src/main/...)를 만든다 - 화면별 하위 폴더를
+                # 두지 않는다. 파일명 자체가 이미 화면 접두어(Pla047Api.java 등)로 구분되고, 이렇게 해야
+                # 나중에 여러 화면이 쌓였을 때 실제 프로젝트에 그대로 병합할 수 있는 구조가 된다.
+                out_dir = PROJECT_ROOT / "pilot"
+                p1, p2 = package_p1, package_p2
+                saved_paths: dict[str, Path] = {}
+                for fname, content in files.items():
+                    rel = tobe_relpath(fname, p1, p2)
+                    full_path = out_dir / rel
+                    full_path.parent.mkdir(parents=True, exist_ok=True)
+                    full_path.write_text(content, encoding="utf-8")
+                    saved_paths[fname] = full_path
+                tree = "\n".join(f"- `{saved_paths[f].relative_to(out_dir)}`" for f in files)
+                st.success(f"저장됨: {out_dir} ({len(files)}개 파일)\n\n{tree}\n\ngit add/commit은 별도로 직접 하세요.")
 
-                    # 계층 간 참조(Api->Service->Store->Mapper) 검증은 파일 하나에 속하지 않아
-                    # 별도 DERIVED 행으로 기록한다(AS_IS_FILENAME을 고유하게 둬서 위 Dto 파생 행과
-                    # 안 겹치게 한다 - CONV_FILE UNIQUE 제약이 NULL을 다 같은 값처럼 취급하지 않게 함).
-                    cross_vr = next((r for r in validation_results if r.check == "CROSS_LAYER_REF"), None)
-                    if cross_vr:
-                        cross_file_id = db.upsert_conv_file(
-                            screen_id=sid, as_is_layer="DERIVED",
-                            as_is_filename=f"{sid}-cross-layer-check", as_is_path=None,
-                            tobe_filename=None, tobe_path=str(out_dir),
-                            conversion_method=None, conversion_status="NOT_STARTED",
-                            build_check="PASS" if cross_vr.passed else "FAIL",
-                        )
-                        if cross_vr.issues:
-                            db.record_issues(cross_file_id, cross_vr.issues, "chatui/validators.py")
+                if save_to_db:
+                    try:
+                        from agents import db
 
-                    st.success("DB에 기록했습니다 (CONV_FILE.BUILD_CHECK 포함, CONV_ISSUE).")
-                except Exception as e:
-                    st.error(f"DB 기록 실패: {e}")
+                        db.ensure_schema()
+                        sid = st.session_state["screen_id"]
+                        prefix = to_prefix(sid)
+                        by_file = {r.file_name: r for r in validation_results}
+
+                        # 생성 단계 이슈(문법/골격 관련)는 계층별로 정확히 나뉘지 않는 부분이 남아있다 -
+                        # skeleton_issues는 Api/Service/Store 골격 생성 전체에서 나온 걸 P(JAVA)에 대표로
+                        # 붙인다(v0 한계, tracking/conversion-verification.csv에도 명시). 반면 정적 검증
+                        # 결과(validation_results)는 파일 단위로 정확히 나오므로 계층마다 정확히 귀속시킨다.
+                        layer_meta = {
+                            "P(JAVA)": (f"P{sid}.java", as_is_paths.get("P.java"),
+                                        st.session_state.get("skeleton_issues", []), "chatui/skeleton_gen.py",
+                                        buckets["P"].get("java")),
+                            "F(JAVA)": (f"F{sid}.java", as_is_paths.get("F.java"), [], None,
+                                        buckets["F"].get("java")),
+                            "D(JAVA)": (f"D{sid}.java", as_is_paths.get("D.java"), [], None,
+                                        buckets["D"].get("java")),
+                            "XSQL": (f"D{sid}.xsql", as_is_paths.get("D.xsql"),
+                                     st.session_state.get("mapper_issues", []), "chatui/converters.py",
+                                     buckets["D"].get("xsql")),
+                            "DERIVED": (f"{sid}-dto-derived", None,
+                                        st.session_state.get("dto_issues", []), "chatui/skeleton_gen.py", None),
+                        }
+
+                        for suffix, layer in _LAYER_BY_SUFFIX:
+                            fname = f"{prefix}{suffix}"
+                            if fname not in files:
+                                continue
+                            as_is_filename, as_is_path, gen_issues, gen_detected_by, as_is_content = layer_meta[layer]
+                            vr = by_file.get(fname)
+                            build_check = "PASS" if vr and vr.passed else ("FAIL" if vr else "NOT_RUN")
+                            content_hash = db.content_hash(as_is_content) if as_is_content else None
+
+                            file_id = db.upsert_conv_file(
+                                screen_id=sid, as_is_layer=layer,
+                                as_is_filename=as_is_filename, as_is_path=as_is_path,
+                                tobe_filename=fname, tobe_path=str(saved_paths[fname].parent),
+                                conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
+                                build_check=build_check, as_is_content_hash=content_hash,
+                            )
+                            if gen_issues and gen_detected_by:
+                                db.record_issues(file_id, gen_issues, gen_detected_by)
+                            if vr and vr.issues:
+                                db.record_issues(file_id, vr.issues, "chatui/validators.py")
+                            if review_findings.get(fname):
+                                db.record_issues(file_id, review_findings[fname], "chatui/quality_scanner.py")
+
+                        # 계층 간 참조(Api->Service->Store->Mapper) 검증은 파일 하나에 속하지 않아
+                        # 별도 DERIVED 행으로 기록한다(AS_IS_FILENAME을 고유하게 둬서 위 Dto 파생 행과
+                        # 안 겹치게 한다 - CONV_FILE UNIQUE 제약이 NULL을 다 같은 값처럼 취급하지 않게 함).
+                        cross_vr = next((r for r in validation_results if r.check == "CROSS_LAYER_REF"), None)
+                        if cross_vr:
+                            cross_file_id = db.upsert_conv_file(
+                                screen_id=sid, as_is_layer="DERIVED",
+                                as_is_filename=f"{sid}-cross-layer-check", as_is_path=None,
+                                tobe_filename=None, tobe_path=str(out_dir),
+                                conversion_method=None, conversion_status="NOT_STARTED",
+                                build_check="PASS" if cross_vr.passed else "FAIL",
+                            )
+                            if cross_vr.issues:
+                                db.record_issues(cross_file_id, cross_vr.issues, "chatui/validators.py")
+
+                        st.success("DB에 기록했습니다 (CONV_FILE.BUILD_CHECK 포함, CONV_ISSUE).")
+                    except Exception as e:
+                        st.error(f"DB 기록 실패: {e}")
 else:
     st.info("폴더 경로를 입력하거나 화면 1개 분량의 P/F/D .java, .bizunit, XSQL 파일을 올려주세요.")
