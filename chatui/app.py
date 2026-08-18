@@ -474,6 +474,7 @@ if screen_id:
     with c1:
         if st.button("1단계: 규칙 기반 변환 실행 (골격 + MyBatis Mapper + Dto)", type="primary"):
             _run_conversion()
+            st.rerun()
     with c2:
         if "skeleton_files" in st.session_state:
             if st.button("🔄 변환 재수행 (원본 다시 읽어서 처음부터 재생성)"):
