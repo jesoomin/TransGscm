@@ -319,7 +319,6 @@ if input_mode == "폴더 경로 지정":
             guess = _guess_package(as_is_paths)
             if guess:
                 package_p1, package_p2 = guess
-                st.caption(f"경로에서 패키지 자동 인식: p1=`{package_p1}`, p2=`{package_p2}`")
             else:
                 st.warning(
                     "경로에서 패키지 p1/p2를 자동으로 인식하지 못했습니다 "
@@ -346,8 +345,6 @@ if screen_id:
     if not any(buckets[layer] for layer in buckets):
         st.error("화면ID를 인식하지 못했습니다. 파일명이 P/F/D + 화면ID + 확장자 형태인지 확인하세요 (예: PPLA047.java).")
         st.stop()
-
-    st.success(f"화면ID: **{screen_id}** (TO-BE 접두어: `{to_prefix(screen_id)}`)")
 
     # 작업 상태 요약 - 아래로 스크롤해서 2/3단계를 보는 동안에도 핵심 진행 상황을 다시 위로
     # 올라오지 않고 확인할 수 있게, position: sticky로 상단에 고정한다. st.container(key=...)가
