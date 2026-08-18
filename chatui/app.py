@@ -45,6 +45,8 @@ from skeleton_gen import (  # noqa: E402
     tobe_relpath,
 )
 from validators import validate_screen  # noqa: E402
+from reviewer import run_review, llm_review  # noqa: E402
+from cross_analysis import analyze_pilot_folder  # noqa: E402
 
 # TO-BE AS_IS_LAYER 값(agents/db_schema.sql의 CONV_FILE.AS_IS_LAYER) - 생성 파일 접미사 -> 계층 매핑.
 # DB 저장 시 이 순서대로 화면당 CONV_FILE 행을 만든다.
@@ -55,6 +57,15 @@ _LAYER_BY_SUFFIX = [
     ("Mapper.xml", "XSQL"),
     ("Dto.java", "DERIVED"),
 ]
+
+# buckets[layer][kind] -> (AS_IS_LAYER, AS-IS 파일명 패턴). 스킵 캐싱 조회 키를 만드는 데 쓴다 -
+# 저장 시 DB에 기록하는 as_is_layer/as_is_filename 규칙과 동일해야 캐시가 실제로 맞아떨어진다.
+_AS_IS_KEY_MAP = {
+    ("P", "java"): "P(JAVA)",
+    ("F", "java"): "F(JAVA)",
+    ("D", "java"): "D(JAVA)",
+    ("D", "xsql"): "XSQL",
+}
 
 
 def _strip_code_fence(text: str) -> str:
@@ -219,6 +230,24 @@ with st.sidebar:
     except Exception as e:  # pragma: no cover - 진단용
         st.error(f"agents.llm_gateway 로드 실패: {e}")
 
+    st.divider()
+    st.subheader("🔗 전체 화면 교차 분석")
+    st.caption(
+        "pilot/{화면}/ 아래 쌓인 화면들끼리 Service/Store 메서드나 Mapper SQL이 겹치는지 비교합니다. "
+        "화면이 1개뿐이면 비교 대상이 없어 그 사실만 보고합니다 - nctRid 매핑 그래프(멘토 코멘트 §1) "
+        "전까지는 정식 영향도 분석이 아니라 화면이 쌓일 때 바로 쓸 인프라 단계입니다."
+    )
+    if st.button("교차 분석 실행"):
+        cross_result = analyze_pilot_folder(PROJECT_ROOT / "pilot")
+        st.session_state["cross_analysis_result"] = cross_result
+    cross_result = st.session_state.get("cross_analysis_result")
+    if cross_result:
+        st.write(f"분석 대상 화면: {', '.join(cross_result.screens_analyzed) or '없음'}")
+        for note in cross_result.notes:
+            st.info(note)
+        for g in cross_result.duplicate_groups:
+            st.warning(f"[{g.kind}] {len(g.locations)}곳 중복: " + " / ".join(g.locations))
+
 input_mode = st.radio(
     "입력 방식", ["폴더 경로 지정", "파일 직접 업로드"], horizontal=True,
     help="로컬 전용 앱이라 폴더 경로를 직접 읽을 수 있습니다. 폴더 안에 화면이 여러 개 섞여 있어도 "
@@ -246,7 +275,42 @@ if input_mode == "폴더 경로 지정":
             screen_ids = sorted(screens.keys())
             if len(screen_ids) > 1:
                 st.info(f"폴더에서 화면 {len(screen_ids)}개 발견: {', '.join(screen_ids)} — 한 번에 하나씩 처리합니다.")
-            screen_id = st.selectbox("변환할 화면 선택", screen_ids)
+
+            # 스킵 캐싱: 화면이 많을 때(업무 폴더 하나에 PU/FU/DU/XSQL 세트가 50개+ 섞여 있는 경우)
+            # 이전에 이미 정적 검증을 통과했고 원본 내용도 그대로인 화면을 목록에서 미리 표시해준다.
+            # 자동으로 건너뛰지는 않는다 - 변환기 자체가 바뀌었을 수 있어 최종 판단은 사람 몫이다.
+            cache_rows: dict[tuple[str, str, str], dict] = {}
+            try:
+                from agents import db as _db_for_cache
+                cache_rows = _db_for_cache.get_cached_status_bulk(screen_ids)
+            except Exception:
+                pass  # DB 연결 안 될 수 있음 - 캐싱 표시는 그냥 생략하고 정상 진행
+
+            def _screen_label(sid: str) -> str:
+                if not cache_rows:
+                    return sid
+                fragments_found = False
+                all_pass_unchanged = True
+                for (layer, kind), as_is_layer in _AS_IS_KEY_MAP.items():
+                    content = screens[sid].get(layer, {}).get(kind)
+                    if not content:
+                        continue
+                    fragments_found = True
+                    as_is_filename = f"{layer}{sid}.{kind}"
+                    cached = cache_rows.get((sid, as_is_layer, as_is_filename))
+                    if not cached or cached["build_check"] != "PASS" or cached["content_hash"] != _db_for_cache.content_hash(content):
+                        all_pass_unchanged = False
+                        break
+                if fragments_found and all_pass_unchanged:
+                    return f"✅ {sid} (이전 변환 PASS, 원본 변경 없음)"
+                return sid
+
+            screen_id = st.selectbox("변환할 화면 선택", screen_ids, format_func=_screen_label)
+            if cache_rows and _screen_label(screen_id).startswith("✅"):
+                st.info(
+                    "이 화면은 이전에 정적 검증을 통과했고 원본 내용도 그대로입니다 - 다시 돌릴 필요가 "
+                    "없을 수 있습니다. 그래도 재변환하려면 아래 '1단계'를 그대로 누르면 됩니다."
+                )
             buckets = screens[screen_id]
             as_is_paths = all_paths.get(screen_id, {})
 
@@ -290,6 +354,29 @@ if screen_id:
         kinds = ", ".join(sorted(buckets[layer].keys())) or "없음"
         detected.append(f"- **{layer}**: {kinds}")
     st.markdown("\n".join(detected))
+
+    # 작업 상태 요약 - 아래로 스크롤해서 2/3단계를 보는 동안에도 핵심 진행 상황을 다시 위로
+    # 올라오지 않고 확인할 수 있게, 화면 선택 직후(스크롤 맨 위 근처)에 고정적으로 보여준다.
+    status_cols = st.columns(4)
+    status_cols[0].metric("화면ID", screen_id)
+    val_results = st.session_state.get("validation_results", [])
+    if val_results:
+        passed_n = sum(1 for r in val_results if r.passed)
+        status_cols[1].metric("정적 검증", f"{passed_n}/{len(val_results)} 통과")
+    else:
+        status_cols[1].metric("정적 검증", "미실행")
+    f_java_present = bool(buckets["F"].get("java"))
+    if f_java_present:
+        total_f = len(extract_methods(buckets["F"]["java"]))
+        ported_n = len(st.session_state.get(f"ported_methods_{screen_id}", set()))
+        status_cols[2].metric("F 포팅 진행", f"{ported_n}/{total_f}")
+    else:
+        status_cols[2].metric("F 포팅 진행", "N/A")
+    if "review_findings" in st.session_state:
+        review_n = sum(len(v) for v in st.session_state["review_findings"].values())
+        status_cols[3].metric("품질/취약점 스캔", f"{review_n}건")
+    else:
+        status_cols[3].metric("품질/취약점 스캔", "미실행")
 
     def _run_conversion() -> None:
         """규칙 기반 골격/Mapper/Dto 생성 + 정적 검증까지 한 번에 실행한다.
@@ -341,8 +428,11 @@ if screen_id:
         # 있도록 아래 캡션에 경고를 남긴다.
         st.session_state[f"ported_methods_{screen_id}"] = set()
 
-        progress.progress(90, text="4/4 실행 가능성 정적 검증 중...")
+        progress.progress(90, text="4/4 실행 가능성 정적 검증 + 코드 품질/취약점 스캔 중...")
         st.session_state["validation_results"] = validate_screen(
+            st.session_state["skeleton_files"], to_prefix(screen_id)
+        )
+        st.session_state["review_findings"] = run_review(
             st.session_state["skeleton_files"], to_prefix(screen_id)
         )
         progress.progress(100, text="완료")
@@ -384,6 +474,8 @@ if screen_id:
                     else:
                         st.warning(text)
 
+        files = st.session_state["skeleton_files"]
+
         validation_results = st.session_state.get("validation_results", [])
         blocker_files = [r for r in validation_results if not r.passed]
         st.markdown('<div id="validation-anchor"></div>', unsafe_allow_html=True)
@@ -415,7 +507,54 @@ if screen_id:
                     else:
                         st.info(text)
 
-        files = st.session_state["skeleton_files"]
+        review_findings: dict[str, list] = st.session_state.get("review_findings", {})
+        total_review = sum(len(v) for v in review_findings.values())
+        with st.expander(f"🛡️ 코드 품질/취약점 스캔 (규칙 기반) - {total_review}건", expanded=False):
+            st.caption(
+                "정규식 기반 규칙 스캔입니다(LLM 아님) - 확정된 취약점이 아니라 '검토가 필요한 후보'를 "
+                "표시합니다: ${...}(MyBatis 텍스트 치환, 값에 따라 SQL 인젝션 가능), 문자열 연결로 "
+                "조립되는 SQL, 포팅 시 보존된 원본 버그(FIXME) 집계."
+            )
+            if not review_findings:
+                st.write("발견된 항목이 없습니다.")
+            for fname, findings in review_findings.items():
+                by_type: dict[str, list] = {}
+                for f in findings:
+                    by_type.setdefault(f.issue_type, []).append(f)
+                st.markdown(f"**{fname}** — {len(findings)}건")
+                for issue_type, items in by_type.items():
+                    severity = items[0].severity
+                    show_key = f"review_expand_{screen_id}_{fname}_{issue_type}"
+                    show_all = (
+                        st.checkbox(f"[{severity}/{issue_type}] {len(items)}건 전체 보기", key=show_key)
+                        if len(items) > 5 else True
+                    )
+                    if not show_all:
+                        st.write(f"[{severity}/{issue_type}] {len(items)}건 (아래 예시 5건, 체크박스로 전체 보기)")
+                    sample = items if show_all else items[:5]
+                    for it in sample:
+                        text = f"L{it.line_no}: {it.message}" if it.line_no else it.message
+                        if severity == "BLOCKER":
+                            st.error(text)
+                        elif severity == "WARNING":
+                            st.warning(text)
+                        else:
+                            st.info(text)
+
+            service_fname_for_review = f"{to_prefix(screen_id)}Service.java"
+            if service_fname_for_review in files:
+                st.divider()
+                llm_review_key = f"llm_review_{screen_id}"
+                if st.button("🤖 LLM 코드 리뷰 (선택, 실험적 - 코드는 수정하지 않음)", key=f"llmreview_btn_{screen_id}"):
+                    with st.spinner("LLM이 Service 코드를 리뷰하는 중..."):
+                        try:
+                            st.session_state[llm_review_key] = llm_review(files[service_fname_for_review])
+                        except Exception as e:
+                            st.error(f"LLM 리뷰 실패: {e}")
+                if llm_review_key in st.session_state:
+                    st.markdown("**LLM 리뷰 결과 (참고용 - 코드에는 반영되지 않았습니다):**")
+                    st.markdown(st.session_state[llm_review_key])
+
         tabs = st.tabs(list(files.keys()))
         PREVIEW_LINES = 40
         for tab, (fname, content) in zip(tabs, files.items()):
@@ -435,7 +574,10 @@ if screen_id:
                 # line_numbers=True로 왼쪽에 줄번호를 붙인다 - 위 검증 결과의 "L123" 같은 표시를
                 # 실제 소스에서 바로 찾을 수 있게 하기 위함.
                 if show_full or total_lines <= PREVIEW_LINES:
-                    st.code(content, language=lang, line_numbers=True)
+                    # 전체 보기일 때는 높이 고정 스크롤 박스 안에 넣는다 - 5000줄짜리 Mapper.xml도
+                    # 페이지 전체를 끝없이 스크롤하지 않고 이 박스 안에서만 스크롤하면 되게 하기 위함.
+                    with st.container(height=450):
+                        st.code(content, language=lang, line_numbers=True)
                 else:
                     st.code("\n".join(lines_list[:PREVIEW_LINES]), language=lang, line_numbers=True)
                     st.caption(
@@ -484,8 +626,11 @@ if screen_id:
                     st.session_state["skeleton_files"][service_fname], method, ported_code
                 )
                 ported.add(method)
-                # 포팅할 때마다 정적 검증을 다시 돌린다 - "함수별로 실행에 문제 없는지" 바로 확인하기 위함.
+                # 포팅할 때마다 정적 검증 + 취약점 스캔을 다시 돌린다 - "함수별로 실행에 문제 없는지" 바로 확인하기 위함.
                 st.session_state["validation_results"] = validate_screen(
+                    st.session_state["skeleton_files"], to_prefix(screen_id)
+                )
+                st.session_state["review_findings"] = run_review(
                     st.session_state["skeleton_files"], to_prefix(screen_id)
                 )
 
@@ -557,6 +702,7 @@ if screen_id:
                     prefix = to_prefix(sid)
                     validation_results = st.session_state.get("validation_results", [])
                     by_file = {r.file_name: r for r in validation_results}
+                    review_findings = st.session_state.get("review_findings", {})
 
                     # 생성 단계 이슈(문법/골격 관련)는 계층별로 정확히 나뉘지 않는 부분이 남아있다 -
                     # skeleton_issues는 Api/Service/Store 골격 생성 전체에서 나온 걸 P(JAVA)에 대표로
@@ -564,34 +710,41 @@ if screen_id:
                     # 결과(validation_results)는 파일 단위로 정확히 나오므로 계층마다 정확히 귀속시킨다.
                     layer_meta = {
                         "P(JAVA)": (f"P{sid}.java", as_is_paths.get("P.java"),
-                                    st.session_state.get("skeleton_issues", []), "chatui/skeleton_gen.py"),
-                        "F(JAVA)": (f"F{sid}.java", as_is_paths.get("F.java"), [], None),
-                        "D(JAVA)": (f"D{sid}.java", as_is_paths.get("D.java"), [], None),
+                                    st.session_state.get("skeleton_issues", []), "chatui/skeleton_gen.py",
+                                    buckets["P"].get("java")),
+                        "F(JAVA)": (f"F{sid}.java", as_is_paths.get("F.java"), [], None,
+                                    buckets["F"].get("java")),
+                        "D(JAVA)": (f"D{sid}.java", as_is_paths.get("D.java"), [], None,
+                                    buckets["D"].get("java")),
                         "XSQL": (f"D{sid}.xsql", as_is_paths.get("D.xsql"),
-                                 st.session_state.get("mapper_issues", []), "chatui/converters.py"),
+                                 st.session_state.get("mapper_issues", []), "chatui/converters.py",
+                                 buckets["D"].get("xsql")),
                         "DERIVED": (f"{sid}-dto-derived", None,
-                                    st.session_state.get("dto_issues", []), "chatui/skeleton_gen.py"),
+                                    st.session_state.get("dto_issues", []), "chatui/skeleton_gen.py", None),
                     }
 
                     for suffix, layer in _LAYER_BY_SUFFIX:
                         fname = f"{prefix}{suffix}"
                         if fname not in files:
                             continue
-                        as_is_filename, as_is_path, gen_issues, gen_detected_by = layer_meta[layer]
+                        as_is_filename, as_is_path, gen_issues, gen_detected_by, as_is_content = layer_meta[layer]
                         vr = by_file.get(fname)
                         build_check = "PASS" if vr and vr.passed else ("FAIL" if vr else "NOT_RUN")
+                        content_hash = db.content_hash(as_is_content) if as_is_content else None
 
                         file_id = db.upsert_conv_file(
                             screen_id=sid, as_is_layer=layer,
                             as_is_filename=as_is_filename, as_is_path=as_is_path,
                             tobe_filename=fname, tobe_path=str(saved_paths[fname].parent),
                             conversion_method="RULE_BASED", conversion_status="IN_PROGRESS",
-                            build_check=build_check,
+                            build_check=build_check, as_is_content_hash=content_hash,
                         )
                         if gen_issues and gen_detected_by:
                             db.record_issues(file_id, gen_issues, gen_detected_by)
                         if vr and vr.issues:
                             db.record_issues(file_id, vr.issues, "chatui/validators.py")
+                        if review_findings.get(fname):
+                            db.record_issues(file_id, review_findings[fname], "chatui/reviewer.py")
 
                     # 계층 간 참조(Api->Service->Store->Mapper) 검증은 파일 하나에 속하지 않아
                     # 별도 DERIVED 행으로 기록한다(AS_IS_FILENAME을 고유하게 둬서 위 Dto 파생 행과
