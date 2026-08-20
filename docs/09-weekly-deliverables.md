@@ -61,21 +61,20 @@ G-SCM 차세대 전환 Agent (v2 — 백엔드 전용 범위)
 
 ### 배경 및 문제 정의
 - **현재 상황(As-Is)**
-  - 프론트: Nexacro14(Dataset 기반 UI, xfdl) / 백엔드: NEXCORE(SK그룹 표준 Spring 기반 BizUnit 프레임워크)
-  - 요청 흐름: Nexacro Dataset ↔ UIAdapter 직렬화 → 단일 진입점 nctRid(예: `RPLA04701`) → P→F→D BizUnit 순차 호출 → D BizUnit이 `dbSelect("S00N", ...)` 형태로 XSQL(iBatis) 실행 → 응답 IDataSet → UIAdapter → Nexacro Dataset
+  - NEXCORE(SK그룹 표준 Spring 기반 BizUnit 프레임워크)가 화면의 단일 진입점 nctRid(예: `RPLA04701`) 요청을 받아 P→F→D BizUnit 순서로 처리하고, D BizUnit이 XSQL(iBatis)로 실제 쿼리를 실행한다
   - 화면 1,416개 전부가 이 구조를 따르지만, 화면-nctRid 매핑이 문자열 규칙과 완전히 일치하지 않아 화면마다 소스를 직접 추적해야 함
-  - **v2 범위 조정**: UI(xfdl)는 디자인 변경 가능성이 있어 별도 트랙으로 분리하고, 이번 Agent는 서버(Controller/Service/Store/Mapper)까지만 자동 전환한다 — React 화면은 나중에 확정된 디자인으로 별도 제작되며, 지금 만든 API를 그대로 호출한다(Strangler Fig)
+  - **v2 범위**: 이번 Agent는 서버(Controller/Service/Store/Mapper)까지만 자동 전환한다. 화면 자체의 재구현은 이 프로젝트의 산출물이 아니다 — nctRid 계약만 그대로 유지해, 화면이 추후 어떤 형태로 다시 만들어지든 지금 만든 API를 그대로 호출할 수 있게 한다
 - **Pain Point**
   - 화면당 평균 10일(2주 원 산정) 이상 소요 예상 → 전체 1,416화면 규모로는 감당 불가능한 공수
-  - 화면-nctRid 매핑을 코드베이스에서 매번 수작업으로 추적 — 이 과정 자체가 전체 공수의 상당 비중을 차지 (@docs/06-mentor-feedback.md §1)
+  - 화면-nctRid 매핑을 코드베이스에서 매번 수작업으로 추적 — 이 과정 자체가 전체 공수의 상당 비중을 차지, **이 프로젝트 최대 리스크**(@docs/06-mentor-feedback.md §1)
   - 반복 패턴(P/F/D/XSQL 4종 세트)임에도 미자동화 → 화면 수만큼 동일 작업 반복
   - 개발자별 이원화로 코드 품질/구조 편차 발생
   - 원본 소스 자체의 결함(예: PLA047의 `FPLA047.java` 컴파일 에러, `.bizunit` XML 선언 손상)이 섞여 있어 "그대로 옮기면 되는" 화면과 "업무 규칙만 추출해야 하는" 화면이 혼재
 - **기회 요인**
-  - PU/FU/DU/XSQL 계층·네이밍 컨벤션이 강제되어 있어 파싱/템플릿화에 유리 (멘토 코멘트: "AlphaTrans/ReCodeAgent가 가정하는 것보다 자동화에 유리한 편")
+  - PU/FU/DU/XSQL 계층·네이밍 컨벤션이 강제되어 있어 파싱/템플릿화에 유리 — 멘토 코멘트: "NEXCORE 조합은 AlphaTrans/ReCodeAgent가 가정하는 것보다 자동화에 유리한 편. 계층과 네이밍이 강제되어 있어 파싱이 된다"(@docs/06-mentor-feedback.md 서두)
   - iBatis→MyBatis 문법 변환은 결정론적 규칙만으로 처리 가능
   - F/D BizUnit의 업무 로직·SQL은 Nexacro와 무관 — 새로 설계할 필요 없이 그대로 포팅
-  - 단일 진입점(nctRid) + 고정 Dataset 포맷 구조 덕분에 차등 테스트(differential testing)가 깔끔하게 성립
+  - 단일 진입점(nctRid) + 고정 응답 포맷 구조 덕분에 차등 테스트(differential testing)가 깔끔하게 성립(@docs/06-mentor-feedback.md §3)
 
 ### 목표 사용자(Target User)
 - **G-SCM 전환 프로젝트 투입 개발자**(사내·외주) — 화면별로 P/F/D/XSQL 세트를 업로드해 변환 결과(골격+포팅 코드)를 받고, 검증 이슈를 확인한 뒤 승인/수정하는 주 사용자
@@ -84,36 +83,43 @@ G-SCM 차세대 전환 Agent (v2 — 백엔드 전용 범위)
 
 ### 프로젝트 목표
 - **정성적 목표**
-  - 목표 1: nctRid↔BizUnit↔XSQL 매핑을 사람이 매번 코드베이스를 헤매며 추적하지 않도록 인덱스화(선행 정적 분석)
-  - 목표 2: 결정론적으로 풀리는 변환(문법 치환, 골격 생성)을 100% 규칙 기반으로 자동화해 LLM은 꼭 필요한 영역(F BizUnit 로직 포팅)에만 투입
-  - 목표 3: 변환기(Translator)와 검증기(Validator)를 분리 설계해 향후 다른 SK 계열 전환 프로젝트에도 검증 자산을 재사용 가능하게 함
+  - 목표 1: nctRid↔BizUnit↔XSQL 매핑을 사람이 매번 코드베이스를 헤매며 추적하지 않도록 인덱스화(선행 정적 분석, @docs/06-mentor-feedback.md §1·§J 1순위)
+  - 목표 2: 결정론적으로 풀리는 변환(문법 치환, 골격 생성)을 100% 규칙 기반으로 자동화해 LLM은 꼭 필요한 영역(F BizUnit 로직 포팅)에만 투입(§2)
+  - 목표 3: 변환기(Translator)와 검증기(Validator)를 분리 설계해 향후 다른 SK 계열 전환 프로젝트에도 검증 자산을 재사용 가능하게 함(§D)
+  - 목표 4: 공통 응답/예외 처리·메시지 코드 규약을 사람이 먼저 확정해, 화면마다 에이전트가 제각각 구현하는 "개발자별 이원화"가 재현되지 않게 함(§2 "절대 자동화하지 말 것")
 - **정량적 목표(KPI)**
 
 | 성과 지표 | 목표 수치 | 측정 방법 | 현재 수준 |
 |---|---|---|---|
-| 화면당 평균 전환 소요시간 | 10일 → 평균 3일 수준(65~70% 절감, 화면 유형별 차등) | 파일럿 20~30건 실측(유형별 1~2일/3~4일/5~7일) | 약 10일(전면 수작업 시 산정치) |
+| 화면당 평균 전환 소요시간(이번 8주 PoC 목표) | 10일 → 평균 4.5일 수준(**55% 절감**) | 파일럿 20~30건 실측 | 약 10일(전면 수작업 시 산정치) |
 | 1차 자동변환 커버리지(규칙 기반 골격+iBatis→MyBatis) | 0% → 결정론적 변환 가능 영역 100% 규칙 기반 처리 | `chatui/skeleton_gen.py`/`chatui/converters.py` 산출물 중 규칙 기반으로 완결된 비율 | PLA047 기준: Api/Store/Dto 골격, XSQL 규칙 변환 검증됨(S001) |
 | 정적 검증(빌드 전 단계) 통과율 | 화면별 Api/Store/Dto/계층간참조 PASS | `chatui/validators.py` → `CONV_FILE.BUILD_CHECK` | PLA047: Api/Store/Dto/계층간참조 PASS, Service/XSQL은 원본 결함으로 의도된 FAIL |
+| 품질/보안 스캔 이슈 검출 | 화면별 이슈 전량 `CONV_ISSUE`에 기록·집계 | `chatui/quality_scanner.py` → `CONV_ISSUE` | PLA047 실측: `${...}` SQL 인젝션 후보 339건, 문자열 연결 SQL 13건, 원본 버그(FIXME) 31건 |
 | 사람 수정 라인 비율(핵심 대리 지표, @docs/06-mentor-feedback.md §H) | 낮을수록 좋음, 파일럿 후 기준치 설정 | `/tracking/conversion-verification.csv` 화면별 기록 | 아직 코드 생성 전 단계라 대부분 N/A(미생성) |
-| 매핑 그래프 자동 추출 성공률 | 80~90%(나머지 10~20%는 사람이 보완, 멘토 경험치) | 화면↔nctRid↔BizUnit↔XSQL 그래프 구축 후 실패 목록 비율 | 미착수(Phase 1) |
+| 매핑 그래프 자동 추출 성공률 | 80~90%(나머지 10~20%는 사람이 보완, 멘토 경험치, §1) | 화면↔nctRid↔BizUnit↔XSQL 그래프 구축 후 실패 목록 비율 | 미착수(Phase 1) |
+
+> 55%는 이번 8주 PoC에서 실측·검증하려는 이 프로젝트 자체의 목표치다. 멘토 코멘트(§4)의 65~70%는 파일럿 20~30건을 거쳐 도구·공통 컴포넌트까지 자산화된 이후, 프로젝트 전체 규모(1,416화면)에 적용할 때의 장기 권장치로 별도 취급한다 — 8주 안에 65~70%를 약속하지 않는다.
 
 ### 핵심 기능 정의
-1. **nctRid 매핑 인덱스 구축기**: `.xjs`의 `transaction()` 호출부 → nctRid 추출, NEXCORE 설정 → nctRid→P BizUnit 매핑, JavaParser로 P→F→D 콜그래프 추적, D BizUnit→XSQL namespace/queryId 매핑을 이어 화면↔API↔SQL 전체 그래프 구축 (Phase 1, 아직 미착수 — 프로젝트 성패의 최우선 과제)
-2. **결정론적 변환기**: iBatis→MyBatis 문법 변환(`chatui/converters.py`), BizUnit 메서드 시그니처→Controller/Service/Store 골격 생성, `.BIZUNIT`(또는 역추출한 필드)→DTO 생성(`chatui/skeleton_gen.py`) — 이미 PLA047로 검증됨
-3. **LLM 포팅 모듈**: F BizUnit의 계산·분기 로직을 NEXCORE 의존만 제거하고 Spring Service 메서드로 옮기는 메서드 단위 LLM 호출(`agents/llm_gateway.py` + `chatui/app.py`의 포팅 탭). 원본 결함은 고치지 않고 `// FIXME(원본 버그)`로 보존
-4. **정적 검증기(Validator)**: 중괄호 균형, 미완료 포팅 스텁, 계층 간 호출 대상 존재, Mapper.xml well-formed 여부를 변환기와 분리된 모듈로 검사(`chatui/validators.py`)
-5. **품질/보안 스캐너 + 화면 간 중복 분석**: MyBatis `${...}` 텍스트치환(SQL 인젝션 후보), 하드코딩 자격증명, 잔존 NEXCORE 의존 등을 규칙 기반으로 스캔(`chatui/quality_scanner.py`)하고, 화면 간 동일 로직 중복을 탐지(`chatui/cross_analysis.py`)
-6. **차등 테스트 하네스**: 동일 입력을 레거시 nctRid와 신규 REST API에 호출해 응답 diff로 검증 (Phase 1, 아직 미착수 — 파일럿보다 먼저 구축 예정)
+멘토 코멘트 §J "적용 우선순위"(매핑 그래프 → 차등 테스트 → 공통 규약/KB → 결정론적 변환기 → 파일럿 → LLM 파이프라인 → Reflection) 순서를 그대로 따른다. 구현 상태는 실제 코드 기준으로 표시했다.
+
+1. **nctRid 매핑 인덱스 구축기** *(Phase 1, 미착수 — 최우선)*: `.xjs`의 `transaction()` 호출부 → nctRid 추출, NEXCORE 설정 → nctRid→P BizUnit 매핑, JavaParser로 P→F→D 콜그래프 추적, D BizUnit→XSQL namespace/queryId 매핑을 이어 화면↔API↔SQL 전체 그래프 구축
+2. **차등 테스트 하네스** *(Phase 1, 미착수 — 변환기보다 먼저)*: 동일 입력을 레거시 nctRid와 신규 REST API에 호출해 응답 diff로 검증
+3. **공통 응답/예외 처리 규약 + NEXCORE 관용구 KB** *(Phase 2, 미착수)*: 공통 팝업 호출·코드도우미·메시지 코드 표준화 등을 사람이 먼저 확정 — 에이전트가 화면마다 제각각 만들지 않도록 강제 컨텍스트로 주입
+4. **결정론적 변환기** *(구현됨)*: iBatis→MyBatis 문법 변환(`chatui/converters.py`), BizUnit 메서드 시그니처→Controller/Service/Store 골격 생성, `.BIZUNIT`(또는 역추출한 필드)→DTO 생성(`chatui/skeleton_gen.py`) — PLA047로 검증됨
+5. **검증기 3종(변환기와 분리된 모듈)** *(구현됨)*: 정적 검증기(`validators.py` — 중괄호 균형, 미완료 포팅 스텁, 계층 간 호출 대상 존재, Mapper.xml well-formed), 품질/보안 스캐너(`quality_scanner.py` — SQL 인젝션 후보, 하드코딩 자격증명, 잔존 NEXCORE 의존, 원본 버그 집계), 화면 간 중복 분석기(`cross_analysis.py` — 화면 간 동일 Service/Store/Mapper 로직 탐지)
+6. **LLM 포팅 모듈** *(구현됨, 사람이 명시적으로 트리거)*: F BizUnit의 계산·분기 로직을 NEXCORE 의존만 제거하고 Spring Service 메서드로 옮기는 메서드 단위 LLM 호출(`agents/llm_gateway.py` + `chatui/app.py`의 포팅 탭). 원본 결함은 고치지 않고 `// FIXME(원본 버그)`로 보존
+7. **파일럿 20~30화면** *(Phase 3, 진행 중 — PLA047 1건)*: 유형별 대표 화면으로 변환 레시피·실측 공수를 확보해 RAG 코퍼스·벤치마크로 자산화
 
 ### 기대 효과
 - **근거**: F/D BizUnit의 업무 로직·SQL(대부분)은 그대로 포팅되고, 신규로 개발하는 부분은 NEXCORE 프레임워크 의존 제거 + REST Controller/DTO 계층에 집중되므로 절감폭이 큼
-- 업무 효율화: 화면 유형별 차등 — 단순조회 1~2일, CRUD 3~4일, 복합화면 5~7일 (평균 10일 대비 약 65~70% 단축, 90% 이상은 약속하지 않음)
-- 품질 향상: 결정론적 변환기가 화면마다 동일한 규칙을 적용해 개발자 간 코드 편차 감소
+- 업무 효율화: 이번 8주 PoC 목표는 화면당 평균 10일 대비 **55% 단축**(평균 약 4.5일). 90% 이상은 약속하지 않으며, 프로젝트 전체 규모로 확장될 때의 멘토 권장 목표(65~70%, 화면 유형별 차등)는 파일럿 확대 이후 별도로 재산정한다
+- 품질 향상: 결정론적 변환기가 화면마다 동일한 규칙을 적용해 개발자 간 코드 편차 감소, 검증기 3종이 이슈를 빠짐없이 `CONV_ISSUE`에 기록해 리뷰 사각지대를 줄임
 - 비용 절감: 파일럿 실측 이후 확정(도구 자체 개발 공수·공통 컴포넌트 구축 공수를 ROI 계산에 반드시 포함)
 
 ### 범위 및 제약사항
 - **In Scope**: `dev-rp-online/src/java/gscm/` 이하 서버 소스(P/F/D BizUnit, `.BIZUNIT`, XSQL) → Controller/Service/Store/Dto/Mapper.xml 자동 전환, 하드코딩 메시지 코드 → `errors*.properties` 외부화, nctRid 1:1 매핑을 유지하는 REST API 설계
-- **Out of Scope**: Nexacro 화면(xfdl) 자체 전환, DB 스키마 변경, `DCOT998`류 화면에 안 묶인 공통/배치 BizUnit, 무인 자동 커밋/배포(사람 리뷰 필수)
+- **Out of Scope**: 화면 자체의 재구현(디자인·프레임워크 불문 — 별도 트랙), DB 스키마 변경, `DCOT998`류 화면에 안 묶인 공통/배치 BizUnit, 무인 자동 커밋/배포(사람 리뷰 필수)
 - **제약사항**
   - nctRid 매핑 자동 추출 파서 선행 필요(Phase 1 최우선)
   - `.BIZUNIT` XML 스키마가 비어있는 경우가 많아 코드 실사용값 역추출 필요
@@ -122,16 +128,16 @@ G-SCM 차세대 전환 Agent (v2 — 백엔드 전용 범위)
   - DB 접속정보·LLM Gateway API 키는 `.env`에만 두고 어떤 문서/코드에도 커밋하지 않음
 
 ### 2주차 부록 — 멘토 요구사항 및 추가 요구사항 정리
-(@docs/06-mentor-feedback.md 전문 분석, 이번 프로젝트 문서/코드에 실제로 반영된 지점을 함께 표시)
+(@docs/06-mentor-feedback.md 전문 분석, 이번 프로젝트 문서/코드에 실제로 반영된 지점을 함께 표시. 멘토 코멘트 원문은 UI/React 트랙까지 포괄하지만, 이 프로젝트(v2)는 백엔드 전용이므로 "반영된 지점" 열은 백엔드에 적용 가능한 부분만 서술했다)
 
 | # | 멘토 요구사항 | 이 프로젝트에 반영된 지점 | 상태 |
 |---|---|---|---|
 | §1 | nctRid 매핑 인덱스를 가장 먼저 구축 — LLM이 아니라 선행 정적 분석 과제로 분리. `.xjs`→transaction()→svcID, NEXCORE 설정→P BizUnit, JavaParser 콜그래프, D BizUnit→XSQL namespace 4단계를 이어 그래프 DB화. 자동 추출 실패분(경험상 10~20%)만 사람이 보완 | @docs/03-kickoff-plan.md Phase 1 전체가 이 요구사항 그대로 구성됨 | 계획 수립 완료, 실행 미착수 |
-| §2 | 결정론적 변환(iBatis→MyBatis, BizUnit→Controller 골격 등)에는 LLM을 쓰지 않고, LLM은 실제 계산·분기 로직 포팅 등 기계적 치환이 안 되는 영역에만 투입. 공통 응답/예외/그리드 등 공통 모듈은 사람이 먼저 확정 | @CLAUDE.md 핵심 원칙 + @docs/02-architecture.md "결정론적/LLM 경계" 표로 명문화, `chatui/converters.py`·`chatui/skeleton_gen.py`(규칙 기반) vs `agents/llm_gateway.py`(LLM 포팅) 코드 분리로 실제 구현 | 반영 완료(설계+코드) |
+| §2 | 결정론적 변환(iBatis→MyBatis, BizUnit→Controller 골격 등)에는 LLM을 쓰지 않고, LLM은 실제 계산·분기 로직 포팅 등 기계적 치환이 안 되는 영역에만 투입. 공통 응답/예외/그리드 등 공통 모듈은 사람이 먼저 확정 | @CLAUDE.md 핵심 원칙 + @docs/02-architecture.md "결정론적/LLM 경계" 표로 명문화, `chatui/converters.py`·`chatui/skeleton_gen.py`(규칙 기반) vs `agents/llm_gateway.py`(LLM 포팅) 코드 분리로 실제 구현. 원문의 xfdl/AG-Grid 관련 항목은 v2 범위(UI 미전환)라 제외 | 반영 완료(설계+코드) |
 | §3 | "변환된다"≠"맞다" — 차등 테스트(differential testing)를 파일럿보다 먼저 구축, 프론트는 사람 리뷰 전제로 공수 산정 | @docs/02-architecture.md "검증 전략" 섹션, @docs/03-kickoff-plan.md Phase 1에 하네스 구축 명시 | 계획만 있음, 구축 미착수(Phase 1 최우선 과제) |
-| §4 | 공수 추정 현실화 — 화면 유형별 차등(40~50%/30~40%/15~20%), 평균 3일·65~70% 절감으로 조정, 90% 이상 약속 금지 | @docs/01-project-plan.md "v2 KPI 조정" 섹션에 표 그대로 반영, @CLAUDE.md "하지 말아야 할 것"에 "90% 이상 절감 약속 금지" 명문화 | 반영 완료 |
+| §4 | 공수 추정 현실화 — 화면 유형별 차등(40~50%/30~40%/15~20%), 평균 3일·65~70% 절감으로 조정, 90% 이상 약속 금지 | @docs/01-project-plan.md "v2 KPI 조정" 섹션에 표 그대로 반영, @CLAUDE.md "하지 말아야 할 것"에 "90% 이상 절감 약속 금지" 명문화 | 반영 완료. 단, 이번 8주 PoC 자체 목표는 이보다 보수적인 **55% 절감**으로 별도 설정(위 KPI 표 참고) — 65~70%는 파일럿 확대 후 전체 프로젝트 목표로 재검토 |
 | §5 | 1,416개 전체가 아니라 구조적 클러스터링 후 유형별 대표 20~30화면 파일럿. 목표는 "화면이 돌아간다"가 아니라 "유형별 변환 레시피 + 실측 공수 확보" | @docs/03-kickoff-plan.md Phase 3 | 계획만 있음, 파일럿 1건(PLA047) 진행 중 |
-| §6 | Dataset 상태 모델(rowState) 의미 손실, 동기→비동기 전환 리스크 | @docs/02-architecture.md "리스크" 섹션에서 v2 범위 재해석(백엔드 전용이라 직접 영향은 적으나 향후 React 트랙을 위해 API 설계 시점에 고려) | 반영 완료(문서화, 실제 결정은 React 트랙에서) |
+| §6 | Dataset 상태 모델(rowState) 의미 손실, 동기→비동기 전환 리스크 | @docs/02-architecture.md "리스크" 섹션에서 v2 범위 재해석(백엔드 전용이라 직접 영향은 적으나 화면이 다시 만들어질 차기 트랙을 위해 API 설계 시점에 고려) | 반영 완료(문서화, 실제 결정은 차기 화면 트랙에서 — 이번 프로젝트 범위 밖) |
 | §A | 5-fragment 분해(.xfdl/.xjs/Dataset/BizUnit/XSQL), 콜그래프 역순 번역(XSQL→D→F→P→API), 스켈레톤 우선, 실패분을 정상 산출물로 취급 | @CLAUDE.md 핵심 원칙("화면 하나를 통째로 넣지 말고 5개 fragment로", "콜그래프 역순", "스켈레톤 먼저") — v2는 UI fragment 제외, `.BIZUNIT`/P/F/D/XSQL 5종으로 재정의 | 반영 완료(설계), 실패 리포트 자동 생성은 미착수 |
 | §B | ReCodeAgent 4-에이전트 분업(Analyzer/Planner/Translator/Validator), 경량 파서 조합, Planner가 계획을 파일로 고정 | @docs/03-kickoff-plan.md Phase 4에 4역할 분리 명시. `conversion-plan.json` 산출 항목이 Phase 2에 있음(미착수) | 계획만 있음, 4-에이전트 분업·plan.json 모두 미착수 |
 | §C | RAG few-shot(파일럿 결과물이 코퍼스), 화면 유형별 동적 프롬프트, Reflection 재시도 상한 2~3회 | @CLAUDE.md 기술 스택에 FAISS/Chroma 명시, @docs/03-kickoff-plan.md Phase 4~5 | 미착수 |
