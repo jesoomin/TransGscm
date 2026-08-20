@@ -1,6 +1,6 @@
 # G-SCM 차세대 전환 Agent (v2)
 
-> 이 문서는 2026-08-14 범위 재정의 이후 버전이다. v1(화면까지 React로 전환)은 @docs/01-project-plan.md, @docs/02-architecture.md 이력에 남아있으나 **현재 유효한 범위는 이 문서 기준**이다. 제안서 원문은 @docs/05-proposal-v2.md, 멘토 코멘트 원문은 @docs/06-mentor-feedback.md 참고.
+> 이 문서는 2026-08-14 범위 재정의 이후 버전이다. v1(화면까지 React로 전환)은 @docs/01-project-plan.md, @docs/02-architecture.md 이력에 남아있으나 **현재 유효한 범위는 이 문서 기준**이다. 제안서 원문은 @docs/05-proposal-v2.md, 멘토 코멘트 원문은 @docs/06-mentor-feedback.md 참고. 7주차 육성 프로그램 주차별 산출물(1~5주차 템플릿 + 멘토 요구사항 반영 매트릭스)은 @docs/09-weekly-deliverables.md 참고.
 
 ## 프로젝트 개요
 Nexacro14(프론트) + NEXCORE(백엔드, Spring 기반 BizUnit 프레임워크) 조합으로 만들어진 레거시 화면 1,416개 중 **서버(Java/XSQL)만** React가 호출할 수 있는 구조로 자동 전환하는 AI Agent를 개발한다. **Nexacro 화면(xfdl) 자체는 이번 범위에서 전환하지 않는다** — UI는 추가 디자인 변경 가능성이 있어 별도 트랙으로 분리한다. 기존 트랜잭션(nctRid) 계약은 그대로 유지해서, 나중에 만들어질 React 화면이 지금 변환하는 API를 그대로 호출할 수 있게 한다.
