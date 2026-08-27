@@ -17,10 +17,15 @@ CLAUDE.md 핵심 원칙에 따라:
     gscm/src/main/resources/mapper/r/{p1}/{p2}/)로 저장한다.
   - 발견한 이슈(문법 오류, 정적 검증 실패 등)는 체크박스(기본 켜짐)를 켜면 agents/db.py로
     CONV_FILE/CONV_ISSUE 테이블(로컬 Oracle)에도 기록한다.
+  - 화면 상단에 전체 화면 기준 전환 현황(총 건수/성공/실패/전환율) 그리드를 보여준다
+    (_render_conversion_summary(), agents/db.py의 CONV_FILE 집계). "전환 실패 건수" 열을
+    클릭하거나 버튼을 누르면 실패한 파일별 상세(사유 포함)를 st.dialog 팝업 그리드로 보여준다.
 
 실행: (프로젝트 루트에서) streamlit run chatui/app.py
 converters.py/skeleton_gen.py/validators.py/db.py는 실제 PLA047 소스 + 실제 로컬 Oracle DB로 검증했다.
-app.py(Streamlit 화면) 자체는 이 환경에 브라우저가 없어 직접 렌더링 확인은 못 했다.
+app.py(Streamlit 화면) 자체도 streamlit.testing.v1.AppTest로 실행 검증했다(브라우저는 여전히 없어 렌더링/
+클릭 UX 자체는 못 봄) - agents.db를 모킹해 DB 미연결 폴백과 전환 현황 그리드/실패 상세 팝업 양쪽 경로를
+예외 없이 확인했다. 실제 Oracle DB로 여러 화면을 쌓은 뒤의 최종 확인은 아직 남아있다.
 """
 from __future__ import annotations
 
