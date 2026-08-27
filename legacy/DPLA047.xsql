@@ -4837,7 +4837,7 @@
 									ELSE COO_COST / BP_EXR END AS COO_COST 
 									FROM PMO_PROFBLT_IMPROV_PROD T1	
 									]]>	
-								</isEqual>
+								</isNotEqual>
 								<isEqual property="CHKMODEYN" compareValue="Y">
 								<![CDATA[
 										LEFT OUTER JOIN (
@@ -5176,7 +5176,6 @@
 									</isEqual><![CDATA[																				
 											)
 										]]>
-	</isNotEqual>
 	<![CDATA[																				
 		SELECT
 	]]>
