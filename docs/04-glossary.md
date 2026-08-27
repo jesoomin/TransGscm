@@ -22,3 +22,5 @@
 - **차등 테스트 (Differential Testing)**: 동일 입력을 레거시 nctRid와 신규 REST API에 각각 호출해 응답을 diff로 비교하는 검증 기법. "문법상 변환됨"과 "기능이 맞음"을 구분하기 위한 핵심 전략.
 - **Strangler Fig 패턴**: 레거시 시스템을 한 번에 교체하지 않고, 신규 시스템과 당분간 공존시키며 점진적으로 대체하는 전략. 이 프로젝트에서는 신규 REST API가 배포된 뒤에도 기존 nctRid 경로가 한동안 함께 살아있는 상태를 정상으로 취급한다.
 - **Translator / Validator 분리**: 코드를 생성하는 변환기(Translator)와 그 결과를 검증하는 검증기(Validator)를 별도 모듈로 두는 설계 원칙. 변환기를 교체해도 검증 자산(테스트, 리포트)이 유지되게 하기 위함.
+- **`ApiResponse<T>`**: 모든 `{화면}Api` 응답을 감싸는 공통 봉투(`com.skhynix.gscm.common.ApiResponse`). AS-IS의 `IDataSet` + `setOkResultMessage(code, args)` 조합에 대응. 상세는 @docs/09-common-conventions.md.
+- **`BizException`**: AS-IS `BizRuntimeException`의 TO-BE 대체(`com.skhynix.gscm.common.BizException`). P/F BizUnit에서 실제로 쓰인 두 생성자 형태(`(code, cause)`, `(code, args, cause)`)를 그대로 포팅 가능하게 유지한다.

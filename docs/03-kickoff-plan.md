@@ -28,7 +28,7 @@
 
 ## Phase 2 — 공통 규약 + 결정론적 변환기 + 업로드→변환 챗팅 UI
 화면 하나를 통째로 넣지 않는다 — `.BIZUNIT`/P/F/D/XSQL 5개 fragment로 나눠 처리하고, **콜그래프 역순(XSQL → Store → Service → Api)** 으로 하위부터 확정한다. 상위(Api) 시그니처를 먼저 잡고 하위를 끼워 맞추지 않는다.
-- [ ] 공통 응답/예외 처리 규약 확정 (사람이 먼저 설계 — 화면마다 에이전트가 제각각 만들지 않도록)
+- [x] 공통 응답/예외 처리 규약 확정 — @docs/09-common-conventions.md. `com.skhynix.gscm.common`에 `ApiResponse`/`ResultCode`/`BizException`/`GlobalExceptionHandler`/`MessageCodeResolver` 템플릿 작성(`templates/common/`), PLA047 실 소스(`PPLA047.java`/`FPLA047.java`)에서 관찰된 `BizRuntimeException(code, args, cause)` 패턴 그대로 대응시킴. Spring 6 실 클래스패스로 `mvn compile` 검증 완료(임시 프로젝트, 저장소에는 남기지 않음). `skeleton_gen.py`의 Api 골격도 `ApiResponse`를 쓰도록 갱신하고 Store의 MyBatis 연동 방식(SqlSessionTemplate 직접 호출) 미확정 TODO를 확정으로 정리함. 메시지 코드(`E0052`/`W0024`/`I0016`) 실제 문구는 여전히 TODO(NEXCORE 공통 메시지 테이블 확인 필요)
 - [ ] 메시지 코드 표준화: AS-IS 하드코딩 코드(`E0052`, `W0024`, `I0016` 등) → `errors.properties`/`errors_en.properties` 추출 규칙
 - [x] iBatis → MyBatis 변환 모듈 v0 — `chatui/converters.py`. PLA047에서 검증한 4종 규칙(`isEqual`/`isNotEqual`/`isNotEmpty`+`iterate`/바인드 변수) + 멘토 코멘트의 `isNull`/`isNotNull`/`isGreaterThan` 등/`dynamic prepend`도 규칙만 준비. **실제로 검증된 건 PLA047뿐**이라 다른 화면 XSQL에 돌려서 결과를 반드시 확인할 것. 변환 후 XML well-formed 여부까지 자동 체크해서 경고로 보여줌(원본 태그 불일치를 여기서 잡아냄)
 - [x] BizUnit 메서드 시그니처 → Controller(`{화면}Api`)/Service/Store 골격 생성기 v0 — `chatui/skeleton_gen.py`. PLA047 실 소스로 동작 검증: P 메서드가 실제로 호출하는 F 메서드를 본문에서 찾아 Api→Service 연결까지 정확히 맞춤(단순 이름 매칭이 아님). D 메서드는 `dbSelect("S00N", ...)` 호출에서 매퍼 statement id를 뽑아 Store가 참조하도록 생성. **골격만 규칙 기반, Service 메서드 본문은 항상 TODO 스텁 — LLM 포팅은 별도 단계**
