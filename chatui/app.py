@@ -29,6 +29,7 @@ import re
 import sys
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -211,11 +212,111 @@ def _guess_package(paths_for_screen: dict[str, str]) -> tuple[str, str] | None:
     return None
 
 
+if hasattr(st, "dialog"):
+    @st.dialog("실패한 파일 상세", width="large")
+    def _show_failure_detail_dialog() -> None:
+        """"전환 실패 건수" 클릭 시 여는 팝업 - 실패한 파일별 상세를 그리드로 보여준다."""
+        from agents import db
+
+        try:
+            failed_files = db.get_failed_files()
+        except Exception as e:  # noqa: BLE001 - DB 연결 문제를 그대로 보여주는 진단용
+            st.error(f"실패 상세 조회 중 오류: {e}")
+            return
+        if not failed_files:
+            st.info("실패로 기록된 파일이 없습니다.")
+            return
+
+        file_ids = [f["file_id"] for f in failed_files]
+        issues_by_file = db.get_issues_for_files(file_ids)
+
+        rows = []
+        for f in failed_files:
+            file_issues = issues_by_file.get(f["file_id"], [])
+            blockers = [i for i in file_issues if i["severity"] == "BLOCKER"]
+            reason = (
+                blockers[0]["message"] if blockers
+                else (file_issues[0]["message"] if file_issues else "(기록된 이슈 없음)")
+            )
+            rows.append({
+                "화면ID": f["screen_id"],
+                "계층": f["as_is_layer"],
+                "AS-IS 파일": f["as_is_filename"] or "-",
+                "TO-BE 파일": f["tobe_filename"] or "-",
+                "실패 사유": reason,
+                "이슈 건수": len(file_issues),
+                "갱신일시": str(f["updated_at"]) if f["updated_at"] else "-",
+            })
+        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+else:
+    def _show_failure_detail_dialog() -> None:
+        st.warning("설치된 streamlit 버전이 st.dialog(팝업)를 지원하지 않습니다 - streamlit>=1.37로 업그레이드하세요.")
+
+
+def _render_conversion_summary() -> None:
+    """전체 화면 대상 전환 현황(총 건수/성공/실패/전환율)을 상단에 그리드로 보여준다.
+
+    데이터 출처는 DB(CONV_FILE) - 화면을 변환하고 "DB에도 기록" 체크박스를 켠 채 저장할 때마다
+    화면당 여러 행(P/F/D/XSQL/DTO 등)이 쌓인다. 화면 하나는 그 안의 파일 중 BUILD_CHECK='FAIL'이
+    하나라도 있으면 실패로 센다(CLAUDE.md: 빌드 통과해야 완료로 인정). DB 연결이 안 되면(자격증명
+    없음 등) 조용히 안내만 하고 나머지 화면은 그대로 쓸 수 있게 한다.
+    """
+    try:
+        from agents import db
+        screens = db.get_screen_summary()
+    except Exception as e:  # noqa: BLE001 - DB 미설정/미연결을 그대로 보여주는 진단용
+        st.info(f"전체 현황(DB) 조회 불가 - DB 연결 설정을 확인하세요: {e}")
+        return
+
+    if not screens:
+        st.info(
+            "아직 DB에 기록된 변환 이력이 없습니다 - 화면을 변환하고 'DB에도 기록'을 켠 채 저장하면 "
+            "여기 집계됩니다."
+        )
+        return
+
+    total = len(screens)
+    fail = sum(1 for s in screens if s["fail_files"] > 0)
+    success = sum(1 for s in screens if s["fail_files"] == 0 and s["pass_files"] > 0)
+    rate = (success / total * 100) if total else 0.0
+
+    summary_df = pd.DataFrame([{
+        "총 전환 건수": total,
+        "전환 성공 건수": success,
+        "전환 실패 건수": fail,
+        "전환율": f"{rate:.1f}%",
+    }])
+
+    clicked_fail_column = False
+    try:
+        event = st.dataframe(
+            summary_df, hide_index=True, width="stretch",
+            on_select="rerun", selection_mode="single-column",
+            key="conversion_summary_grid",
+        )
+        selection = getattr(event, "selection", None) or {}
+        selected_columns = list(selection.get("columns") or [])
+        clicked_fail_column = "전환 실패 건수" in selected_columns or 2 in selected_columns
+    except TypeError:
+        # 설치된 streamlit 버전이 on_select/selection_mode를 지원하지 않을 수 있다 - 그런 경우
+        # 셀 선택 없이 그리드만 보여주고, 아래 버튼으로 상세보기를 대신한다.
+        st.dataframe(summary_df, hide_index=True, width="stretch")
+
+    if fail > 0:
+        st.caption("전환 실패 건수 열을 클릭하거나 아래 버튼을 누르면 실패한 파일 상세를 볼 수 있습니다.")
+        if clicked_fail_column or st.button(f"🔍 실패 {fail}건 상세 보기", key="show_fail_detail_btn"):
+            _show_failure_detail_dialog()
+
+
 st.title("G-SCM AS-IS → TO-BE 변환 (v0)")
 st.caption(
     "P/F/D BizUnit(.java/.bizunit) + XSQL을 화면 1개 단위로 업로드하세요. "
     "결정론적 규칙으로 먼저 변환하고, LLM은 선택했을 때만 Service 로직 포팅에 씁니다."
 )
+
+st.subheader("📊 전체 전환 현황")
+_render_conversion_summary()
+st.divider()
 
 with st.sidebar:
     st.subheader("LLM Gateway 상태")

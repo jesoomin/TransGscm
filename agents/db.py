@@ -214,6 +214,76 @@ def upsert_conv_file(
         return file_id
 
 
+def get_screen_summary() -> list[dict]:
+    """화면(SCREEN_ID)별로 CONV_FILE 행을 집계한다 - 전체 현황 그리드(성공/실패/전환율)의 기초 데이터.
+
+    화면 하나는 P/F/D/XSQL/DTO 등 여러 CONV_FILE 행(파일)으로 구성된다. BUILD_CHECK='FAIL'인
+    파일이 하나라도 있으면 그 화면 전체를 실패로 센다(CLAUDE.md: 빌드 통과해야 완료로 인정 -
+    파일 하나만 깨져도 화면은 아직 완료가 아니다).
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT SCREEN_ID,
+                   COUNT(*) AS TOTAL_FILES,
+                   SUM(CASE WHEN BUILD_CHECK = 'FAIL' THEN 1 ELSE 0 END) AS FAIL_FILES,
+                   SUM(CASE WHEN BUILD_CHECK = 'PASS' THEN 1 ELSE 0 END) AS PASS_FILES
+            FROM CONV_FILE
+            GROUP BY SCREEN_ID
+            ORDER BY SCREEN_ID
+            """
+        )
+        cols = [d[0].lower() for d in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def get_failed_files() -> list[dict]:
+    """BUILD_CHECK='FAIL'인 CONV_FILE 행 전부(화면ID/계층/파일명/경로)를 돌려준다.
+
+    "전환 실패 건수" 클릭 시 여는 상세 팝업 그리드의 기본 행 - 화면 하나에서 파일 여러 개가
+    실패할 수 있어 파일 단위로 한 행씩 낸다. 실패 사유(이슈 상세)는 FILE_ID로 get_issues_for_files()를
+    따로 호출해서 채운다 - 한 번의 복잡한 조인 SQL 대신 단순한 쿼리 두 번으로 나눠 오류 가능성을 줄인다.
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT FILE_ID, SCREEN_ID, AS_IS_LAYER, AS_IS_FILENAME, TOBE_FILENAME, TOBE_PATH, UPDATED_AT
+            FROM CONV_FILE
+            WHERE BUILD_CHECK = 'FAIL'
+            ORDER BY SCREEN_ID, AS_IS_LAYER
+            """
+        )
+        cols = [d[0].lower() for d in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def get_issues_for_files(file_ids: list[int]) -> dict[int, list[dict]]:
+    """주어진 FILE_ID들의 CONV_ISSUE를 한 번에 가져와 FILE_ID별로 묶어서 돌려준다."""
+    if not file_ids:
+        return {}
+    with get_connection() as conn:
+        cur = conn.cursor()
+        placeholders = ", ".join(f":f{i}" for i in range(len(file_ids)))
+        params = {f"f{i}": fid for i, fid in enumerate(file_ids)}
+        cur.execute(
+            f"""
+            SELECT FILE_ID, ISSUE_TYPE, SEVERITY, LINE_NO, MESSAGE
+            FROM CONV_ISSUE
+            WHERE FILE_ID IN ({placeholders})
+            ORDER BY FILE_ID, ISSUE_ID
+            """,
+            params,
+        )
+        result: dict[int, list[dict]] = {}
+        for fid, issue_type, severity, line_no, message in cur.fetchall():
+            result.setdefault(fid, []).append({
+                "issue_type": issue_type, "severity": severity, "line_no": line_no, "message": message,
+            })
+        return result
+
+
 def record_issues(file_id: int, issues, detected_by: str) -> None:
     """chatui/converters.py, chatui/skeleton_gen.py가 만든 ConversionIssue 목록을 CONV_ISSUE에 적재한다."""
     if not issues:
