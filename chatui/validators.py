@@ -4,8 +4,9 @@ CLAUDE.md 핵심 원칙: "변환기(Translator)와 검증기(Validator)는 분�
 변환 로직에 섞이면 변환기를 바꿀 때마다 검증 자산도 같이 깨진다." 이 모듈은
 converters.py/skeleton_gen.py가 만든 결과물을 입력으로만 받고, 그 파일들을 절대 고치지 않는다.
 
-이 개발 환경엔 실제 Maven/Spring 빌드(pom.xml, 의존성 jar)가 아직 없어서 진짜 `javac` 컴파일이나
-Spring 컨텍스트 기동은 못 한다. 대신 지금 할 수 있는 정적 검증만 한다:
+실제 Maven 모듈은 `gscm/`(pom.xml)에 있고 `cd gscm && mvn compile`로 진짜 `javac` 컴파일을
+확인할 수 있다 - 다만 이 모듈(validators.py)은 그 mvn 호출과는 아직 연동돼 있지 않고, 대신
+가볍고 빠른 정적 검증만 한다(변환기/검증기 분리 원칙 - 실제 컴파일 연동은 별도 자산으로 얹을 것):
   - Java: 중괄호 균형(문자열/주석 인식), LLM 포팅이 안 끝나고 남은 PORT_START 스텁 탐지
   - 계층 간 실제 호출 대상 존재 확인: Api의 service.xxx() -> Service에 정의돼 있는지,
     Service의 store.xxx() -> Store에 정의돼 있는지, Store가 참조하는 매퍼 statement id ->

@@ -70,6 +70,8 @@ gscm/src/main/resources/
 /parsers       .BIZUNIT XML, Java, XSQL 파서 (xfdl 파서는 범위 아님)
 /templates     Controller/Service/Store/Mapper 코드 생성 템플릿
 /pilot         파일럿 화면 20~30건 변환 결과물 (유형별 4~5개씩)
+/gscm          실제 빌드되는 TO-BE Maven 모듈(pom.xml). chatui가 생성한 화면별 Api/Service/Store/Dto/Mapper.xml을
+               여기 src/main/... 아래 실 경로에 저장 - `cd gscm && mvn compile`로 진짜 컴파일 확인 가능
 /tracking      화면·파일별 변환 검증 테이블 (@docs/08-conversion-verification.md 참고)
 /legacy        AS-IS 원본 소스 (아래 "레거시 소스 정리" 참고)
 /docs          기획·아키텍처·계획 문서

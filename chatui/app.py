@@ -544,10 +544,12 @@ if screen_id:
                 expanded=bool(blocker_files),
             ):
                 st.caption(
-                    "실제 Maven/Spring 빌드 환경이 아직 없어 진짜 컴파일은 못 합니다 - 대신 중괄호 균형, "
+                    "이 정적 검사는 아직 진짜 javac 컴파일을 하지 않습니다 - 중괄호 균형, "
                     "LLM 포팅 미완료 스텁, 계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), "
-                    "Mapper.xml well-formed 여부를 정적으로 확인합니다. PASS는 \"돌아간다\"가 아니라 "
-                    "\"이 정적 검사를 통과했다\"는 뜻입니다."
+                    "Mapper.xml well-formed 여부만 확인합니다. PASS는 \"돌아간다\"가 아니라 "
+                    "\"이 정적 검사를 통과했다\"는 뜻입니다. 실제 Maven 모듈은 `gscm/`에 있으니 "
+                    "진짜 컴파일 확인은 `cd gscm && mvn compile`로 직접 실행하세요 "
+                    "(이 화면 내 자동 실행 연동은 아직 없음)."
                 )
                 for r in validation_results:
                     icon = "✅" if r.passed else "❌"
