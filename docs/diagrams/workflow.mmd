@@ -1,0 +1,48 @@
+flowchart TD
+    classDef userAction fill:#e8eefc,stroke:#4a6fd6,color:#1a1a2e
+    classDef systemStep fill:#fff7e6,stroke:#d6a54a,color:#1a1a2e
+    classDef storage fill:#e9f7ef,stroke:#4ad68a,color:#1a1a2e
+    classDef gate fill:#fde8e8,stroke:#d64a4a,color:#1a1a2e
+
+    START([사람: chatui 실행]) --> INPUT[화면 1개 선택<br/>폴더경로 또는 파일업로드<br/>P/F/D java·bizunit + XSQL]
+    class INPUT userAction
+
+    INPUT --> STEP1["1단계: 규칙 기반 변환 실행<br/>skeleton_gen.py + converters.py<br/>(Api/Service/Store/Dto 골격 + Mapper.xml)"]
+    class STEP1 systemStep
+
+    STEP1 --> AUTOCHECK["자동 실행: 정적 검증 + 품질 스캔<br/>validators.py / quality_scanner.py"]
+    class AUTOCHECK systemStep
+
+    AUTOCHECK --> RESULTTAB{"📄 변환 결과 탭<br/>PASS/FAIL 목록 확인"}
+    class RESULTTAB gate
+
+    RESULTTAB -->|"선택: 🔨 실제 mvn compile 실행"| MVN["gscm/ Maven 모듈<br/>실제 javac 컴파일<br/>(run_maven_compile)"]
+    class MVN systemStep
+    MVN --> RESULTTAB
+
+    RESULTTAB --> PORTQ{"F 메서드 포팅 완료?"}
+    class PORTQ gate
+    PORTQ -->|아니오| PORT["🔧 2단계 포팅<br/>F 메서드별 LLM 포팅(선택)<br/>LLM Gateway 호출 + 스플라이스"]
+    class PORT userAction
+    PORT --> RECHECK["재검증<br/>validators.py"]
+    class RECHECK systemStep
+    RECHECK --> PORTQ
+
+    PORTQ -->|예/불필요| SAVETAB["💾 3단계 저장<br/>검토 완료 - pilot/에 TO-BE 구조로 저장"]
+    class SAVETAB userAction
+
+    SAVETAB --> FS[("pilot/gscm/...<br/>파일시스템 저장")]
+    class FS storage
+    SAVETAB -->|"체크: DB에도 기록"| DB[("Oracle DB<br/>CONV_FILE / CONV_ISSUE")]
+    class DB storage
+
+    DB -.->|화면이 쌓일 때마다 집계| DASH["📊 전체 전환 현황<br/>총 건수/성공/실패/전환율 그리드<br/>(화면 상단, 항상 표시)"]
+    class DASH systemStep
+    DASH -->|"실패건수 클릭 또는 버튼"| POPUP["🔍 실패 상세 팝업<br/>화면ID/계층/파일/실패사유 그리드"]
+    class POPUP userAction
+
+    subgraph SIDE["사이드바 (병렬, 독립 실행)"]
+        direction TB
+        LLMSTAT["LLM Gateway 상태 확인"]
+        CROSS["전체 화면 교차 분석<br/>cross_analysis.py<br/>(pilot/ 전체 대상 중복 탐지)"]
+    end

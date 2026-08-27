@@ -1,0 +1,32 @@
+flowchart TD
+    classDef nodeStyle fill:#f5f0ff,stroke:#7c4fd6,color:#1a1a2e,rx:10,ry:10
+    classDef condStyle fill:#fff,stroke:#7c4fd6,color:#1a1a2e,stroke-dasharray: 4 2
+    classDef ioStyle fill:#eafaf1,stroke:#2ea86e,color:#1a1a2e
+
+    S(("START")):::ioStyle --> N1["categorize_input<br/>(_categorize / _scan_folder)"]:::nodeStyle
+    N1 --> N2["generate_skeletons<br/>(skeleton_gen.py)"]:::nodeStyle
+    N2 --> N3["convert_xsql_fragment<br/>(converters.py)"]:::nodeStyle
+    N3 --> N4["generate_dto<br/>(skeleton_gen.py)"]:::nodeStyle
+    N4 --> N5["validate_screen<br/>(validators.py, static)"]:::nodeStyle
+    N5 --> N6["run_review<br/>(quality_scanner.py)"]:::nodeStyle
+
+    N6 --> C1{"porting_complete?"}:::condStyle
+    C1 -- "no: 다음 F 메서드" --> N7["llm_port_method<br/>(LLM Gateway, 화면유형별X<br/>메서드 1개씩)"]:::nodeStyle
+    N7 --> N8["splice_ported_method<br/>(skeleton_gen.py)"]:::nodeStyle
+    N8 --> N5b["validate_screen (재실행)"]:::nodeStyle
+    N5b --> C1
+
+    C1 -- "yes / 포팅 대상 없음" --> C2{"사람이<br/>mvn compile 실행?"}:::condStyle
+    C2 -- "예(선택)" --> N9["run_maven_compile<br/>(validators.py, 실제 subprocess mvn)"]:::nodeStyle
+    N9 --> C2
+    C2 -- "아니오 / 계속 진행" --> N10["save_to_pilot<br/>(파일시스템 write)"]:::nodeStyle
+
+    N10 --> C3{"DB에도 기록<br/>체크박스?"}:::condStyle
+    C3 -- "예" --> N11["upsert_conv_file +<br/>record_issues<br/>(agents/db.py)"]:::nodeStyle
+    N11 --> N12
+    C3 -- "아니오" --> N12["END (화면 1건 처리 완료)"]:::ioStyle
+
+    N12 -.재진입: 다른 화면 선택.-> N1
+
+    N11 -.-> D1["get_screen_summary /<br/>get_failed_files /<br/>get_issues_for_files<br/>(agents/db.py)"]:::nodeStyle
+    D1 --> D2["render_conversion_summary<br/>(app.py 최상단, 언제든 조회)"]:::nodeStyle
