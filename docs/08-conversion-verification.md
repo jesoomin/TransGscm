@@ -40,16 +40,19 @@
 - 실제 로컬 Oracle DB(`RPLS_ADM`/`xe`)에 테이블 생성 + insert + select까지 end-to-end로 검증 완료.
 - CSV와 DB는 지금은 서로 자동 동기화되지 않는다 — CSV는 사람이 화면 리뷰하며 채우는 요약본, DB는 변환기가 실행될 때마다 쌓이는 원시 로그에 가깝다. 화면 수가 늘면 CSV를 DB에서 뽑아내는 쪽으로 정리하는 게 맞다(아직 안 함).
 - v0 한계: 골격 **생성** 단계 이슈(문법/시그니처 관련, `skeleton_gen.py`가 만듦)는 여전히 파일별로 정확히 귀속하지 못하고 P(JAVA) 행에 대표로 붙인다. XSQL/Dto 생성 이슈는 정확히 귀속된다.
-- **`chatui/validators.py`(신규, 변환기와 분리된 검증기) 연동**: 골격 생성/포팅 직후 자동으로 정적 검증을 돌려 파일별로 정확히 귀속된 `CONV_FILE.BUILD_CHECK`(PASS/FAIL/NOT_RUN)를 남긴다 — 이건 생성 이슈와 달리 P/F/D/XSQL/Dto 전부 파일 단위로 정확하다. 계층 간 참조(Api→Service→Store→Mapper) 검증은 파일 하나에 속하지 않아 `AS_IS_LAYER=DERIVED`, `AS_IS_FILENAME={화면}-cross-layer-check`인 별도 행으로 기록한다. 실제 Maven/Spring 빌드는 아직 없어(pom.xml 미구축) 진짜 컴파일 검증은 아니고, 중괄호 균형·미완료 포팅 스텁·계층 간 호출 대상 존재·Mapper.xml well-formed 수준의 정적 검사다 - PLA047로 실제 DB에 기록까지 검증 완료.
+- **`chatui/validators.py`(신규, 변환기와 분리된 검증기) 연동**: 골격 생성/포팅 직후 자동으로 정적 검증을 돌려 파일별로 정확히 귀속된 `CONV_FILE.BUILD_CHECK`(PASS/FAIL/NOT_RUN)를 남긴다 — 이건 생성 이슈와 달리 P/F/D/XSQL/Dto 전부 파일 단위로 정확하다. 계층 간 참조(Api→Service→Store→Mapper) 검증은 파일 하나에 속하지 않아 `AS_IS_LAYER=DERIVED`, `AS_IS_FILENAME={화면}-cross-layer-check`인 별도 행으로 기록한다. 이 정적 검사는 중괄호 균형·미완료 포팅 스텁·계층 간 호출 대상 존재·Mapper.xml well-formed 수준이라 진짜 컴파일 검증은 아니다 - PLA047로 실제 DB에 기록까지 검증 완료. **2026-08-27 추가**: 별도로 `gscm/pom.xml`(실제 Maven 모듈)을 구축해 `cd gscm && mvn compile`로 진짜 javac 컴파일 검증도 가능해졌다 - 아직 이 정적 검사와 자동 연동돼 있진 않다(각자 따로 실행). 실제로 두 검증의 정확도 차이가 곧바로 드러났다: `Pla047Service.java`를 실제 컴파일해보니 이 정적 검사(중괄호 개수만 셈)가 잡아낸 "중괄호 13개 안 닫힘" 한 줄보다 훨씬 상세한 진단(else-without-if 11건, 잘못된 이스케이프 4건, catch-without-try 2건)이 나왔다 - 원본 FPLA047.java의 실제 버그를 그대로 보존했기 때문으로, 이 화면이 Reimagine 후보라는 기존 판단과 일치한다.
 - **`AS_IS_CONTENT_HASH` 컬럼(2026-08-18 추가)**: 원본 파일 SHA-256 해시를 `CONV_FILE`에 저장해, 화면이 많을 때(업무 폴더 하나에 P/F/D/XSQL 세트가 50개 이상 섞여 있는 경우) 이전에 이미 정적 검증을 통과했고 원본 내용도 그대로인 화면을 화면 선택 목록에서 "✅ 이전 변환 PASS, 원본 변경 없음"으로 미리 보여준다. 자동으로 건너뛰지는 않는다(변환기 자체가 바뀌었을 수 있어 최종 판단은 사람 몫) - `agents/db.py`의 `get_cached_status_bulk()`로 화면 목록 전체를 쿼리 1번에 조회한다. 이미 있던 테이블에는 `ensure_schema()`가 `ALTER TABLE`로 컬럼을 추가한다(ORA-01430은 "이미 있음"으로 무시).
 - **`chatui/quality_scanner.py`(신규, 2026-08-18 `reviewer.py`에서 개명) — 코드 품질/취약점 스캔**: 변환기·검증기와 또 다른 별도 단계. 규칙 기반(LLM 아님)으로 (1) MyBatis `${...}`(텍스트 치환, SQL 인젝션 위험 후보) (2) 문자열 연결로 조립되는 SQL(Java) (3) 포팅 시 보존된 `// FIXME(원본 버그)` 집계 (4) 비밀번호/API 키로 보이는 값의 하드코딩(`HARDCODED_CREDENTIAL`, BLOCKER — 다른 항목과 달리 즉시 사람 검토 대상으로 분리) (5) 포팅 후에도 남아있는 NEXCORE 프레임워크 의존(`DEPRECATED_NEXCORE_API`, 포팅 불완전 신호)을 스캔해 `CONV_ISSUE`에 `detected_by='chatui/quality_scanner.py'`로 쌓는다. PLA047 실측: `Pla047Mapper.xml`에서 `${...}` 339건(원본 XSQL이 `$var$` 텍스트 치환을 광범위하게 씀을 보여줌), `Pla047Service.java`에서 문자열 연결 SQL 13건 + 원본 버그 집계 31건 — 전부 실제 DB에 저장 확인. 선택 기능으로 `llm_review()`(LLM 코드 리뷰, 코드 미수정·세션 내 표시만·DB 미저장)도 있다.
 - **`chatui/cross_analysis.py`(신규) — 화면 간 중복/영향도 분석**: `pilot/{screen}/` 전체를 훑어 서로 다른 화면 간 동일한 Service/Store 메서드 본문이나 Mapper SQL을 찾는다. 멘토 코멘트 §1의 nctRid 매핑 그래프가 진짜 전제라 지금은 인프라 단계 - 파일럿 화면이 1개(PLA047)뿐이라 실행하면 항상 "비교 대상 없음" 노트만 나온다. 로직 자체는 임시 2-화면 픽스처로 검증(동일 내용을 다른 화면ID로 복제해서 돌렸을 때 3개 메서드 중복을 정확히 잡아냄 확인, 실제 커밋에는 없음).
 
 ## PLA047으로 시드한 초기 데이터
-이번 세션에서 실제로 확인한 상태를 그대로 첫 9행에 기록했다(추측치 없음):
-- P/F/D `.bizunit` 3개 전부 XML 선언 손상 — 파싱 실패
-- `PPLA047.java` 컴파일 실패(파라미터 누락), `FPLA047.java` 컴파일 실패(다수 에러), `DPLA047.java`는 문법상 이상 없음(컴파일러로 미검증)
-- `DPLA047.xsql`은 S001+queryCommon만 변환 완료, S002~S006은 원본 자체가 없어 보류
-- DTO/메시지 프로퍼티는 아직 미착수
+최초 시드 당시(이 절 제목의 "초기 데이터") 확인한 상태는 아래와 같았다(추측치 없음). **이후 상태 변화는 `tracking/conversion-verification.csv`의 각 행에 날짜별로 계속 추가 기록하고 있으니, 최신 상태는 이 목록이 아니라 그 CSV를 기준으로 본다.**
+- P/F/D `.bizunit` 3개 전부 XML 선언 손상 — 파싱 실패 (**2026-08-27 기준 여전히 미해결**)
+- `PPLA047.java` 컴파일 실패(파라미터 누락), `FPLA047.java` 컴파일 실패(다수 에러), `DPLA047.java`는 문법상 이상 없음(컴파일러로 미검증) (**2026-08-27 기준 `.java` 3개 다 여전히 미해결** - `FPLA047.java`는 LLM 포팅 후에도 원본 버그를 그대로 보존해 실제 `mvn compile`이 여전히 실패함, 의도된 결과)
+- `DPLA047.xsql`은 S001+queryCommon만 변환 완료, S002~S006은 원본 자체가 없어 보류 (**2026-08-27: 해결됨** - 원본이 이미 S001~S006 전체를 담도록 갱신됐었고, 남아있던 태그 불일치 2건도 수정해 전체가 유효한 XML이 됨)
+- DTO/메시지 프로퍼티는 아직 미착수 (**2026-08-27: DTO는 완료, 메시지 프로퍼티는 파일 생성까지만 진행** - 실제 문구는 여전히 TODO)
 
-상세 근거는 이전 세션의 `/legacy` 검증 작업(본 대화 앞부분) 및 `pilot/PLA047/` 결과물 참고.
+상세 근거는 이전 세션의 `/legacy` 검증 작업(본 대화 앞부분), `tracking/conversion-verification.csv`, 실제 빌드되는 `gscm/` Maven 모듈 참고. `pilot/PLA047/` 대신 `pilot/gscm/`에 화면별 저장 결과가 쌓이며, 이는 실제 빌드 모듈 `gscm/`과 주기적으로 동기화해야 하는 스테이징 사본이다(2026-08-27: 한 차례 드리프트가 발생해 재동기화함 - 아래 참고).
+
+### 스테이징(`pilot/gscm/`)과 실제 빌드 모듈(`gscm/`)의 드리프트 (2026-08-27 발견 및 해소)
+`chatui/app.py`의 "저장" 버튼은 화면별 리뷰 결과를 `pilot/` 아래에 쌓는 스테이징 용도로 설계돼 있고, 실제 컴파일 가능한 Maven 모듈은 저장소 루트의 `gscm/`이다. 이 둘은 자동으로 동기화되지 않는다. 이번 세션에서 `gscm/pom.xml`을 새로 만들며 `chatui/skeleton_gen.py`의 import 버그를 고치기 위해 골격을 재생성했는데, 그 과정에서 이전에 이미 `pilot/gscm/`에 완료돼 있던 `Pla047Service.java`의 LLM 포팅 결과가 빈 TODO 스텁으로 되돌아가는 회귀가 발생했다(가장 최근 빌드 검증에서는 발견되지 않고 있다가 이번 점검에서 발견). `pilot/gscm/`의 포팅 결과를 `gscm/`으로 복원하고, 이후 확정된 `BizException` 공통 규약에 맞춰 `BizRuntimeException` 참조만 치환한 뒤, 다시 `pilot/gscm/`을 `gscm/`과 동일하게 재동기화했다. 앞으로 `gscm/`을 직접 고치면(예: 골격 재생성, 공통 규약 반영) `pilot/gscm/`도 같이 갱신해야 한다는 걸 잊지 않기 위해 여기 남긴다.

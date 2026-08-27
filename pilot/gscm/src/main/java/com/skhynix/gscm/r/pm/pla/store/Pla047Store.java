@@ -6,8 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Map;
 
-// TODO: MyBatis 연동 방식(SqlSessionTemplate 직접 호출 vs @Mapper 인터페이스)이 아직 사내 컨벤션으로
-// 확정되지 않아 SqlSessionTemplate 방식으로 임시 작성했다 - 실제 컨벤션 확인 후 조정할 것.
+// MyBatis 연동 방식: SqlSessionTemplate 직접 호출로 확정(docs/09-common-conventions.md #5).
+// docs/07-tobe-structure.xlsx 확정 구조에 없는 별도 Mapper 인터페이스는 도입하지 않는다.
 @Repository
 public class Pla047Store {
 
