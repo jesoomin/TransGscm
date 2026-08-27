@@ -9,9 +9,9 @@
 ## 1주차: 역량 및 기술 스택 확인
 
 ### 1. 현재 보유 역량
-- **Python 숙련도**: 초급~중급 — 실무 구현 경험은 적으나 프레임워크 기반 Agent 구성·활용 경험 보유
+- **Python 숙련도**: 초급~중급 → 이번 PoC 진행 중 실무 구현 경험을 실제로 축적함 — 정규식/`xml.dom.minidom` 기반 경량 파서(`chatui/converters.py`, `skeleton_gen.py`, `validators.py`), Azure OpenAI SDK 연동(`agents/llm_gateway.py`), `oracledb`를 통한 Oracle DB 연동(`agents/db.py`) 등을 직접 작성·검증함. 다만 `javalang`/`tree-sitter`/`lxml` 같은 정식 파서 라이브러리는 아직 도입하지 않고 경량 정규식 기반으로 대체 중 — 정확한 AST 기반 파싱은 남은 과제
 - **AI/ML 경험**: 전통 ML보다 LLM 기반 Agent 시스템 구축 중심
-- **LLM 활용 경험**: 사내 SKHy GaiA LLM 프레임워크로 Analysis/Simulation/Validation Agent 기능 구축
+- **LLM 활용 경험**: 사내 SKHy GaiA LLM 프레임워크로 Analysis/Simulation/Validation Agent 기능 구축 + 이번 프로젝트에서 사내 LLM Gateway(Azure OpenAI 호환, `agents/llm_gateway.py`)를 이용한 단발 instruction 프롬프트 기반 코드 포팅(`chatui/app.py`의 `_port_method`) 구현·검증(PLA047)
 - **RAG/Agent 구현 경험**: 유
   - P-MIX Simulation Agent — Multi-Agent 구조(Analysis/Simulation/Validation) 구현
   - Orchestrator 설계: 자연어 질의 → Agent 할당 → 기능 실행 → 결과 구조화
@@ -19,27 +19,30 @@
 - **프로젝트 경험**
   - P-MIX Simulation Agent(수행 중) — GaiA 기반 Multi-Agent/Orchestrator 구현
   - G-SCM Nexacro14 + NEXCORE(Spring, PU/FU/DU/XSQL) 개발·유지보수 — 이번 전환 프로젝트 도메인 지식의 원천
+  - **G-SCM 차세대 전환 Agent PoC(현재 진행 중)** — 결정론적 변환기(iBatis→MyBatis, BizUnit→Controller/Service/Store/Dto 골격) v0, LLM 포팅 모듈, 변환기와 분리된 검증기 3종(정적 검증·품질/보안 스캐너·화면 간 중복 분석)을 실제로 구현하고 PLA047 1건으로 end-to-end 검증까지 완료
 
 ### 2. 학습 필요 영역
 | 영역 | 현재 상태 | 필요 학습 |
 |---|---|---|
 | LangChain/LangGraph 기초 | 미사용 (GaiA로 유사 기능 구현 경험만 있음) | GaiA 대비 LangGraph의 상태(State)/그래프 노드 설계 방식 학습 후 한계 지점에서만 도입 검토 |
-| RAG 구현 | md 정적 삽입 수준 | FAISS/Chroma 기반 동적 예시 검색으로 고도화 (파일럿 20~30화면이 코퍼스가 됨, @docs/06-mentor-feedback.md §C) |
-| Multi-Agent 시스템 설계 | Analysis/Simulation/Validation 3분업 경험 있음 | ReCodeAgent식 Analyzer/Planner/Translator/Validator 4분업 구조로 재설계 (@docs/06-mentor-feedback.md §B) |
+| 정식 파서(AST) 도입 | 현재는 정규식/`xml.dom.minidom` 기반 경량 파서로 규칙 변환·well-formed 검사를 처리 중(`converters.py`/`skeleton_gen.py`/`validators.py`) — 멘토 코멘트가 권한 "언어별 경량 파서"보다도 더 가벼운 정규식 수준 | `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang/tree-sitter로 교체해 태그 중첩·타입 시그니처를 구조적으로 다뤄야 정확도가 오름(@docs/06-mentor-feedback.md §B "무거운 정적분석기 대신 경량 파서 조합") |
+| RAG 구현 | md 정적 삽입 수준, 임베딩 클라이언트(`agents/llm_gateway.py`의 `embed()`)는 준비됐으나 호출부 미구현 | FAISS/Chroma 기반 동적 예시 검색으로 고도화 (파일럿 20~30화면이 코퍼스가 됨, @docs/06-mentor-feedback.md §C) |
+| Multi-Agent 시스템 설계 | Analysis/Simulation/Validation 3분업 경험 있음, 이번 프로젝트는 변환기(Translator)와 검증기(Validator) 분리까지만 코드로 구현됨 | ReCodeAgent식 Analyzer/Planner/Translator/Validator 4분업 구조로 재설계 (@docs/06-mentor-feedback.md §B) |
 | Vector DB 활용(FAISS/Chroma) | 미사용 | 임베딩 저장/유사도 검색 API, 화면 유형별 few-shot 검색 파이프라인 |
-| 프롬프트 엔지니어링 | 단일 프롬프트 위주(`chatui/app.py`의 F BizUnit 포팅 프롬프트 1종) | 화면 유형별 동적 프롬프트 분기, 구조화 출력 강제, Reflection 재시도 프롬프트 |
+| 프롬프트 엔지니어링 | 화면 유형 구분 없는 단일 고정 instruction 프롬프트 1종만 구현(`chatui/app.py`의 `_port_method`) — 재시도 상한, 구조화 출력 강제는 아직 없음 | 화면 유형별 동적 프롬프트 분기, 구조화 출력 강제, 재시도 상한(2~3회)을 둔 Reflection 프롬프트(@docs/06-mentor-feedback.md §C) |
 | API 개발(FastAPI) | 미사용 | 변환 Agent를 서비스화할 때 필요 (현재는 Streamlit 로컬 앱) |
-| UI 개발(Streamlit) | 사용 중 (`chatui/app.py`) | 리뷰 대시보드 고도화(검증/스캔 결과 시각화는 이미 일부 구현됨) |
+| UI 개발(Streamlit) | 사용 중이며 계속 고도화 중(`chatui/app.py`) — 화면별 탭 구성, 변환 진행 상태 바, 검증/스캔 결과 이슈 목록, 원클릭 복사 등 이미 구현 | 파일럿이 20~30화면으로 늘어날 때의 화면 목록/필터/일괄 조회 UX 설계 |
+| 정적 분석 도구 연동(Maven/Gradle) | `pom.xml` 등 빌드 환경 미구축이라 실제 컴파일 검증 없음 — 대신 `validators.py`가 중괄호 균형·계층 간 참조 등 경량 정적 검사만 수행 | Spring 프로젝트 골격(pom.xml) 구축 후 실제 `javac`/Maven 빌드 연동 |
 
 ### 3. 기술 스택 선호도
 - 오케스트레이션: 사내 GaiA 프레임워크 우선 재사용, 한계 확인 시 LangGraph 검토(@CLAUDE.md 기술 스택)
-- LLM 호출: 사내 LLM Gateway(AI Talent Lab, Azure OpenAI 호환) — `agents/llm_gateway.py`, 허용 모델 화이트리스트(`ALLOWED_MODELS`)로 임의 모델명 사용을 코드 레벨에서 차단
-- 코드 파싱: `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang/tree-sitter, `.xjs`의 `transaction()` 추출용 경량 JS AST 파서(babel/tree-sitter)
+- LLM 호출: 사내 LLM Gateway(AI Talent Lab, Azure OpenAI 호환) — `agents/llm_gateway.py`, 허용 모델 화이트리스트(`ALLOWED_MODELS`)로 임의 모델명 사용을 코드 레벨에서 차단, 기본 모델은 `gpt-4.1`(`LLM_GATEWAY_DEFAULT_MODEL`)
+- 코드 파싱: **목표 스택**은 `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang/tree-sitter, `.xjs`의 `transaction()` 추출용 경량 JS AST 파서(babel/tree-sitter)이나, **현재 실제 구현은 `re`(정규식) + `xml.dom.minidom`(well-formed 검사)만으로 v0를 완성한 상태** — PLA047 1건에서는 충분히 동작했지만 화면이 늘어나면 정식 파서로 교체가 필요할 것으로 예상(@docs/06-mentor-feedback.md §B)
 - 검색/예시 저장: FAISS 또는 Chroma (파일럿 20~30건이 RAG 코퍼스, 아직 미착수)
 - 서비스화: FastAPI (아직 미착수, 현재는 Streamlit 로컬 전용)
-- 리뷰/변환 UI: Streamlit(`chatui/app.py`, 이미 동작)
-- 검증: Maven/Gradle(Java 빌드, pom.xml 미구축이라 실제 컴파일 검증은 아직 안 됨) + 차등 테스트 하네스(레거시 nctRid ↔ 신규 REST, 아직 미착수)
-- DB: 로컬 Oracle(`RPLS_ADM`/`xe`, `.env`) — `agents/db.py`/`agents/db_schema.sql`로 `CONV_FILE`/`CONV_ISSUE` 테이블 연동 이미 검증됨
+- 리뷰/변환 UI: Streamlit(`chatui/app.py`) — 업로드→골격 생성→검증/스캔→LLM 포팅→저장까지 전체 흐름이 탭 기반으로 이미 동작
+- 검증: Maven/Gradle(Java 빌드, pom.xml 미구축이라 실제 컴파일 검증은 아직 안 됨) + 차등 테스트 하네스(레거시 nctRid ↔ 신규 REST, 아직 미착수) — 그 전 단계로 `chatui/validators.py`(정적 검증)와 `chatui/quality_scanner.py`(품질/보안 스캔)는 이미 동작하며 결과를 DB에 기록
+- DB: 로컬 Oracle(`RPLS_ADM`/`xe`, `.env`) — `agents/db.py`/`agents/db_schema.sql`로 `CONV_FILE`/`CONV_ISSUE` 테이블 연동 이미 검증됨, 원본 SHA-256 해시 기반 캐시 조회(`get_cached_status_bulk`)까지 구현
 - 형상관리: Git 브랜치/PR, 계층별(Store/Service/Api/Mapper) 분리 커밋 원칙
 
 ### 4. 프로젝트 관심 도메인
