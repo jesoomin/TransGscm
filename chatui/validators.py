@@ -4,22 +4,27 @@ CLAUDE.md 핵심 원칙: "변환기(Translator)와 검증기(Validator)는 분�
 변환 로직에 섞이면 변환기를 바꿀 때마다 검증 자산도 같이 깨진다." 이 모듈은
 converters.py/skeleton_gen.py가 만든 결과물을 입력으로만 받고, 그 파일들을 절대 고치지 않는다.
 
-실제 Maven 모듈은 `gscm/`(pom.xml)에 있고 `cd gscm && mvn compile`로 진짜 `javac` 컴파일을
-확인할 수 있다 - 다만 이 모듈(validators.py)은 그 mvn 호출과는 아직 연동돼 있지 않고, 대신
-가볍고 빠른 정적 검증만 한다(변환기/검증기 분리 원칙 - 실제 컴파일 연동은 별도 자산으로 얹을 것):
+가볍고 빠른 정적 검사(브레이스 균형, 계층 간 참조, Mapper.xml well-formed)와, `gscm/`에 대해
+실제 `mvn compile`을 subprocess로 돌리는 `run_maven_compile()` 둘 다 이 모듈에 있다 - 다만 이
+둘은 서로 다른 함수로 분리돼 있고 자동으로 이어지지 않는다(정적 검사가 실패해도 mvn을 자동으로
+돌리거나 하지 않음). 정적 검사가 보는 것:
   - Java: 중괄호 균형(문자열/주석 인식), LLM 포팅이 안 끝나고 남은 PORT_START 스텁 탐지
   - 계층 간 실제 호출 대상 존재 확인: Api의 service.xxx() -> Service에 정의돼 있는지,
     Service의 store.xxx() -> Store에 정의돼 있는지, Store가 참조하는 매퍼 statement id ->
     Mapper.xml에 있는지
   - Mapper.xml: XML well-formed 여부, statement id 중복, #{..}/${..} 바인드 표현식 짝
-PASS는 "돌아간다"가 아니라 "이 정적 검사를 통과했다"는 뜻이다 - 실제 실행 검증(차등 테스트)은
+정적 검사의 PASS는 "돌아간다"가 아니라 "이 정적 검사를 통과했다"는 뜻이다 - `run_maven_compile()`의
+BUILD SUCCESS라야 실제 컴파일이 확인된 것이다. 실제 실행 검증(차등 테스트)은 그것과도 또 다른,
 docs/02-architecture.md의 별도 단계다.
 """
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 import xml.dom.minidom as minidom
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass
@@ -308,3 +313,76 @@ def validate_screen(files: dict[str, str], prefix: str) -> list[ValidationResult
         issues=cross_issues,
     ))
     return results
+
+
+@dataclass
+class MavenCompileResult:
+    """`gscm/`에 대해 실제 `mvn compile`을 돌린 결과. 위 정적 검증들과 달리 이건 진짜 javac 컴파일이다.
+
+    mvn 바이너리나 gscm/pom.xml이 없으면 실행 자체를 하지 않고 available=False로 안내만 한다 -
+    이 환경에 mvn이 없다고 에러를 내는 대신, 있는 환경에서 다시 누르면 되게 한다.
+    """
+    available: bool
+    ran: bool
+    passed: bool
+    summary: str
+    error_lines: list[str] = field(default_factory=list)
+    raw_output: str = ""
+    returncode: int | None = None
+
+
+def run_maven_compile(gscm_dir: Path | str | None = None, timeout: int = 300) -> MavenCompileResult:
+    """`gscm/` Maven 모듈에서 `mvn -q compile`을 실제로 실행한다(subprocess).
+
+    화면 하나가 아니라 gscm/ 모듈 전체를 컴파일한다 - Maven에 "이 파일만" 컴파일하는 개념이 없어서다.
+    화면이 여러 개 쌓이면 다른 화면의 컴파일 에러도 같이 보일 수 있다는 뜻이다.
+    """
+    if gscm_dir is None:
+        gscm_dir = Path(__file__).resolve().parent.parent / "gscm"
+    else:
+        gscm_dir = Path(gscm_dir)
+
+    mvn_path = shutil.which("mvn")
+    if not mvn_path:
+        return MavenCompileResult(
+            available=False, ran=False, passed=False,
+            summary=(
+                "이 환경 PATH에서 mvn을 찾지 못해 실제 컴파일 검증을 건너뜁니다 - mvn이 설치된 환경에서 "
+                "이 버튼을 다시 누르면 진짜 javac 컴파일 결과를 보여줍니다."
+            ),
+        )
+    if not (gscm_dir / "pom.xml").exists():
+        return MavenCompileResult(
+            available=False, ran=False, passed=False,
+            summary=f"{gscm_dir}/pom.xml이 없어 실제 컴파일 검증을 건너뜁니다 - Maven 모듈이 아직 없습니다.",
+        )
+
+    try:
+        proc = subprocess.run(
+            ["mvn", "-q", "compile"],
+            cwd=str(gscm_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return MavenCompileResult(
+            available=True, ran=False, passed=False,
+            summary=(
+                f"mvn compile이 {timeout}초 안에 끝나지 않았습니다(의존성 다운로드가 오래 걸리는 첫 실행에 "
+                "흔함) - 잠시 후 다시 눌러보세요."
+            ),
+        )
+
+    output = (proc.stdout or "") + (proc.stderr or "")
+    error_lines = [line for line in output.splitlines() if line.startswith("[ERROR]")]
+    passed = proc.returncode == 0
+    summary = (
+        "BUILD SUCCESS - gscm/ 전체가 실제로 컴파일됩니다."
+        if passed
+        else f"BUILD FAILURE (exit {proc.returncode}) - [ERROR] {len(error_lines)}건. 아래 로그 참고."
+    )
+    return MavenCompileResult(
+        available=True, ran=True, passed=passed, summary=summary,
+        error_lines=error_lines, raw_output=output, returncode=proc.returncode,
+    )

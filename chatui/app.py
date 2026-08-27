@@ -7,9 +7,10 @@ CLAUDE.md 핵심 원칙에 따라:
   - Service 메서드 "본문"(업무 로직 포팅)만 선택적으로 LLM Gateway를 쓴다 - 기본은 꺼져있다.
   - 변환기(converters.py/skeleton_gen.py)와 검증기(validators.py)를 분리한다. 골격 생성/포팅
     직후 자동으로 validators.py의 정적 검증(중괄호 균형, 계층 간 실제 호출 대상 존재 여부,
-    Mapper.xml well-formed 여부)을 돌려 "실행 가능성에 가까운지"를 보여준다 - 진짜 Maven/Spring
-    빌드가 아직 없어 실제 컴파일/기동 검증은 아니다(그 결과가 PASS/FAIL로 CONV_FILE.BUILD_CHECK에
-    저장된다).
+    Mapper.xml well-formed 여부)을 돌려 "실행 가능성에 가까운지"를 보여준다(그 결과가 PASS/FAIL로
+    CONV_FILE.BUILD_CHECK에 저장된다). 정적 검증 결과 옆의 "실제 mvn compile 실행" 버튼을 누르면
+    validators.py의 run_maven_compile()이 실제 gscm/ Maven 모듈에 대해 진짜 javac 컴파일을
+    subprocess로 돌린다 - 이건 정적 검증과 별개로 자동 연동되지 않고 사람이 버튼을 눌러야 실행된다.
   - 아무것도 자동으로 커밋하지 않는다. 로컬 pilot/{screen}/ 폴더에 "저장" 버튼을 눌러야만
     파일이 생기며, docs/07-tobe-structure.xlsx 기준 실제 TO-BE 폴더 구조
     (gscm/src/main/java/com/skhynix/gscm/r/{p1}/{p2}/Controller|dto|service|store/,
@@ -44,7 +45,7 @@ from skeleton_gen import (  # noqa: E402
     to_prefix,
     tobe_relpath,
 )
-from validators import validate_screen  # noqa: E402
+from validators import validate_screen, run_maven_compile  # noqa: E402
 from quality_scanner import run_review, llm_review  # noqa: E402
 from cross_analysis import analyze_pilot_folder  # noqa: E402
 
@@ -544,13 +545,29 @@ if screen_id:
                 expanded=bool(blocker_files),
             ):
                 st.caption(
-                    "이 정적 검사는 아직 진짜 javac 컴파일을 하지 않습니다 - 중괄호 균형, "
-                    "LLM 포팅 미완료 스텁, 계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), "
-                    "Mapper.xml well-formed 여부만 확인합니다. PASS는 \"돌아간다\"가 아니라 "
-                    "\"이 정적 검사를 통과했다\"는 뜻입니다. 실제 Maven 모듈은 `gscm/`에 있으니 "
-                    "진짜 컴파일 확인은 `cd gscm && mvn compile`로 직접 실행하세요 "
-                    "(이 화면 내 자동 실행 연동은 아직 없음)."
+                    "이 정적 검사는 진짜 javac 컴파일이 아닙니다 - 중괄호 균형, LLM 포팅 미완료 스텁, "
+                    "계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), Mapper.xml well-formed "
+                    "여부만 확인합니다. PASS는 \"돌아간다\"가 아니라 \"이 정적 검사를 통과했다\"는 뜻입니다. "
+                    "아래 버튼은 실제 `gscm/` Maven 모듈에 대해 `mvn compile`을 진짜로 실행합니다 - "
+                    "화면 하나가 아니라 gscm/ 모듈 전체를 컴파일하므로, 다른 화면의 미해결 에러가 같이 "
+                    "보일 수 있습니다."
                 )
+                if st.button("🔨 실제 mvn compile 실행", key=f"mvn_compile_btn_{screen_id}"):
+                    with st.spinner(
+                        "gscm/에서 mvn compile 실행 중... (의존성 캐시가 없는 첫 실행은 몇 분 걸릴 수 있습니다)"
+                    ):
+                        st.session_state[f"mvn_result_{screen_id}"] = run_maven_compile()
+                mvn_result = st.session_state.get(f"mvn_result_{screen_id}")
+                if mvn_result is not None:
+                    if not mvn_result.available:
+                        st.info(mvn_result.summary)
+                    elif mvn_result.passed:
+                        st.success(mvn_result.summary)
+                    else:
+                        st.error(mvn_result.summary)
+                        with st.expander(f"컴파일 오류 로그 ({len(mvn_result.error_lines)}건)"):
+                            for line in mvn_result.error_lines:
+                                st.code(line, language=None)
                 for r in validation_results:
                     icon = "✅" if r.passed else "❌"
                     st.markdown(f"{icon} **{r.file_name}** ({r.check})")
