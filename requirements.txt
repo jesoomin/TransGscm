@@ -1,4 +1,13 @@
+# Phase 0~2 (결정론적 변환기 + 챗UI + 로컬 검증) - 이미 사용 중
 openai>=1.40
 python-dotenv>=1.0
 streamlit>=1.35
 oracledb>=2.0
+
+# Phase 4~6 대비 추가 (2026-08-27, docs/10-week4-design-devenv.md) - 설치/임포트만 검증됨,
+# 파이프라인에는 아직 연동 안 됨. CLAUDE.md 기술 스택 절 참고.
+langgraph>=1.2
+fastapi>=0.141
+uvicorn[standard]>=0.52
+chromadb>=1.5
+faiss-cpu>=1.15
