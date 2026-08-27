@@ -214,6 +214,37 @@ def upsert_conv_file(
         return file_id
 
 
+def replace_nctrid_map(screen_id: str, rows) -> None:
+    """화면 하나의 nctRid 매핑 행을 전부 지우고 다시 넣는다(agents/nctrid_mapper.py 재실행 시 중복 방지).
+
+    rows는 agents.nctrid_mapper.NctridMapRow 목록 - 정적 분석 결과를 그대로 옮겨 담는다.
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM NCTRID_MAP WHERE SCREEN_ID = :screen_id", screen_id=screen_id)
+        cur.executemany(
+            """
+            INSERT INTO NCTRID_MAP (
+                SCREEN_ID, NCTRID, P_CLASS, P_METHOD, F_CLASS, F_METHOD,
+                D_CLASS, D_METHOD, XSQL_STMT_ID, NOTE
+            ) VALUES (
+                :screen_id, :nctrid, :p_class, :p_method, :f_class, :f_method,
+                :d_class, :d_method, :xsql_stmt_id, :note
+            )
+            """,
+            [
+                {
+                    "screen_id": r.screen_id, "nctrid": r.nctrid, "p_class": r.p_class,
+                    "p_method": r.p_method, "f_class": r.f_class, "f_method": r.f_method,
+                    "d_class": r.d_class, "d_method": r.d_method,
+                    "xsql_stmt_id": r.xsql_stmt_id, "note": r.note,
+                }
+                for r in rows
+            ],
+        )
+        conn.commit()
+
+
 def get_screen_summary() -> list[dict]:
     """화면(SCREEN_ID)별로 CONV_FILE 행을 집계한다 - 전체 현황 그리드(성공/실패/전환율)의 기초 데이터.
 

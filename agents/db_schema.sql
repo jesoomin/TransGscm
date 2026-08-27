@@ -52,3 +52,25 @@ CREATE TABLE CONV_ISSUE (
 
 CREATE INDEX IX_CONV_ISSUE_FILE ON CONV_ISSUE(FILE_ID);
 CREATE INDEX IX_CONV_FILE_SCREEN ON CONV_FILE(SCREEN_ID);
+
+-- nctRid 매핑 그래프: 화면ID/nctRid <-> P->F->D BizUnit <-> XSQL statement 콜체인.
+-- agents/nctrid_mapper.py가 P/F/D BizUnit Java 소스 정적 분석만으로 채운다(LLM 아님).
+-- tracking/nctrid-map.csv(사람이 보는 요약본)와 같은 정보를 담는다 - CONV_FILE/CSV 관계와 동일하게
+-- 지금은 서로 자동 동기화되지 않는다.
+CREATE TABLE NCTRID_MAP (
+    MAP_ID       NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    SCREEN_ID    VARCHAR2(30)  NOT NULL,   -- 예: U-PPLA047
+    NCTRID       VARCHAR2(30)  NOT NULL,   -- 예: RPLA04701 (.bizunit 없으면 P 메서드명 그대로 - 사용자 확인: nctRid=P 메서드명)
+    P_CLASS      VARCHAR2(50)  NOT NULL,
+    P_METHOD     VARCHAR2(100) NOT NULL,
+    F_CLASS      VARCHAR2(50),
+    F_METHOD     VARCHAR2(100),
+    D_CLASS      VARCHAR2(50),
+    D_METHOD     VARCHAR2(100),
+    XSQL_STMT_ID VARCHAR2(30),
+    NOTE         VARCHAR2(500),
+    CREATED_AT   TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL
+);
+
+CREATE INDEX IX_NCTRID_MAP_SCREEN ON NCTRID_MAP(SCREEN_ID);
+CREATE INDEX IX_NCTRID_MAP_NCTRID ON NCTRID_MAP(NCTRID);

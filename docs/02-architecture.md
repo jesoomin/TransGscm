@@ -57,8 +57,9 @@ NEXCORE가 단일 진입점(nctRid)에 고정된 Dataset 포맷을 쓰기 때문
 변환기(Translator)와 검증기(Validator)는 별도 모듈로 분리한다 — 나중에 변환기를 바꿔도 검증 자산(차등 테스트 하네스, 결과 리포트)이 살아남게 하기 위함.
 
 ## 선결 확인 필요 사항 (Phase 0)
-- UIAdapter의 실제 서블릿/URL 패턴 및 nctRid 라우팅 코드 — nctRid 매핑 그래프 구축의 전제
-- `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 (동적 조합인 경우 부분 평가 필요) — **UI를 전환하진 않지만, 어떤 화면이 어떤 nctRid를 쓰는지 알아야 TO-BE API와 대응시킬 수 있어 이 분석 자체는 여전히 필요**
+> **2026-08-27 정정(사용자 확인, 실무 경험 기반)**: 아래 첫 두 항목은 더 이상 nctRid 매핑 그래프의 전제조건이 아니다. nctRid는 P BizUnit 소스의 public 메서드명과 사실상 동일해서(예: `pPLA04701` = nctRid `RPLA04701`), UIAdapter 라우팅 코드나 `.xjs` 파싱 없이 **P/F/D BizUnit Java 소스만으로** 화면↔nctRid↔BizUnit↔XSQL 그래프를 정적으로 구성할 수 있다 - `agents/nctrid_mapper.py`, `docs/03-kickoff-plan.md` Phase 1, `docs/04-glossary.md` 참고.
+- ~~UIAdapter의 실제 서블릿/URL 패턴 및 nctRid 라우팅 코드~~ — 불필요로 확인
+- ~~`.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙~~ — 불필요로 확인
 - `.BIZUNIT` XML의 실제 스키마 (필드/타입 정의 포맷) — 비어있는 경우가 많아 대체 추출 규칙 필요
 - P BizUnit이 순수 진입점 역할만 하는지, 화면별 검증 로직이 섞여있는지 (PLA047 1건은 순수 위임 확인됨, 표본 확대 필요)
 - 소스코드 외부 LLM 전송에 대한 사내 보안 정책

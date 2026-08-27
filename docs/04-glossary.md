@@ -6,7 +6,8 @@
 - **PU / FU / DU**: G-SCM에서 BizUnit을 세 계층으로 나눈 프로젝트 컨벤션. P(Presentation, 화면 요청 처리) → F(Function, 비즈니스 로직) → D(Data, 데이터 접근) 순서로 호출된다.
 - **XSQL**: iBatis 기반 SQL 매핑 XML 파일. D BizUnit이 참조해 실제 쿼리를 실행한다. MyBatis의 Mapper.xml에 해당.
 - **UIAdapter**: Nexacro 클라이언트의 Dataset과 NEXCORE 서버의 `IDataSet`을 직렬화/역직렬화해 연결하는 브릿지 라이브러리.
-- **nctRid**: Nexacro 화면에서 트랜잭션을 호출할 때 쓰는 서비스 ID (예: `RPLA04701`). 화면 파일명과 문자열이 일치하지 않으므로, 매핑을 반드시 소스나 문서에서 확인해야 한다.
+- **nctRid**: Nexacro 화면에서 트랜잭션을 호출할 때 쓰는 서비스 ID (예: `RPLA04701`). **사용자 확인(2026-08-27, 실무 경험)**: nctRid는 P BizUnit(PU) 소스의 public 메서드명과 사실상 동일하다 - `PPLA047.java`의 `pPLA04701` 메서드가 nctRid `RPLA04701` 트랜잭션 하나에 대응한다. 즉 `.xjs`나 NEXCORE 설정을 조회하지 않아도 P BizUnit Java 소스(메서드 목록)만으로 화면이 쓰는 nctRid 전체를 정적으로 열거할 수 있다 - `agents/nctrid_mapper.py`가 이 방식으로 동작한다. 화면 파일명과 nctRid 문자열이 일치하지 않는 경우가 있어(`docs/06-mentor-feedback.md` §1), `.bizunit`에 실제 값이 있으면 그걸 우선 쓰고 없으면 P 메서드명으로 대체한다.
+- **화면ID**: `U-{P클래스명}` 형식(예: `U-PPLA047`). **사용자 확인(2026-08-27)**. 화면 하나 안에 nctRid(P 메서드) 여러 개가 있고, 하나의 PU가 서로 다른 FU 여러 개를 호출하는 구조도 가능하다 - `agents/nctrid_mapper.py`는 이를 반영해 F/D 소스를 클래스명 기준 dict로 받는다.
 - **IDataSet / IOnlineContext**: NEXCORE BizUnit 메서드의 표준 파라미터. IDataSet은 요청/응답 데이터, IOnlineContext는 사용자·거래 컨텍스트 정보를 담는다.
 - **.BIZUNIT XML**: 각 BizUnit의 입출력 필드/타입을 정의하는 메타데이터 파일로 추정. 실제 스키마는 Phase 0에서 확인 필요.
 - **DCOT998류**: 특정 화면에 묶이지 않은 공통/배치성 BizUnit을 가리키는 예시. 이번 변환 범위에서 제외.

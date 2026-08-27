@@ -55,7 +55,7 @@ gscm/src/main/resources/
 ## 기술 스택
 - 오케스트레이션: 사내 GaiA LLM 프레임워크 우선 (한계 확인되면 LangGraph 검토)
 - **LLM 호출: 사내 LLM Gateway(AI Talent Lab, Azure OpenAI 호환, `https://skax.ai-talentlab.com`)를 통해 접근.** 허용 모델은 `gpt-4.1`/`gpt-4.1-mini`/`gpt-4o`/`gpt-4o-mini`/`gpt-5`/`gpt-5-mini`/`gpt-5.4`/`text-embedding-3-large`/`text-embedding-3-small`/`text-embedding-ada-002` — 이 목록 밖 모델명은 쓰지 않는다. 클라이언트 구현은 `agents/llm_gateway.py`. 결정론적 변환 영역에는 쓰지 않는다(위 핵심 원칙 참고)
-- 파싱: `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang 또는 tree-sitter. **xfdl 파서는 불필요**(UI 미전환)하지만, **`.xjs`의 `transaction()` 호출부에서 nctRid 문자열을 추출하기 위한 경량 JS AST 파서(babel 또는 tree-sitter)는 여전히 필요**하다 — 화면을 변환하진 않지만 화면↔nctRid 매핑을 알아야 하기 때문. 무거운 정적분석기(CodeQL류) 대신 언어별 경량 파서 조합으로 충분하다
+- 파싱: `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang 또는 tree-sitter. **xfdl 파서는 불필요**(UI 미전환). **2026-08-27 정정(사용자 확인, 실무 경험 기반)**: nctRid는 P BizUnit 소스의 public 메서드명과 사실상 동일해서(예: `pPLA04701` = nctRid `RPLA04701`), `.xjs`의 `transaction()` 호출부를 파싱할 필요가 없어졌다 — P/F/D BizUnit Java 소스(파일명 규칙 + 메서드 호출부)만으로 화면↔nctRid↔BizUnit↔XSQL 매핑을 정적으로 구성한다(`agents/nctrid_mapper.py`, @docs/03-kickoff-plan.md Phase 1 참고). 무거운 정적분석기(CodeQL류) 대신 경량 정규식 기반 추출로 충분함을 확인했다(`chatui/skeleton_gen.py`의 검증된 추출 함수 재사용)
 - 검색/예시 저장: FAISS 또는 Chroma (파일럿 20~30건이 RAG 코퍼스가 됨)
 - 서비스화: FastAPI
 - **업로드→변환 챗팅 UI**: `docs/07-tobe-structure.xlsx`의 AS_IS 시트 기준 폴더6(`gscm`, 즉 `dev-rp-online/src/java/gscm/` 이하)부터 업로드하면 TO-BE 구조 파일로 변환해주는 대화형 도구. 상세는 @docs/03-kickoff-plan.md

@@ -19,12 +19,20 @@
 
 ## Phase 1 — nctRid 매핑 그래프 + 차등 테스트 하네스 (변환기보다 먼저)
 멘토 코멘트 §1, §3. 이게 없으면 에이전트가 화면마다 코드베이스를 헤매며 환각을 낸다.
-- [ ] `.xjs` → `transaction()` 호출부 → nctRid 추출 (정적 분석, LLM 아님). 동적 문자열 조합이면 부분 평가/상수 전파 필요
-- [ ] NEXCORE 설정에서 nctRid → P BizUnit 클래스 매핑 추출
-- [ ] JavaParser로 P → F → D 콜그래프 추적
-- [ ] D BizUnit → XSQL namespace + queryId 매핑
-- [ ] 위 4단계를 이어 화면↔API↔SQL 전체 그래프를 DB(또는 구조화 파일)로 구축. 자동 추출 실패 케이스(문자열 규칙 불일치, 경험상 전체 10~20%)는 사람이 채운다
-- [ ] 차등 테스트 하네스 구축: 동일 입력 → 레거시 nctRid 호출 / 신규 REST 호출 → 정규화 후 diff. 로컬 Oracle DB(`.env`)에 두 경로를 붙여서 파일럿 전에 먼저 동작 확인
+
+**2026-08-27 접근 변경(사용자 확인, 실무 경험 기반)**: nctRid는 P BizUnit(PU) 소스의 public 메서드명과
+사실상 동일하다(`PPLA047.java`의 `pPLA04701` = nctRid `RPLA04701`). 화면ID는 `U-{P클래스명}` 형식이고,
+하나의 PU가 여러 FU를 호출할 수 있는 구조다. UI 소스(.xjs)나 NEXCORE 설정을 거치지 않아도 **P/F/D
+BizUnit Java 소스(파일명 규칙 + 메서드 호출부)만으로 nctRid↔P↔F↔D↔XSQL 콜그래프 전체를 정적으로 구성할
+수 있다** - 아래 두 항목(`.xjs` 추출, NEXCORE 설정 매핑)은 더 이상 선행 조건이 아니므로 접근 방식을
+변경한다(@docs/04-glossary.md "nctRid"/"화면ID" 참고).
+
+- [x] ~~`.xjs` → `transaction()` 호출부 → nctRid 추출~~ — **불필요로 확인(사용자, 2026-08-27)**: nctRid=P 메서드명이라 Java 소스만으로 충분. `.xjs` 파싱 자체가 이번 범위(UI 미전환)에 안 맞기도 했음(CLAUDE.md 핵심 원칙)
+- [x] ~~NEXCORE 설정에서 nctRid → P BizUnit 클래스 매핑 추출~~ — **불필요로 확인(사용자, 2026-08-27)**: P 클래스명 자체가 화면ID(`U-{P클래스명}`)이므로 별도 설정 조회가 필요 없음
+- [x] **P → F → D 콜그래프 추적 + D → XSQL statement 매핑 — `agents/nctrid_mapper.py` 신규 구현**. JavaParser 대신 `chatui/skeleton_gen.py`가 이미 검증한 정규식 기반 추출 함수(`extract_methods`/`extract_method_bodies`/`extract_nctrid_map`)를 재사용하고, D→XSQL statement id 추출(`dbSelect("S00N", ...)`)은 `skeleton_gen.py`에서 `extract_d_statement_ids()`로 뽑아내 공용 함수로 분리한 뒤 재사용(중복 방지). 호출 매칭은 **변수명이 아니라 메서드명 존재 여부**로 한다 - FPLA047.java 35행처럼 D 유닛을 `lookupFunctionUnit()`으로 조회하거나 `fu`/`du` 변수명이 메서드마다 뒤섞이는 원본 결함이 있어도 안전하게 동작하도록 함(원본을 고치지 않고 그 위에서 강건하게 동작하는 방식 선택). PLA047 실 소스로 검증: `pPLA04701`(nctRid `RPLA04701`) → `fPLA047QrySelectMainList` → `dPLA04702/03/04/05`(S002~S005) 4개 전부, `pPLA04702`(`RPLA04702`) → `fPLA047QrySelectRev` → `dPLA04701`(S001), `pPLA04703`(`RPLA04703`) → `fPLA047QrySelectRevPeriod` → `dPLA04706`(S006) - 총 6행, 전부 사전에 사람이 직접 대조한 값과 정확히 일치 확인
+- [x] 화면↔API↔SQL 그래프를 구조화 파일 + DB로 구축 — `tracking/nctrid-map.csv`(사람이 보는 요약본, `write_csv()`)와 `agents/db_schema.sql`의 신규 `NCTRID_MAP` 테이블(+`agents/db.py`의 `replace_nctrid_map()`) 둘 다 준비. **DB 쪽은 이 개발 환경에 Oracle 접속이 없어 실행 검증은 못 함**(코드는 기존 `upsert_conv_file`/`record_issues`와 동일한 패턴) - CSV 쪽은 PLA047 실 데이터로 저장까지 확인. 자동 추출 실패 케이스(F/D 메서드 호출을 못 찾은 행)는 `비고` 열에 "원본 확인 필요"로 남기고 추측하지 않는다
+- [ ] 화면이 여러 개 쌓이면(파일럿 20~30개) 자동 추출 실패율이 실제로 10~20%대인지 표본으로 재확인 — 지금은 PLA047 1건뿐이라 아직 통계적으로 의미 없음
+- [ ] 차등 테스트 하네스 구축: 동일 입력 → 레거시 nctRid 호출 / 신규 REST 호출 → 정규화 후 diff. 로컬 Oracle DB(`.env`)에 두 경로를 붙여서 파일럿 전에 먼저 동작 확인 (**다음 착수 예정**)
 
 ## Phase 2 — 공통 규약 + 결정론적 변환기 + 업로드→변환 챗팅 UI
 화면 하나를 통째로 넣지 않는다 — `.BIZUNIT`/P/F/D/XSQL 5개 fragment로 나눠 처리하고, **콜그래프 역순(XSQL → Store → Service → Api)** 으로 하위부터 확정한다. 상위(Api) 시그니처를 먼저 잡고 하위를 끼워 맞추지 않는다.

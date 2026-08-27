@@ -120,6 +120,15 @@ def splice_ported_method(service_java: str, method: str, ported_body_code: str) 
     return pattern.sub(lambda _m: replacement, service_java, count=1)
 
 
+def extract_d_statement_ids(d_java_text: str) -> dict[str, str]:
+    """D BizUnit 메서드명 -> dbSelect("S00N", ...) 호출에서 뽑은 XSQL statement id.
+
+    agents/nctrid_mapper.py의 nctRid 매핑 그래프 구축(D->XSQL 단계)에서도 그대로 재사용한다 -
+    같은 패턴을 두 곳에서 따로 유지하지 않기 위함.
+    """
+    return dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
+
+
 def extract_nctrid_map(bizunit_text: str) -> dict[str, str]:
     """.bizunit에서 method id -> transactionId(nctRid 또는 내부 트랜잭션 ID) 매핑을 뽑는다.
 
@@ -431,7 +440,7 @@ def generate_skeletons(
                 message="D 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.",
             ))
         # dbSelect("S00N", ...) 호출에서 실제 매핑 statement id를 뽑아 Store가 참조할 수 있게 한다.
-        stmt_ids = dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
+        stmt_ids = extract_d_statement_ids(d_java_text)
         lines = [
             f"package {base_pkg}.store;",
             "",
