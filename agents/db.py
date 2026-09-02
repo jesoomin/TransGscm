@@ -77,6 +77,40 @@ def ensure_schema() -> None:
             (error,) = e.args
             if error.code != 1430:  # ORA-01430: column being added already exists in table
                 raise
+        # CONV_METHOD/CONV_METHOD_CALL이 나중에(CONV_ISSUE보다 뒤에) 추가된 테이블이라, 이미
+        # CONV_ISSUE가 만들어져 있던 기존 설치본에는 METHOD_ID 컬럼+FK가 없다 - 위와 같은 패턴으로
+        # "이미 있음" 오류만 무시하고 추가한다.
+        try:
+            cur.execute("ALTER TABLE CONV_ISSUE ADD (METHOD_ID NUMBER)")
+        except oracledb.DatabaseError as e:
+            (error,) = e.args
+            if error.code != 1430:
+                raise
+        try:
+            cur.execute(
+                "ALTER TABLE CONV_ISSUE ADD CONSTRAINT FK_CONV_ISSUE_METHOD "
+                "FOREIGN KEY (METHOD_ID) REFERENCES CONV_METHOD(METHOD_ID)"
+            )
+        except oracledb.DatabaseError as e:
+            (error,) = e.args
+            if error.code != 2275:  # ORA-02275: such a referential constraint already exists
+                raise
+        try:
+            cur.execute("ALTER TABLE CONV_METHOD ADD (NCTRID VARCHAR2(50))")
+        except oracledb.DatabaseError as e:
+            (error,) = e.args
+            if error.code != 1430:
+                raise
+        # NCTRID_MAP도 PU_ID/FU_ID/DU_ID/XSQL_ID보다 먼저 만들어진 설치본이 있을 수 있어 같은
+        # 패턴으로 뒤늦게 추가한다. 컬럼 하나만 이미 있어도 여러 개를 한 ALTER 문에 같이 넣으면
+        # 전체가 ORA-01430으로 실패하므로 컬럼별로 따로 실행한다.
+        for col in ("PU_ID", "FU_ID", "DU_ID", "XSQL_ID"):
+            try:
+                cur.execute(f"ALTER TABLE NCTRID_MAP ADD ({col} VARCHAR2(50))")
+            except oracledb.DatabaseError as e:
+                (error,) = e.args
+                if error.code != 1430:
+                    raise
         conn.commit()
 
 
@@ -214,20 +248,32 @@ def upsert_conv_file(
         return file_id
 
 
-def record_issues(file_id: int, issues, detected_by: str) -> None:
-    """chatui/converters.py, chatui/skeleton_gen.py가 만든 ConversionIssue 목록을 CONV_ISSUE에 적재한다."""
+def record_issues(
+    file_id: int,
+    issues,
+    detected_by: str,
+    method_id_by_name: dict[str, int] | None = None,
+) -> None:
+    """chatui/converters.py, chatui/skeleton_gen.py가 만든 ConversionIssue 목록을 CONV_ISSUE에 적재한다.
+
+    method_id_by_name을 넘기면(같은 파일 안의 {AS-IS 메서드명: METHOD_ID}), ConversionIssue.method_name이
+    채워진 이슈는 METHOD_ID까지 연결해서 저장한다 - 없으면(기존 호출부, 또는 파일 전체에 걸린
+    이슈) 전과 동일하게 METHOD_ID는 NULL로 남는다.
+    """
     if not issues:
         return
+    lookup = method_id_by_name or {}
     with get_connection() as conn:
         cur = conn.cursor()
         cur.executemany(
             """
-            INSERT INTO CONV_ISSUE (FILE_ID, ISSUE_TYPE, SEVERITY, LINE_NO, MESSAGE, DETECTED_BY)
-            VALUES (:file_id, :issue_type, :severity, :line_no, :message, :detected_by)
+            INSERT INTO CONV_ISSUE (FILE_ID, METHOD_ID, ISSUE_TYPE, SEVERITY, LINE_NO, MESSAGE, DETECTED_BY)
+            VALUES (:file_id, :method_id, :issue_type, :severity, :line_no, :message, :detected_by)
             """,
             [
                 {
                     "file_id": file_id,
+                    "method_id": lookup.get(getattr(i, "method_name", None)),
                     "issue_type": i.issue_type,
                     "severity": i.severity,
                     "line_no": i.line_no,
@@ -238,3 +284,169 @@ def record_issues(file_id: int, issues, detected_by: str) -> None:
             ],
         )
         conn.commit()
+
+
+def upsert_conv_method(
+    file_id: int,
+    method_name: str,
+    method_name_tobe: str | None = None,
+    body_hash: str | None = None,
+    conversion_method: str | None = None,
+    mapper_stmt_id: str | None = None,
+    nctrid: str | None = None,
+) -> int:
+    """CONV_METHOD 행을 만들거나(없으면) 갱신하고(있으면) METHOD_ID를 돌려준다. (FILE_ID, METHOD_NAME) 기준."""
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT METHOD_ID FROM CONV_METHOD WHERE FILE_ID = :file_id AND METHOD_NAME = :method_name",
+            file_id=file_id, method_name=method_name,
+        )
+        row = cur.fetchone()
+        if row:
+            method_id = row[0]
+            cur.execute(
+                """
+                UPDATE CONV_METHOD SET
+                    METHOD_NAME_TOBE = :method_name_tobe, BODY_HASH = :body_hash,
+                    CONVERSION_METHOD = :conversion_method, MAPPER_STMT_ID = :mapper_stmt_id,
+                    NCTRID = :nctrid, UPDATED_AT = SYSTIMESTAMP
+                WHERE METHOD_ID = :method_id
+                """,
+                method_name_tobe=method_name_tobe, body_hash=body_hash,
+                conversion_method=conversion_method, mapper_stmt_id=mapper_stmt_id,
+                nctrid=nctrid, method_id=method_id,
+            )
+        else:
+            method_id_var = cur.var(int)
+            cur.execute(
+                """
+                INSERT INTO CONV_METHOD (
+                    FILE_ID, METHOD_NAME, METHOD_NAME_TOBE, BODY_HASH, CONVERSION_METHOD, MAPPER_STMT_ID, NCTRID
+                ) VALUES (
+                    :file_id, :method_name, :method_name_tobe, :body_hash, :conversion_method, :mapper_stmt_id, :nctrid
+                )
+                RETURNING METHOD_ID INTO :method_id
+                """,
+                file_id=file_id, method_name=method_name, method_name_tobe=method_name_tobe,
+                body_hash=body_hash, conversion_method=conversion_method, mapper_stmt_id=mapper_stmt_id,
+                nctrid=nctrid, method_id=method_id_var,
+            )
+            method_id = method_id_var.getvalue()[0]
+        conn.commit()
+        return method_id
+
+
+def link_method_call(
+    caller_method_id: int,
+    callee_method_id: int | None,
+    callee_name_raw: str | None,
+) -> None:
+    """콜그래프 엣지 하나를 기록한다(caller/callee/원본이름 조합이 이미 있으면 중복 삽입 안 함).
+
+    callee_method_id가 None이면(콜그래프 구축 시점에 callee 파일이 아직 처리 안 됐거나, 다른
+    화면 소속이라 이번 실행 범위 밖인 경우) callee_name_raw만 보존한다 - 추측으로 연결하지 않는다.
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT CALL_ID FROM CONV_METHOD_CALL
+            WHERE CALLER_METHOD_ID = :caller AND NVL(CALLEE_METHOD_ID, -1) = NVL(:callee, -1)
+              AND NVL(CALLEE_NAME_RAW, '-') = NVL(:callee_raw, '-')
+            """,
+            caller=caller_method_id, callee=callee_method_id, callee_raw=callee_name_raw,
+        )
+        if cur.fetchone():
+            return
+        cur.execute(
+            """
+            INSERT INTO CONV_METHOD_CALL (CALLER_METHOD_ID, CALLEE_METHOD_ID, CALLEE_NAME_RAW)
+            VALUES (:caller, :callee, :callee_raw)
+            """,
+            caller=caller_method_id, callee=callee_method_id, callee_raw=callee_name_raw,
+        )
+        conn.commit()
+
+
+def replace_nctrid_map(screen_id: str, rows: list[dict]) -> None:
+    """화면 하나 분량의 NCTRID_MAP 행을 통째로 갈아끼운다 (SCREEN_ID 기준 DELETE 후 INSERT).
+
+    rows의 각 dict는 {"ui_id","screen_id","pu_id","fu_id","du_id","xsql_id","nctrid","nctrid_source",
+    "p_method","f_method","d_method","mapper_stmt_id"} 키를 갖는다(agents/nctrid_graph.py의
+    build_nctrid_map_rows 참고). F_METHOD/D_METHOD가 NULL일 수 있어 UNIQUE 제약 기반 upsert 대신
+    화면 단위 통째 교체 방식을 쓴다 - 재분석할 때마다 그 화면의 이전 매핑을 깨끗이 지우고 새로 채운다.
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM NCTRID_MAP WHERE SCREEN_ID = :screen_id", screen_id=screen_id)
+        if rows:
+            cur.executemany(
+                """
+                INSERT INTO NCTRID_MAP (
+                    UI_ID, SCREEN_ID, PU_ID, FU_ID, DU_ID, XSQL_ID,
+                    NCTRID, NCTRID_SOURCE, P_METHOD, F_METHOD, D_METHOD, MAPPER_STMT_ID
+                ) VALUES (
+                    :ui_id, :screen_id, :pu_id, :fu_id, :du_id, :xsql_id,
+                    :nctrid, :nctrid_source, :p_method, :f_method, :d_method, :mapper_stmt_id
+                )
+                """,
+                rows,
+            )
+        conn.commit()
+
+
+def get_nctrid_map(ui_id: str | None = None, screen_id: str | None = None, nctrid: str | None = None) -> list[dict]:
+    """NCTRID_MAP을 조회한다. 조건을 안 주면 전체를 돌려준다(화면이 늘어나면 호출부에서 필터링 권장)."""
+    where = []
+    params: dict = {}
+    if ui_id:
+        where.append("UI_ID = :ui_id")
+        params["ui_id"] = ui_id
+    if screen_id:
+        where.append("SCREEN_ID = :screen_id")
+        params["screen_id"] = screen_id
+    if nctrid:
+        where.append("NCTRID = :nctrid")
+        params["nctrid"] = nctrid
+    clause = f"WHERE {' AND '.join(where)}" if where else ""
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"""
+            SELECT UI_ID, SCREEN_ID, PU_ID, FU_ID, DU_ID, XSQL_ID,
+                   NCTRID, NCTRID_SOURCE, P_METHOD, F_METHOD, D_METHOD, MAPPER_STMT_ID
+            FROM NCTRID_MAP {clause}
+            ORDER BY UI_ID, NCTRID, F_METHOD, D_METHOD
+            """,
+            params,
+        )
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def find_duplicate_methods(min_group_size: int = 2) -> list[dict]:
+    """BODY_HASH가 같은 메서드끼리 화면 경계를 넘어 묶어서 돌려준다 - 여러 화면에 복붙된 동일/유사
+    로직 후보(멘토 코멘트의 "NEXCORE 관용구집" 자산화와 연결됨). BODY_HASH가 없는(아직 본문을
+    못 뽑은) 메서드는 제외한다.
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT m.BODY_HASH, m.METHOD_ID, m.METHOD_NAME, f.SCREEN_ID, f.AS_IS_LAYER
+            FROM CONV_METHOD m JOIN CONV_FILE f ON f.FILE_ID = m.FILE_ID
+            WHERE m.BODY_HASH IS NOT NULL
+            ORDER BY m.BODY_HASH
+            """
+        )
+        groups: dict[str, list[dict]] = {}
+        for body_hash, method_id, method_name, screen_id, layer in cur.fetchall():
+            groups.setdefault(body_hash, []).append(
+                {"method_id": method_id, "method_name": method_name, "screen_id": screen_id, "layer": layer}
+            )
+    return [
+        {"body_hash": h, "members": members}
+        for h, members in groups.items()
+        if len(members) >= min_group_size
+    ]

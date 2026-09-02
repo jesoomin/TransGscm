@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//mybatid.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.skhynix.gscm.r.pm.pla.store.Pla011Store">
+
+	<!-- ============================================================
+	     [전역 공통 SQL] 전 화면(PLA001~PLA050) 동일 - 공통 Mapper 분리 대상
+	     ============================================================ -->
+	<select id="dCommonCodeQry" parameterType="com.skhynix.gscm.r.pm.pla.dto.CommoncodeqryDto" resultType="map">
+		
+		/* Biz: gscm.r.pm.prdb.db.DPLA011.S901 공통코드 조회 */
+		SELECT CD_GRP_ID
+			 , CD
+			 , CD_NM
+			 , SORT_SEQ
+		  FROM COM_CODE_MST
+		 WHERE CD_GRP_ID = #{CD_GRP_ID}
+		   AND USE_YN = 'Y'
+		 ORDER BY SORT_SEQ
+		
+	</select>
+
+	<select id="dAuthCheck" parameterType="com.skhynix.gscm.r.pm.pla.dto.AuthcheckDto" resultType="map">
+		
+		/* Biz: gscm.r.pm.prdb.db.DPLA011.S902 사용자 권한 체크 */
+		SELECT USER_ID
+			 , MENU_ID
+			 , AUTH_TYP_CD
+		  FROM COM_USER_AUTH
+		 WHERE USER_ID = #{USER_ID}
+		   AND MENU_ID = #{MENU_ID}
+		   AND AUTH_TYP_CD IN ('R','W')
+		
+	</select>
+
+	<!-- ============================================================
+	     [도메인 공통 SQL] '생산관리' 업무그룹(10개 화면) 내 동일
+	     ============================================================ -->
+	<select id="dHistoryQry" parameterType="com.skhynix.gscm.r.pm.pla.dto.HistoryqryDto" resultType="map">
+		
+		/* Biz: gscm.r.pm.prdb.db.DPLA011.S903 생산관리 이력 조회 (도메인 공통) */
+		SELECT A.HIST_SEQ
+			 , A.CHG_DT
+			 , A.CHG_USER_ID
+			 , A.CHG_CONT
+		  FROM PRO_CHG_HIST A
+		 WHERE A.DOMAIN_CD = 'PRD'
+		   AND A.CHG_DT BETWEEN #{SEARCH_DT_FROM} AND #{SEARCH_DT_TO}
+		 ORDER BY A.CHG_DT DESC
+		
+	</select>
+
+	<!-- ============================================================
+	     [화면 개별 SQL]
+	     S001 : 전 화면 동일 골격(구조적 유사/Near-dup), 테이블/컬럼만 상이
+	     S002 : 화면 고유 로직(완전 고유)
+	     ============================================================ -->
+	<select id="dPLA01101" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla01101Dto" resultType="map">
+		
+		/* Biz: gscm.r.pm.prdb.db.DPLA011.S001 생산실적 메인 목록 조회 */
+		SELECT A.TGT_CD
+			 , A.TGT_CD_NM
+			 , A.WORK_YM
+			 , A.QTY
+			 , A.AMT
+		  FROM PRO_MAIN_01 A
+		 WHERE A.WORK_YM BETWEEN #{SEARCH_DT_FROM} AND #{SEARCH_DT_TO}
+		 ORDER BY A.TGT_CD, A.WORK_YM
+		
+	</select>
+
+	<select id="dPLA01102" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla01102Dto" resultType="map">
+		
+		/* Biz: gscm.r.pm.prdb.db.DPLA011.S002 생산실적 상세 조회 */
+		SELECT B.TGT_CD
+			 , B.DTL_SEQ
+			 , B.QTY AS METRIC_VALUE
+			 , B.METRIC_TYPE
+		  FROM PRO_DTL_01 B
+		 WHERE B.TGT_CD = #{TGT_CD}
+		   AND B.METRIC_TYPE = #{METRIC_TYPE}
+		
+	</select>
+
+	<select id="dExcelDownQry" parameterType="com.skhynix.gscm.r.pm.pla.dto.ExceldownqryDto" resultType="map">
+		
+		/* Biz: gscm.r.pm.prdb.db.DPLA011.S904 엑셀다운로드용 조회 (홀수 화면 공통) */
+		SELECT A.TGT_CD
+			 , A.TGT_CD_NM
+			 , A.WORK_YM
+			 , A.QTY
+			 , A.AMT
+			 , A.RATE
+		  FROM COM_EXCEL_DOWN_VW A
+		 WHERE A.SEARCH_DT BETWEEN #{SEARCH_DT_FROM} AND #{SEARCH_DT_TO}
+		 ORDER BY A.WORK_YM DESC
+		
+	</select>
+</mapper>

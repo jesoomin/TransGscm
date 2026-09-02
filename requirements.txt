@@ -2,3 +2,15 @@ openai>=1.40
 python-dotenv>=1.0
 streamlit>=1.35
 oracledb>=2.0
+
+# 워크플로우 오케스트레이션 (agents/workflow_graph.py) - 상태 기반 병렬 포팅 제어 + 재시도 피드백 루프
+langgraph>=1.2
+
+# Java(BizUnit) AST 파서 (chatui/java_ast.py) - tree-sitter는 오류 복구 파서라 컴파일 안 되는
+# AS-IS 원본에도 동작한다(javalang 같은 엄격한 파서는 문법 오류가 있으면 전체 파싱이 실패함)
+tree-sitter>=0.26
+tree-sitter-java>=0.23
+
+# 테스트 (tests/) - tests/test_cross_analysis.py가 이미 체크인돼 있는데 여기 빠져있어서
+# requirements.txt만 설치하면 실행이 안 됐다(2026-08-28 확인 후 추가)
+pytest>=8.0

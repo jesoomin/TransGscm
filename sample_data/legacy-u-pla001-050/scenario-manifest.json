@@ -1,0 +1,1107 @@
+{
+  "scenario": "U-PLA001~U-PLA050 synthetic legacy source set",
+  "template": "PLA047 user-provided source files",
+  "conversion_policy": "각 화면을 chatui에서 개별 변환·검토한다. 일괄 변환하지 않는다.",
+  "screens": [
+    {
+      "screen": "U-PLA001",
+      "nctRid": [
+        "RPLA00101",
+        "RPLA00102",
+        "RPLA00103"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA001.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA001.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA001.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA001.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA001.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA001.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA001.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA002",
+      "nctRid": [
+        "RPLA00201",
+        "RPLA00202",
+        "RPLA00203"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA002.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA002.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA002.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA002.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA002.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA002.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA002.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA003",
+      "nctRid": [
+        "RPLA00301",
+        "RPLA00302",
+        "RPLA00303"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA003.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA003.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA003.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA003.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA003.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA003.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA003.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA004",
+      "nctRid": [
+        "RPLA00401",
+        "RPLA00402",
+        "RPLA00403"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA004.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA004.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA004.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA004.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA004.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA004.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA004.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA005",
+      "nctRid": [
+        "RPLA00501",
+        "RPLA00502",
+        "RPLA00503"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA005.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA005.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA005.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA005.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA005.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA005.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA005.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA006",
+      "nctRid": [
+        "RPLA00601",
+        "RPLA00602",
+        "RPLA00603"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA006.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA006.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA006.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA006.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA006.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA006.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA006.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA007",
+      "nctRid": [
+        "RPLA00701",
+        "RPLA00702",
+        "RPLA00703"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA007.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA007.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA007.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA007.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA007.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA007.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA007.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA008",
+      "nctRid": [
+        "RPLA00801",
+        "RPLA00802",
+        "RPLA00803"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA008.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA008.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA008.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA008.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA008.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA008.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA008.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA009",
+      "nctRid": [
+        "RPLA00901",
+        "RPLA00902",
+        "RPLA00903"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA009.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA009.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA009.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA009.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA009.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA009.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA009.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA010",
+      "nctRid": [
+        "RPLA01001",
+        "RPLA01002",
+        "RPLA01003"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA010.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA010.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA010.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA010.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA010.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA010.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA010.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA011",
+      "nctRid": [
+        "RPLA01101",
+        "RPLA01102",
+        "RPLA01103"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA011.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA011.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA011.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA011.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA011.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA011.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA011.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA012",
+      "nctRid": [
+        "RPLA01201",
+        "RPLA01202",
+        "RPLA01203"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA012.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA012.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA012.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA012.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA012.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA012.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA012.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA013",
+      "nctRid": [
+        "RPLA01301",
+        "RPLA01302",
+        "RPLA01303"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA013.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA013.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA013.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA013.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA013.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA013.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA013.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA014",
+      "nctRid": [
+        "RPLA01401",
+        "RPLA01402",
+        "RPLA01403"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA014.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA014.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA014.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA014.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA014.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA014.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA014.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA015",
+      "nctRid": [
+        "RPLA01501",
+        "RPLA01502",
+        "RPLA01503"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA015.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA015.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA015.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA015.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA015.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA015.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA015.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA016",
+      "nctRid": [
+        "RPLA01601",
+        "RPLA01602",
+        "RPLA01603"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA016.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA016.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA016.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA016.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA016.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA016.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA016.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA017",
+      "nctRid": [
+        "RPLA01701",
+        "RPLA01702",
+        "RPLA01703"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA017.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA017.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA017.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA017.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA017.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA017.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA017.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA018",
+      "nctRid": [
+        "RPLA01801",
+        "RPLA01802",
+        "RPLA01803"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA018.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA018.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA018.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA018.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA018.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA018.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA018.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA019",
+      "nctRid": [
+        "RPLA01901",
+        "RPLA01902",
+        "RPLA01903"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA019.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA019.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA019.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA019.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA019.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA019.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA019.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA020",
+      "nctRid": [
+        "RPLA02001",
+        "RPLA02002",
+        "RPLA02003"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA020.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA020.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA020.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA020.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA020.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA020.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA020.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA021",
+      "nctRid": [
+        "RPLA02101",
+        "RPLA02102",
+        "RPLA02103"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA021.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA021.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA021.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA021.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA021.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA021.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA021.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA022",
+      "nctRid": [
+        "RPLA02201",
+        "RPLA02202",
+        "RPLA02203"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA022.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA022.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA022.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA022.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA022.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA022.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA022.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA023",
+      "nctRid": [
+        "RPLA02301",
+        "RPLA02302",
+        "RPLA02303"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA023.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA023.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA023.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA023.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA023.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA023.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA023.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA024",
+      "nctRid": [
+        "RPLA02401",
+        "RPLA02402",
+        "RPLA02403"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA024.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA024.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA024.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA024.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA024.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA024.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA024.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA025",
+      "nctRid": [
+        "RPLA02501",
+        "RPLA02502",
+        "RPLA02503"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA025.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA025.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA025.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA025.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA025.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA025.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA025.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA026",
+      "nctRid": [
+        "RPLA02601",
+        "RPLA02602",
+        "RPLA02603"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA026.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA026.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA026.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA026.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA026.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA026.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA026.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA027",
+      "nctRid": [
+        "RPLA02701",
+        "RPLA02702",
+        "RPLA02703"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA027.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA027.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA027.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA027.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA027.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA027.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA027.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA028",
+      "nctRid": [
+        "RPLA02801",
+        "RPLA02802",
+        "RPLA02803"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA028.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA028.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA028.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA028.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA028.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA028.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA028.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA029",
+      "nctRid": [
+        "RPLA02901",
+        "RPLA02902",
+        "RPLA02903"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA029.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA029.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA029.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA029.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA029.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA029.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA029.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA030",
+      "nctRid": [
+        "RPLA03001",
+        "RPLA03002",
+        "RPLA03003"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA030.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA030.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA030.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA030.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA030.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA030.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA030.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA031",
+      "nctRid": [
+        "RPLA03101",
+        "RPLA03102",
+        "RPLA03103"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA031.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA031.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA031.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA031.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA031.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA031.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA031.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA032",
+      "nctRid": [
+        "RPLA03201",
+        "RPLA03202",
+        "RPLA03203"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA032.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA032.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA032.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA032.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA032.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA032.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA032.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA033",
+      "nctRid": [
+        "RPLA03301",
+        "RPLA03302",
+        "RPLA03303"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA033.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA033.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA033.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA033.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA033.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA033.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA033.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA034",
+      "nctRid": [
+        "RPLA03401",
+        "RPLA03402",
+        "RPLA03403"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA034.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA034.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA034.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA034.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA034.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA034.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA034.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA035",
+      "nctRid": [
+        "RPLA03501",
+        "RPLA03502",
+        "RPLA03503"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA035.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA035.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA035.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA035.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA035.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA035.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA035.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA036",
+      "nctRid": [
+        "RPLA03601",
+        "RPLA03602",
+        "RPLA03603"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA036.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA036.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA036.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA036.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA036.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA036.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA036.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA037",
+      "nctRid": [
+        "RPLA03701",
+        "RPLA03702",
+        "RPLA03703"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA037.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA037.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA037.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA037.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA037.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA037.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA037.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA038",
+      "nctRid": [
+        "RPLA03801",
+        "RPLA03802",
+        "RPLA03803"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA038.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA038.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA038.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA038.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA038.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA038.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA038.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA039",
+      "nctRid": [
+        "RPLA03901",
+        "RPLA03902",
+        "RPLA03903"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA039.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA039.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA039.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA039.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA039.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA039.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA039.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA040",
+      "nctRid": [
+        "RPLA04001",
+        "RPLA04002",
+        "RPLA04003"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA040.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA040.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA040.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA040.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA040.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA040.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA040.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA041",
+      "nctRid": [
+        "RPLA04101",
+        "RPLA04102",
+        "RPLA04103"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA041.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA041.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA041.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA041.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA041.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA041.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA041.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA042",
+      "nctRid": [
+        "RPLA04201",
+        "RPLA04202",
+        "RPLA04203"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA042.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA042.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA042.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA042.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA042.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA042.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA042.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA043",
+      "nctRid": [
+        "RPLA04301",
+        "RPLA04302",
+        "RPLA04303"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA043.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA043.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA043.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA043.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA043.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA043.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA043.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA044",
+      "nctRid": [
+        "RPLA04401",
+        "RPLA04402",
+        "RPLA04403"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA044.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA044.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA044.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA044.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA044.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA044.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA044.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA045",
+      "nctRid": [
+        "RPLA04501",
+        "RPLA04502",
+        "RPLA04503"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA045.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA045.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA045.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA045.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA045.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA045.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA045.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA046",
+      "nctRid": [
+        "RPLA04601",
+        "RPLA04602",
+        "RPLA04603"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA046.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA046.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA046.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA046.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA046.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA046.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA046.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA047",
+      "nctRid": [
+        "RPLA04701",
+        "RPLA04702",
+        "RPLA04703"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA047.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA047.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA047.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA047.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA047.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA047.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA047.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA048",
+      "nctRid": [
+        "RPLA04801",
+        "RPLA04802",
+        "RPLA04803"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA048.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA048.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA048.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA048.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA048.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA048.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA048.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA049",
+      "nctRid": [
+        "RPLA04901",
+        "RPLA04902",
+        "RPLA04903"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA049.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA049.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA049.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA049.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA049.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA049.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA049.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    },
+    {
+      "screen": "U-PLA050",
+      "nctRid": [
+        "RPLA05001",
+        "RPLA05002",
+        "RPLA05003"
+      ],
+      "source_files": [
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA050.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/PPLA050.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA050.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/FPLA050.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA050.java",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/biz/DPLA050.bizunit",
+        "dev-rp-online/src/java/gscm/r/pm/pla/plab/db/DPLA050.xsql"
+      ],
+      "overlap_expectation": {
+        "service": "원본 F 로직을 동일 포팅하면 후보가 될 수 있음",
+        "store": "원본 D 접근 패턴을 동일 포팅하면 후보가 될 수 있음",
+        "mapper_sql": "원본 XSQL을 그대로 복제했으므로 statement 본문은 화면 간 동일"
+      }
+    }
+  ]
+}

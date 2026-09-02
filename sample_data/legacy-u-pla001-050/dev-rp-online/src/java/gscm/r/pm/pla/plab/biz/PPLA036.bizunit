@@ -1,0 +1,64 @@
+<?xml version='1.0" encoding="UTF-8" standalone="no"?>
+<bizUnit id="PPLA036">
+	<bizUnitName>[PU] 제품별 장당 수익</bizUnitName>
+	<parentClassXd>BPU</parentClassXd>
+	<componentId>pla.PLAB</componentId>
+	<description>제품별 장당 수익</description>
+	<method-list>
+		<method id="pPLA03603">
+			<methodName>[PM]REV 기간 조회</methodName>
+			<transactionId>RPLA03603</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>REV 기간 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="pPLA03601">
+			<methodName>[PM]장당 수익성분석 조회</methodName>
+			<transactionId>RPLA03601</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>장당 수익성분석 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="pPLA03602">
+			<methodName>[PM]REV 조회</methodName>
+			<transactionId>RPLA03602</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>REV 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+	</method-list>
+	<xsql/>
+	<history>
+		<created date="2025-07-21" user="제수민"/>
+	</history>
+</bizUnit>	

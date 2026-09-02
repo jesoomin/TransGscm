@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  pilot/gscm 화면들을 실제로 `mvn compile`까지 돌리기 위한 최소 스캐폴드다.
+
+  CLAUDE.md 원칙("공통 응답/예외 처리 규약, 공통 Mapper/Store 패턴은 사람이 먼저 확정한다")에
+  따라, 이 파일은 사내 표준 parent POM/내부 아티팩트 저장소(Nexus 등)를 흉내내지 않는다 -
+  실제 SK그룹 표준 Spring Boot 버전, 사내 BOM, 내부 리포지토리 좌표는 확인된 바 없어서
+  공개 Maven Central 좌표로만 채웠다. mvn compile이 실제로 도는지 확인하는 용도의 임시
+  스캐폴드이지, 이대로 배포/운영에 쓸 수 있는 최종 pom이 아니다 - 인프라팀 확인 후 교체할 것.
+
+  버전/의존성은 pilot/gscm/src/main 안의 실제 import문에서 그대로 뽑았다(추측 아님):
+  spring-boot-starter-web(Rest*), mybatis-spring-boot-starter(SqlSessionTemplate),
+  lombok(@Data/@RequiredArgsConstructor/@Slf4j), springdoc-openapi(Swagger 애너테이션 +
+  @ParameterObject), Oracle JDBC(로컬 개발 DB가 Oracle XE - CLAUDE.md "로컬 개발 환경" 참고).
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- TODO: 사내 표준 Spring Boot 버전 확인 후 교체 - 임시로 공개 최신 안정 버전을 썼다. -->
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.skhynix.gscm</groupId>
+    <artifactId>gscm-pilot</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>gscm-pilot</name>
+    <description>G-SCM AS-IS -> TO-BE 전환 파일럿(pilot/) mvn compile 검증용 최소 프로젝트</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+        <!-- TODO: 로컬 Oracle(SID xe)용 - 실제 사내 표준 드라이버 좌표/버전 확인 후 교체.
+             ojdbc는 라이선스상 Maven Central에 없을 수 있어 실제로는 사내 Nexus 좌표가 필요할 수 있다. -->
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <version>23.5.0.24.07</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>gscm-pilot</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,115 @@
+<?xml version='1.0" encoding="UTF-8" standalone="no"?>
+<bizUnit id="DPLA011">
+	<bizUnitName>[DU] 제품별 장당 수익</bizUnitName>
+	<parentClassXd>BDU</parentClassXd>
+	<componentId>pla.PLAB</componentId>
+	<description>제품별 장당 수익</description>
+	<method-list>
+		<method id="dPLA01103">
+			<methodName>[DM] 장당 수익성분석 조회(대시보드 sub Total 적용)</methodName>
+			<transactionId>pla.PLAB@DPLA011_dPLA01103</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>장당 수익성분석 조회(대시보드 sub Total 적용)</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="dPLA01106">
+			<methodName>[DM]REV 기간 조회</methodName>
+			<transactionId>pla.PLAB@DPLA011_dPLA01106</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>REV 기간 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="dPLA01101">
+			<methodName>[DM]REV조회</methodName>
+			<transactionId>pla.PLAB@DPLA011_dPLA01101</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>REV조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="dPLA01105">
+			<methodName>[DM]장당 수익성분석 업데이트 시각 조회</methodName>
+			<transactionId>pla.PLAB@DPLA011_dPLA01105</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>장당 수익성분석 업데이트 시각 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="dPLA01104">
+			<methodName>[DM]장당 수익성분석 조회(sub Total 적용)</methodName>
+			<transactionId>pla.PLAB@DPLA011_dPLA01104</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>장당 수익성분석 조회(sub Total 적용)</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="dPLA01102">
+			<methodName>[DM]장당 수익성분석 조회(부분쿼리작성)</methodName>
+			<transactionId>pla.PLAB@DPLA011_dPLA01102</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>장당 수익성분석 조회(부분쿼리작성)</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+	</method-list>
+	<xsql/>
+	<history>
+		<created date="2025-07-21" user="제수민"/>
+	</history>
+</bizUnit>	

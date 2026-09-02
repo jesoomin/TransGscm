@@ -3,6 +3,8 @@ package com.skhynix.gscm.r.pm.pla.service;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.skhynix.gscm.r.pm.pla.dto.*;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -16,18 +18,20 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 	Map<String, Object> responseData = new java.util.HashMap<String, Object>();
 	
 	try{
-		Map<String,Object> paramMap = request;
+		// FIXME(원본 버그): 원본은 DPLA047 fu = (DPLA047) lookupFunctionUnit(DPLA047.class); 를 사용하지만 실제로 fu를 사용하지 않음
+		Map<String,Object> requestData = request;
+		Map<String,Object> paramMap = requestData;
 		
-		String strDim = (String) request.get("DIM");
+		String strDim = (String) requestData.get("DIM");
 		String sOrderBy = "";
-		String strTechCd		= (String) request.get("TECH_CD");
-		String strFabDenCd		= (String) request.get("FAB_DEN_CD");
-		String strChgProdModCd	= (String) request.get("CHG_PROD_MODE_CD");
-		String strAppLvl1Cd		= (String) request.get("APP_LVL_1_CD");
-		String strPkgtypCd2		= (String) request.get("PKG_TYP_CD2");
-		String strCellTypCd		= (String) request.get("CELL_LAYER_TYP_CD");
-		String strSRCTYPE		= (String) request.get("SRCTYPE");
-		String strChkSubTotal	= (String) request.get("CHK_SUBTOTAL");
+		String strTechCd		= (String) requestData.get("TECH_CD");
+		String strFabDenCd		= (String) requestData.get("FAB_DEN_CD");
+		String strChgProdModCd	= (String) requestData.get("CHG_PROD_MODE_CD");
+		String strAppLvl1Cd		= (String) requestData.get("APP_LVL_1_CD");
+		String strPkgtypCd2		= (String) requestData.get("PKG_TYP_CD2");
+		String strCellTypCd		= (String) requestData.get("CELL_LAYER_TYP_CD");
+		String strSRCTYPE		= (String) requestData.get("SRCTYPE");
+		String strChkSubTotal	= (String) requestData.get("CHK_SUBTOTAL");
 		
 		String[] arrDim = strDim.split(",");
 		String strDimOuter = "";
@@ -49,7 +53,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.APP_LVL_1_CD END AS APP_LVL_1_CD";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.APP_LVL_1_CD";		
 					}		
@@ -65,8 +69,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.TECH_CD END AS TECH_CD";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
-					else{
+					}else{
 						strDimOuterSubTotal += ", T1.TECH_CD";		
 					}		
 					
@@ -81,8 +84,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.FAB_DEN_CD END AS FAB_DEN_CD";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
-					else{
+					}else{
 						strDimOuterSubTotal += ", T1.FAB_DEN_CD";		
 					}		
 					
@@ -97,8 +99,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.CHG_PROD_MODE_CD END AS CHG_PROD_MODE_CD";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
-					else{
+					}else{
 						strDimOuterSubTotal += ", T1.CHG_PROD_MODE_CD";		
 					}		
 					
@@ -113,7 +114,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.PKG_TYP_CD2 END AS PKG_TYP_CD2";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.PKG_TYP_CD2";		
 					}		
@@ -129,7 +130,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.MOD_DEN_CD END AS MOD_DEN_CD";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.MOD_DEN_CD";		
 					}		
@@ -146,7 +147,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.DATA_GBN_CD END AS DATA_GBN_CD";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.DATA_GBN_CD";		
 					}		
@@ -162,7 +163,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.SSD_MODEL_NM END AS SSD_MODEL_NM";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.SSD_MODEL_NM";		
 					}		
@@ -178,7 +179,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.UFS_IF_NM END AS UFS_IF_NM";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.UFS_IF_NM";		
 					}		
@@ -194,7 +195,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.SSD_IF_NM END AS SSD_IF_NM";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.SSD_IF_NM";		
 					}		
@@ -210,7 +211,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.PRFT_GBN1 END AS PRFT_GBN1";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.PRFT_GBN1";		
 					}		
@@ -226,7 +227,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1.PRFT_GBN2 END AS PRFT_GBN2";
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1.PRFT_GBN2";		
 					}		
@@ -242,7 +243,7 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 					
 					if(i == 0){
 						strDimOuterSubTotal += ", CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total' ELSE T1." + arrDim[i] +" END AS " + arrDim[i];
-					// FIXME(원본 버그): 원본의 if 블록에 중괄호/else 구문이 깨져 있음
+					// FIXME(원본 버그): 원본 소스의 if/else 중괄호 불일치
 					else{
 						strDimOuterSubTotal += ", T1." + arrDim[i];	
 					}		
@@ -261,33 +262,33 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 			sNetDie += " AND A.SCM_FAMILY_CD = NVL(T1.SCM_FAMILY_CD, ' ') AND A.UPPER_CD1 = NVL(T1.UPPER_CD1, ' ') AND A.UPPER_CD2 = NVL(T1.UPPER_CD2, ' ') ";
 		}	
 		
-		request.put("GROUPING_NETDIE1", strDimOuter.replaceAll("T1.", "A.").replaceFirst(", ",""));
-		request.put("GROUPING_NETDIE2", sGroupinNetDim.replaceFirst(", ",""));
-		request.put("GROUPING_NETDIE3", strDimOuter.replaceAll("T1.", "A.").replaceFirst(", ",""));
-		request.put("GROUPING_NETDIE4", strDimGroup.replaceAll("T1.", "A.").replaceFirst("\\+",",")+ " AS GRP_ID");
-		request.put("GROUPING_NETDIE5", strDimGroup.replaceAll("T1.", "").replaceFirst("\\+",",")+ " AS GRP_ID");
+		requestData.put("GROUPING_NETDIE1", strDimOuter.replaceAll("T1.", "A.").replaceFirst(", ",""));
+		requestData.put("GROUPING_NETDIE2", sGroupinNetDim.replaceFirst(", ",""));
+		requestData.put("GROUPING_NETDIE3", strDimOuter.replaceAll("T1.", "A.").replaceFirst(", ",""));
+		requestData.put("GROUPING_NETDIE4", strDimGroup.replaceAll("T1.", "A.").replaceFirst("\\+",",")+ " AS GRP_ID");
+		requestData.put("GROUPING_NETDIE5", strDimGroup.replaceAll("T1.", "").replaceFirst("\\+",",")+ " AS GRP_ID");
 		
-		request.put("GROUPING_WHERE", sGroupingNetWhere);
-		request.put("NETDIE_WHERE", sNetDie);
+		requestData.put("GROUPING_WHERE", sGroupingNetWhere);
+		requestData.put("NETDIE_WHERE", sNetDie);
 		
 		if("BASE".equals(strSRCTYPE)){
-			request.put("DIM_OUTER", strDimOuter.substring(2));
-			request.put("DIM_GROUP", strDimGroup.substring(3));
-			request.put("DIM_OUTER_SUB_TOTAL", strDimOuterSubTotal.substring(2));
-			request.put("DIM_OUTER_SEQ", strDimOuterSeq);
-			request.put("ORDER_BY", sOrderBy.substring(2));
+			requestData.put("DIM_OUTER", strDimOuter.substring(2));
+			requestData.put("DIM_GROUP", strDimGroup.substring(3));
+			requestData.put("DIM_OUTER_SUB_TOTAL", strDimOuterSubTotal.substring(2));
+			requestData.put("DIM_OUTER_SEQ", strDimOuterSeq);
+			requestData.put("ORDER_BY", sOrderBy.substring(2));
 		} else {
-			request.put("DIM_OUTER", "");
-			request.put("DIM_GROUP", "");
-			request.put("DIM_OUTER_SUB_TOTAL", "");
-			request.put("DIM_OUTER_SEQ", "");
-			request.put("ORDER_BY", "");
+			requestData.put("DIM_OUTER", "");
+			requestData.put("DIM_GROUP", "");
+			requestData.put("DIM_OUTER_SUB_TOTAL", "");
+			requestData.put("DIM_OUTER_SEQ", "");
+			requestData.put("ORDER_BY", "");
 		}
 		
 		if( strTechCd != null && !"".equals(strTechCd) ){
 			String[] arr = strTechCd.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -295,8 +296,8 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		if( strFabDenCd != null && !"".equals(strFabDenCd) ){
 			String[] arr = strFabDenCd.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -304,8 +305,8 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		if( strChgProdModCd != null && !"".equals(strChgProdModCd) ){
 			String[] arr = strChgProdModCd.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -313,8 +314,9 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		if( strFabDenCd != null && !"".equals(strFabDenCd) ){
 			String[] arr = strFabDenCd.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 중복 처리 존재, 원본 그대로 유지
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -322,8 +324,8 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		if( strAppLvl1Cd != null && !"".equals(strAppLvl1Cd) ){
 			String[] arr = strAppLvl1Cd.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -331,8 +333,8 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		if( strPkgtypCd2 != null && !"".equals(strPkgtypCd2) ){
 			String[] arr = strPkgtypCd2.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -340,8 +342,8 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		if( strCellTypCd != null && !"".equals(strCellTypCd) ){
 			String[] arr = strCellTypCd.split(",");
-			// FIXME(원본 버그): 원본은 ArrayList<object>()로 선언하여 컴파일 에러
-			java.util.List<Object> list = new java.util.ArrayList<Object>();
+			// FIXME(원본 버그): 원본은 new ArrayList<object>() 로 되어 있어 컴파일 오류
+			List<Object> list = new ArrayList<object>();
 			for (int i=0; i<arr.length; i++){
 				list.add(arr[i].trim());
 			}
@@ -349,39 +351,39 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		}
 		
 		Object rdPivot = null;
-		rdPivot = store.dPLA04702(request);
+		rdPivot = store.dPLA04702(requestData).get("PIVOT_LIST");
 		
-		// FIXME(원본 버그): 원본은 IRecordSet rdPivot.get(0, ...) 사용, Map 기반으로는 동일 인터페이스가 없어 강제 캐스팅으로 포팅
-		paramMap.put("PIVOT_STR", (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("PIVOT_STR"));
-		String sConvQty = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("WF_CONV_QTY_SALE_PLN_ST_O");
+		// FIXME(원본 버그): 원본의 IRecordSet API(get(0, ...)) 의존을 제거하지 못한 부분, 실제 타입 미정
+		paramMap.put("PIVOT_STR", (String)((IRecordSet)rdPivot).get(0, "PIVOT_STR"));
+		String sConvQty = (String)((IRecordSet)rdPivot).get(0, "WF_CONV_QTY_SALE_PLN_ST_O");
 		String[] sArrConvQty = sConvQty.split(",");
-		java.util.List<String> sListConvQty = new java.util.ArrayList<>();
+		List<String> sListConvQty = new ArrayList<>();
 		
-		String sSomEqQty = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("SOM_EQ_QTY_SALE_PLN_ST_O");
+		String sSomEqQty = (String)((IRecordSet)rdPivot).get(0, "SOM_EQ_QTY_SALE_PLN_ST_O");
 		String[] sArrSomEqQty = sSomEqQty.split(",");
-		java.util.List<String> sListSomEqQty = new java.util.ArrayList<>();
+		List<String> sListSomEqQty = new ArrayList<>();
 		
-		String sCum2Yld = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("CUM2_YLD_MASTER_DATA_ST_O");
+		String sCum2Yld = (String)((IRecordSet)rdPivot).get(0, "CUM2_YLD_MASTER_DATA_ST_O");
 		String[] sArrCum2Yld = sCum2Yld.split(",");
-		java.util.List<String> sListCum2Yld = new java.util.ArrayList<>();
+		List<String> sListCum2Yld = new ArrayList<>();
 		
-		String sOddCum2Yld = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("ODD_CUM2_YLD_MASTER_DATA_ST_O");
+		String sOddCum2Yld = (String)((IRecordSet)rdPivot).get(0, "ODD_CUM2_YLD_MASTER_DATA_ST_O");
 		String[] sArrOddCum2Yld = sOddCum2Yld.split(",");
-		java.util.List<String> sListOddCum2Yld = new java.util.ArrayList<>();
+		List<String> sListOddCum2Yld = new ArrayList<>();
 		
-		String sGoodDie = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("ODD_GOOD_DIE_MASTER_DATA_ST_O");
+		String sGoodDie = (String)((IRecordSet)rdPivot).get(0, "ODD_GOOD_DIE_MASTER_DATA_ST_O");
 		sGoodDie = sGoodDie.replaceAll("ODD_GOOD_DIE_MASTER_DATA", "GOOD_DIE_MASTER_DATA");
 		String[] sArrGoodDie = sGoodDie.split(",");
-		java.util.List<String> sListGoodDie = new java.util.ArrayList<>();
+		List<String> sListGoodDie = new ArrayList<>();
 		
-		String sOddGoodDie = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("ODD_GOOD_DIE_MASTER_DATA_ST_O");			
+		String sOddGoodDie = (String)((IRecordSet)rdPivot).get(0, "ODD_GOOD_DIE_MASTER_DATA_ST_O");			
 		String[] sArrOddGoodDie = sOddGoodDie.split(",");
-		java.util.List<String> sListOddGoodDie = new java.util.ArrayList<>();
+		List<String> sListOddGoodDie = new ArrayList<>();
 		
 		
-		String sSomDieQty = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("SOM_DIE_QTY_SALE_PLN_ST_O");
+		String sSomDieQty = (String)((IRecordSet)rdPivot).get(0, "SOM_DIE_QTY_SALE_PLN_ST_O");
 		String[] sArrSomDieQty = sSomDieQty.split(",");
-		java.util.List<String> sListSomDieQty = new java.util.ArrayList<>();
+		List<String> sListSomDieQty = new ArrayList<>();
 		
 		for(String s : sArrConvQty){
 			if(s != null && !s.isEmpty()) sListConvQty.add(s);
@@ -413,22 +415,24 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		
 		StringBuilder sCumSb = new StringBuilder();
 		StringBuilder sGoodDieSb = new StringBuilder();
-		String sSchTyp = (String) request.get("SEARCH_TYPE");
-		String sYear = (String) request.get("YEAR");
-		int sTechGrpId = Integer.valueOf((String) request.get("TECH_GRP_ID"));
+		String sSchTyp = (String) requestData.get("SEARCH_TYPE");
+		String sYear = (String) requestData.get("YEAR");
+		int sTechGrpId = Integer.valueOf((String) requestData.get("TECH_GRP_ID"));
 		
 		if("ODD".equals(sSchTyp)){
-			// FIXME(원본 버그): 변수 i가 선언되지 않은 상태로 사용됨
-			sCumSb.append(", CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE CASE WHEN MAX(GRP_ID) OVER()-1 <= GRP_ID OR GRP_ID = " + sTechGrpId);
-			sCumSb.append(" THEN CASE WHEN (SELECT A.FAB_DEN_CD_NUM FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") = 0 THEN 0 ELSE ");
-			sCumSb.append("(" + sListSomEqQty.get(i));
-			sCumSb.append(" / " + sListConvQty.get(i) + ") / (SELECT A.FAB_DEN_CD_NUM FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") * 100 END ");
-			sCumSb.append(" ELSE CASE WHEN GRP_ID = 0 THEN " + sListCum2Yld.get(i) + " ELSE CASE WHEN (SELECT A.NET_DIE_300_CNT FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") = 0 THEN 0 ELSE " + sListSomDieQty.get(i) + " / " + sListConvQty.get(i) + " / (SELECT A.NET_DIE_300_CNT FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") * 100");
-			sCumSb.append(" END END END END AS " + sListCum2Yld.get(i));
-			
-			sGoodDieSb.append(", CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE CASE WHEN MAX(GRP_ID) OVER()-1 <= GRP_ID OR GRP_ID = " + sTechGrpId + " THEN TO_CHAR(" + sListSomEqQty.get(i));
-			sGoodDieSb.append(" / " + sListConvQty.get(i) + " ) ELSE CASE WHEN GRP_ID > 0 THEN CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE TO_CHAR(" + sListSomDieQty.get(i) + " / " +  sListConvQty.get(i) + ") END ELSE " + sListGoodDie.get(i));
-			sGoodDieSb.append(" END END END AS " + sListGoodDie.get(i));
+			for(int i=0; i<sListConvQty.size(); i++){
+				sCumSb.append(", CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE CASE WHEN MAX(GRP_ID) OVER()-1 <= GRP_ID OR GRP_ID = " + sTechGrpId);
+				sCumSb.append(" THEN CASE WHEN (SELECT A.FAB_DEN_CD_NUM FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") = 0 THEN 0 ELSE ");
+				sCumSb.append("(" + sListSomEqQty.get(i));
+				sCumSb.append(" / " + sListConvQty.get(i) + ") / (SELECT A.FAB_DEN_CD_NUM FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") * 100 END ");
+				sCumSb.append(" ELSE CASE WHEN GRP_ID = 0 THEN " + sListCum2Yld.get(i) + " ELSE CASE WHEN (SELECT A.NET_DIE_300_CNT FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") = 0 THEN 0 ELSE " + sListSomDieQty.get(i) + " / " + sListConvQty.get(i) + " / (SELECT A.NET_DIE_300_CNT FROM G_NETDIE A WHERE A.MQHYT = " + sYear + " " + sNetDie + ") * 100");
+				sCumSb.append(" END END END END AS " + sListCum2Yld.get(i));
+				
+				sGoodDieSb.append(", CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE CASE WHEN MAX(GRP_ID) OVER()-1 <= GRP_ID OR GRP_ID = " + sTechGrpId + " THEN TO_CHAR(" + sListSomEqQty.get(i));
+				sGoodDieSb.append(" / " + sListConvQty.get(i) + " ) ELSE CASE WHEN GRP_ID > 0 THEN CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE TO_CHAR(" + sListSomDieQty.get(i) + " / " +  sListConvQty.get(i) + ") END ELSE " + sListGoodDie.get(i));
+				sGoodDieSb.append(" END END END AS " + sListGoodDie.get(i));
+			)
+			// FIXME(원본 버그): 원본은 for 블록 종료 구문이 ')''로 되어 있어 컴파일 오류
 		}else{
 			for(int i=0; i<sListConvQty.size(); i++){
 				sCumSb.append(", CASE WHEN " + sListConvQty.get(i) + " = 0 THEN 0 ELSE CASE GRP_ID > 0 THEN CASE WHEN ");
@@ -459,137 +463,144 @@ public Map<String, Object> fPLA047QrySelectMainList(Map<String, Object> request)
 		"VAR_COST_YR_COST", "CASH_COST_YR_COST", "COGS_COST_YR_COST", "COO_COST_YR_COST", "COO_PROF_RATE_YR"};
 		
 		for(String sColumn : sParamColumn) {
-			paramMap.put(sColumn			, (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get(sColumn));
-			paramMap.put(sColumn + "_ST" 	, (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get(sColumn+"_ST"));
+			paramMap.put(sColumn			, (String)((IRecordSet)rdPivot).get(0, sColumn));
+			paramMap.put(sColumn + "_ST" 	, (String)((IRecordSet)rdPivot).get(0, sColumn+"_ST"));
 			if(!sColumn.equals("CUM2_YLD_MASTER_DATA") && !sColumn.equals("GOOD_DIE_MASTER_DATA") && 
 			   !sColumn.equals("ODD_CUM2_YLD_MASTER_DATA") && !sColumn.equals("ODD_GOOD_DIE_MASTER_DATA") && 
 			   !sColumn.equals("COO_PROF_RATE_WF") && !sColumn.equals("COO_PROF_RATE_EQ") && 
 			   !sColumn.equals("COO_PROF_RATE_DIE") && !sColumn.equals("COO_PROF_RATE_PROD")) {
-				   paramMap.put(sColumn + "_ST_O"		, (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get(sColumn + "_ST_O"));
+				   paramMap.put(sColumn + "_ST_O"		, (String)((IRecordSet)rdPivot).get(0, sColumn + "_ST_O"));
 			}
 		}
 		
-		if("Y".equals((String) request.get("COO_PROF_RATE_WF_YN"))) {
-			String sCooProfRateWf1 = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("COO_PROF_RATE_WF_ST_01");
+		if("Y".equals((String) requestData.get("COO_PROF_RATE_WF_YN"))) {
+			String sCooProfRateWf1 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_WF_ST_01");
 			String[] sArrCooProfRateWf1 = sCooProfRateWf1.split("@");
-			java.util.List<String> sListCooProfRateWf1 = new java.util.ArrayList<>();
+			List<String> sListCooProfRateWf1 = new ArrayList<>();
 			for(String s: sArrCooProfRateWf1){
 				if(s != null && !s.isEmpty()) sListCooProfRateWf1.add(s);
 			}
 			
-			String sCooProfRateWf2 = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("COO_PROF_RATE_WF_ST_02");
+			String sCooProfRateWf2 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_WF_ST_02");
 			String[] sArrCooProfRateWf2 = sCooProfRateWf2.split("@");
-			java.util.List<String> sListCooProfRateWf2 = new java.util.ArrayList<>();
+			List<String> sListCooProfRateWf2 = new ArrayList<>();
 			for(String s: sArrCooProfRateWf2){
 				if(s != null && !s.isEmpty()) sListCooProfRateWf2.add(s);
 			}
+			String sCooProfRateWf = "";
+			for(int i=0; i<sListCooProfRateWf1.size(); i++){
+				sCooProfRateWf += sListCooProfRateWf1.get(i) + sListCooProfRateWf2.get(i);
+			}
+			
+			paramMap.put("COO_PROF_RATE_WF_COL", sCooProfRateWf);
+			// FIXME(원본 버그): 원본은 system.out.println 으로 되어 있어 컴파일 오류
+			system.out.println(sCooProfRateWf);
+		}
+		
+		if("Y".equals((String) requestData.get("COO_PROF_RATE_EQ_YN"))) {
+			String sCooProfRateEq1 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_EQ_ST_01");
+			// FIXME(원본 버그): 원본은 동일 변수명 중복 선언(String sCooProfRateEq1 / String[] sCooProfRateEq1)
+			String[] sCooProfRateEq1 = sCooProfRateEq1.split("@");
+			List<String> sListCooProfRateEq1 = new ArrayList<>();
+			for(String s: sCooProfRateEq1){
+				if(s != null && !s.isEmpty()) sListCooProfRateEq1.add(s);
+			}
+			
+			String sCooProfRateEq2 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_EQ_ST_02");
+			String[] sArrCooProfRateEq2 = sCooProfRateEq2.split("@");
+			List<String> sListCooProfRateEq2 = new ArrayList<>();
+			for(String s: sArrCooProfRateEq2){
+				if(s != null && !s.isEmpty()) sListCooProfRateEq2.add(s);
+			}
 			String sCooProfRateEq = "";
-			// FIXME(원본 버그): sListCooProfRateEq1, sListCooProfRateEq2 미선언 변수 사용
 			for(int i=0; i<sListCooProfRateEq1.size(); i++){
 				sCooProfRateEq += sListCooProfRateEq1.get(i) + sListCooProfRateEq2.get(i);
 			}
 			
 			paramMap.put("COO_PROF_RATE_EQ_COL", sCooProfRateEq);
-			// FIXME(원본 버그): system.out.println 오탈자
-			System.out.println(sCooProfRateEq);
+			// FIXME(원본 버그): 원본은 system.out.println 으로 되어 있어 컴파일 오류
+			system.out.println(sCooProfRateEq);
 		}
 		
-		if("Y".equals((String) request.get("COO_PROF_RATE_DIE_YN"))) {
-			String sCooProfRateDie1 = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("COO_PROF_RATE_DIE_ST_01");
+		if("Y".equals((String) requestData.get("COO_PROF_RATE_DIE_YN"))) {
+			String sCooProfRateDie1 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_DIE_ST_01");
 			String[] sArrCooProfRateDie1 = sCooProfRateDie1.split("@");
-			java.util.List<String> sListCooProfRateDie1 = new java.util.ArrayList<>();
+			List<String> sListCooProfRateDie1 = new ArrayList<>();
 			for(String s: sArrCooProfRateDie1){
 				if(s != null && !s.isEmpty()) sListCooProfRateDie1.add(s);
 			}
 			
-			String sCooProfRateDie2 = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("COO_PROF_RATE_DIE_ST_02");
+			String sCooProfRateDie2 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_DIE_ST_02");
 			String[] sArrCooProfRateDie2 = sCooProfRateDie2.split("@");
-			java.util.List<String> sListCooProfRateDie2 = new java.util.ArrayList<>();
+			List<String> sListCooProfRateDie2 = new ArrayList<>();
 			for(String s: sArrCooProfRateDie2){
 				if(s != null && !s.isEmpty()) sListCooProfRateDie2.add(s);
 			}
 			String sCooProfRateDie = "";
 			for(int i=0; i<sListCooProfRateDie1.size(); i++){
-				// FIXME(원본 버그): sCooProfRateDie가 아니라 sCooProfRateEq에 누적함
-				sCooProfRateEq += sListCooProfRateDie1.get(i) + sListCooProfRateDie2.get(i);
+				sCooProfRateDie += sListCooProfRateDie1.get(i) + sListCooProfRateDie2.get(i);
 			}
 			
 			paramMap.put("COO_PROF_RATE_DIE_COL", sCooProfRateDie);
-			// FIXME(원본 버그): system.out.println 오탈자
-			System.out.println(sCooProfRateDie);
+			// FIXME(원본 버그): 원본은 system.out.println 으로 되어 있어 컴파일 오류
+			system.out.println(sCooProfRateDie);
 		}
 		
-		if("Y".equals((String) request.get("COO_PROF_RATE_PROD_YN"))) {
-			String sCooProfRateProd1 = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("COO_PROF_RATE_PROD_ST_01");
+		if("Y".equals((String) requestData.get("COO_PROF_RATE_PROD_YN"))) {
+			String sCooProfRateProd1 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_PROD_ST_01");
 			String[] sArrCooProfRateProd1 = sCooProfRateProd1.split("@");
-			java.util.List<String> sListCooProfRateProd1 = new java.util.ArrayList<>();
+			List<String> sListCooProfRateProd1 = new ArrayList<>();
 			for(String s: sArrCooProfRateProd1){
 				if(s != null && !s.isEmpty()) sListCooProfRateProd1.add(s);
 			}
 			
-			String sCooProfRateProd2 = (String)((java.util.Map)((java.util.List)((java.util.Map)rdPivot).get("PIVOT_LIST")).get(0)).get("COO_PROF_RATE_PROD_ST_02");
+			String sCooProfRateProd2 = (String)((IRecordSet)rdPivot).get(0, "COO_PROF_RATE_PROD_ST_02");
 			String[] sArrCooProfRateProd2 = sCooProfRateProd2.split("@");
-			java.util.List<String> sListCooProfRateProd2 = new java.util.ArrayList<>();
+			List<String> sListCooProfRateProd2 = new ArrayList<>();
 			for(String s: sArrCooProfRateProd2){
 				if(s != null && !s.isEmpty()) sListCooProfRateProd2.add(s);
 			}
 			String sCooProfRateProd = "";
 			for(int i=0; i<sListCooProfRateProd1.size(); i++){
-				// FIXME(원본 버그): sCooProfRateProd가 아니라 sCooProfRateEq에 누적함
-				sCooProfRateEq += sListCooProfRateProd1.get(i) + sListCooProfRateProd2.get(i);
+				sCooProfRateProd += sListCooProfRateProd1.get(i) + sListCooProfRateProd2.get(i);
 			}
 			
 			paramMap.put("COO_PROF_RATE_PROD_COL", sCooProfRateProd);
-			// FIXME(원본 버그): system.out.println 오탈자
-			System.out.println(sCooProfRateProd);
+			// FIXME(원본 버그): 원본은 system.out.println 으로 되어 있어 컴파일 오류
+			system.out.println(sCooProfRateProd);
 		}
-		request.putAll(paramMap);
+		// FIXME(원본 버그): 원본의 putFieldMap 호출을 Map 병합으로 대체
+		requestData.putAll(paramMap);
 		Object rs = null;
 		
-		Object sDateTimeMap = store.dPLA04705(request);
+		Object sDateTimeMap = store.dPLA04705(requestData).get("DATETIME_MAP");
 		
-		if(strChkSubTotal.equals("Y")) rs = store.dPLA04704(request);
-		else						   rs = store.dPLA04703(request);
+		if(strChkSubTotal.equals("Y")) rs = store.dPLA04704(requestData).get("MAIN_LIST");
+		else						   rs = store.dPLA04703(requestData).get("MAIN_LIST");
 		
 		responseData.put("DATETIME_MAP", sDateTimeMap);
 		responseData.put("MAIN_LIST", rs);
 		
-	} catch (RuntimeException be){
+	} catch (BizRuntimeException be){
 		throw be;
 	} catch (Exception e){
-		throw new RuntimeException("E0052", e);
-	}
-	return responseData;
-}
-
-    // LLM 포팅됨 - 사람 리뷰 필요(CLAUDE.md: 리뷰 없는 커밋 금지)
-public Map<String, Object> fPLA047QrySelectRev(Map<String, Object> request) {
-	Map<String, Object> responseData = new HashMap<String, Object>();
-	try {
-		Object rs = store.dPLA04701(request).get("REV_LIST");
-		responseData.put("REV_LIST", rs);
-	} catch (BizRuntimeException be) {
-		throw be;
-	} catch (Exception e) {
 		throw new BizRuntimeException("E0052", e);
 	}
 	return responseData;
 }
 
-    // LLM 포팅됨 - 사람 리뷰 필요(CLAUDE.md: 리뷰 없는 커밋 금지)
-public Map<String, Object> fPLA047QrySelectRevPeriod(Map<String, Object> request) {
-    Map<String, Object> responseData = new java.util.HashMap<>();
-    try {
-        // FIXME(원본 버그): 원본은 requestData, onlineCtx를 사용하나 메서드/본문 내 미선언 상태임. 원본 그대로 유지 대상이므로 request를 requestData로 치환하고 onlineCtx는 제거하여 포팅함.
-        Map<String, Object> duResult = store.dPLA04706(request);
-        Object rs = duResult.get("MAIN_LIST");
-        responseData.put("MAIN_LIST", rs);
-    } catch (BizRuntimeException be) {
-        throw be;
-    } catch (Exception e) {
-        throw new BizRuntimeException("E0052", e);
+    // 원본 fPLA047QrySelectRev가 dPLA04701 하나만 호출하고 recordset을 그대로 돌려주는 단순
+    // 위임이라(계산/분기 없음) LLM 포팅 없이 규칙 기반으로 바로 옮겼다 - 원본과
+    // 다르게 동작한다고 판단되면 사람이 확인할 것.
+    public List<Pla04701Dto> pla04701(Pla04701Dto dto) {
+        return store.dPLA04701(dto);
     }
-    return responseData;
-}
+
+    // 원본 fPLA047QrySelectRevPeriod가 dPLA04706 하나만 호출하고 recordset을 그대로 돌려주는 단순
+    // 위임이라(계산/분기 없음) LLM 포팅 없이 규칙 기반으로 바로 옮겼다 - 원본과
+    // 다르게 동작한다고 판단되면 사람이 확인할 것.
+    public List<Pla04706Dto> pla04706(Pla04706Dto dto) {
+        return store.dPLA04706(dto);
+    }
 
 }

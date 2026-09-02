@@ -27,6 +27,8 @@ class ValidationIssue:
     severity: str  # BLOCKER | WARNING | INFO
     message: str
     line_no: int | None = None
+    method_name: str | None = None  # 특정 메서드에 귀속되면 채운다(agents/db.py record_issues의
+    # method_id_by_name 연결에 씀, CONV_ISSUE.METHOD_ID) - 파일 전체 이슈는 None으로 둔다
 
 
 @dataclass
@@ -131,7 +133,7 @@ def _check_unspliced_markers(java_text: str) -> list[ValidationIssue]:
         issues.append(ValidationIssue(
             issue_type="PORTING_INCOMPLETE", severity="WARNING",
             message=f"{m.group(1)}가 아직 LLM 포팅되지 않고 스텁(UnsupportedOperationException) 상태입니다.",
-            line_no=line_no,
+            line_no=line_no, method_name=m.group(1),
         ))
     return issues
 
@@ -150,6 +152,37 @@ def _defined_methods(java_text: str | None) -> set[str]:
     if not java_text:
         return set()
     return set(_METHOD_DEF_RE.findall(java_text))
+
+
+def _method_line_ranges(java_text: str) -> list[tuple[str, int, int]]:
+    """TO-BE Java 파일에서 메서드별 (이름, 시작행, 끝행) 근사 범위를 뽑는다 - 다음 메서드 정의
+    직전까지를 그 메서드 범위로 본다(완벽한 AST 경계는 아니지만, 이슈를 어느 메서드에 귀속시킬지
+    판단하는 용도로는 충분하다 - 이 검증기 자체가 애초에 정규식 기반이라는 설계와 같은 수준이다).
+    """
+    matches = list(_METHOD_DEF_RE.finditer(java_text))
+    ranges: list[tuple[str, int, int]] = []
+    for i, m in enumerate(matches):
+        start_line = java_text.count("\n", 0, m.start()) + 1
+        end_pos = matches[i + 1].start() if i + 1 < len(matches) else len(java_text)
+        end_line = java_text.count("\n", 0, end_pos) + 1
+        ranges.append((m.group(1), start_line, end_line))
+    return ranges
+
+
+def _attribute_methods(issues: list[ValidationIssue], java_text: str) -> None:
+    """line_no는 있는데 method_name이 아직 없는 이슈에, 그 줄이 속한 메서드 이름을 채운다(제자리
+    수정). 이게 없으면 agents/db.py의 record_issues()가 CONV_ISSUE.METHOD_ID를 못 채우고,
+    agents/impact_analysis.py의 find_error_methods()가 "어떤 함수가 문제인지" 아무 것도 못
+    찾는다(2026-09-03 실제로 이렇게 비어있는 걸 확인하고 추가함).
+    """
+    ranges = _method_line_ranges(java_text)
+    for issue in issues:
+        if issue.method_name or not issue.line_no:
+            continue
+        for name, start, end in ranges:
+            if start <= issue.line_no < end:
+                issue.method_name = name
+                break
 
 
 def check_cross_layer_refs(
@@ -181,6 +214,7 @@ def check_cross_layer_refs(
                 message=f"{line_no}행: Api가 호출하는 service.{called}(...)가 Service에 정의돼 있지 않습니다.",
                 line_no=line_no,
             ))
+        _attribute_methods([i for i in issues if i.issue_type == "UNRESOLVED_SERVICE_CALL"], api_java)
 
     if service_java and store_java:
         reported = set()
@@ -195,6 +229,7 @@ def check_cross_layer_refs(
                 message=f"{line_no}행: Service가 호출하는 store.{called}(...)가 Store에 정의돼 있지 않습니다.",
                 line_no=line_no,
             ))
+        _attribute_methods([i for i in issues if i.issue_type == "UNRESOLVED_STORE_CALL"], service_java)
 
     if store_java and mapper_xml:
         reported = set()
@@ -209,6 +244,7 @@ def check_cross_layer_refs(
                 message=f"{line_no}행: Store가 참조하는 매퍼 statement id '{stmt}'가 Mapper.xml에 없습니다.",
                 line_no=line_no,
             ))
+        _attribute_methods([i for i in issues if i.issue_type == "MISSING_STATEMENT"], store_java)
     return issues
 
 
@@ -271,6 +307,7 @@ def check_mapper_xml(mapper_xml: str) -> list[ValidationIssue]:
 
 def validate_java_file(file_name: str, java_text: str) -> ValidationResult:
     issues = _check_brace_balance(java_text) + _check_unspliced_markers(java_text)
+    _attribute_methods(issues, java_text)
     passed = not any(i.severity == "BLOCKER" for i in issues)
     return ValidationResult(file_name=file_name, check="JAVA_STATIC", passed=passed, issues=issues)
 
@@ -307,3 +344,121 @@ def validate_screen(files: dict[str, str], prefix: str) -> list[ValidationResult
         issues=cross_issues,
     ))
     return results
+
+
+def _find_local_mvn_and_java_home() -> tuple[str | None, str | None]:
+    """PATH에 mvn/java가 없을 때 이 PC에 실제로 설치돼 있는 걸 찾는다(전역 설치 없이도 동작하게).
+
+    2026-08-28 확인: 이 PC엔 `C:\\sqldeveloper\\jdk\\jre`에 SQL Developer가 번들로 깐 JDK 17
+    (java/javac 둘 다 실제로 동작함, 이름은 jre지만 javac이 있어 완전한 JDK임)이 이미 있었고,
+    Maven은 어디에도 없어서 공식 배포본(apache-maven-3.9.9)을 받아 `~/dev-tools/`에 풀어뒀다 -
+    관리자 권한/설치 프로그램 없이 압축 풀기만으로 동작하는 방식을 택했다(전역 PATH도 안 건드림,
+    다른 프로그램에 영향 없음). 여기서 그 두 경로를 안다.
+    """
+    import shutil
+    from pathlib import Path
+
+    mvn_bin = shutil.which("mvn") or shutil.which("mvn.cmd")
+    if not mvn_bin:
+        for candidate in (
+            Path.home() / "dev-tools" / "apache-maven-3.9.9" / "bin" / "mvn.cmd",
+            Path.home() / "dev-tools" / "apache-maven-3.9.9" / "bin" / "mvn",
+        ):
+            if candidate.exists():
+                mvn_bin = str(candidate)
+                break
+
+    java_home = None
+    if not (shutil.which("java") and shutil.which("javac")):
+        for candidate in (Path("C:/sqldeveloper/jdk/jre"),):
+            if (candidate / "bin" / "java.exe").exists() or (candidate / "bin" / "java").exists():
+                java_home = str(candidate)
+                break
+
+    return mvn_bin, java_home
+
+
+def check_maven_build(pom_path, timeout_sec: int = 300) -> ValidationResult:
+    """`mvn -q compile`을 실제로 돌려서 진짜 javac 컴파일이 되는지 확인한다.
+
+    validate_screen()의 나머지 검사와 달리 이건 파일 dict(메모리)가 아니라 디스크에 이미
+    "저장"된 pilot/gscm 트리 전체를 대상으로 한다 - Maven은 모듈 단위로 빌드하지, 화면 하나만
+    떼어서 컴파일할 수 없기 때문이다(여러 화면이 pilot/gscm 아래 한 트리로 합쳐지는 구조라
+    화면별 저장이 끝날 때마다 이 검사를 다시 돌리면 그 시점까지 저장된 전체 화면이 같이
+    컴파일된다).
+
+    PATH에 mvn/java가 없으면 `_find_local_mvn_and_java_home()`으로 이 PC에 실제 설치된 걸
+    찾아서 쓴다(2026-08-28부터 - 이전엔 PATH에 없으면 바로 포기하고 INFO만 남겼다). 그래도
+    둘 다 못 찾으면 그때만 "코드가 잘못됐다"와 구분되는 INFO로 남긴다.
+    """
+    import os
+    import subprocess
+
+    pom_path = str(pom_path)
+    mvn_bin, java_home = _find_local_mvn_and_java_home()
+    if not mvn_bin:
+        return ValidationResult(
+            file_name="(Maven 빌드)", check="MAVEN_BUILD", passed=True,
+            issues=[ValidationIssue(
+                issue_type="MAVEN_NOT_AVAILABLE", severity="INFO",
+                message=(
+                    "이 PC의 PATH와 알려진 설치 위치(~/dev-tools/apache-maven-*)에서도 mvn을 "
+                    "찾지 못해 실제 컴파일 검증을 건너뜁니다 - mvn을 설치한 뒤 이 버튼을 다시 누르세요."
+                ),
+            )],
+        )
+
+    env = os.environ.copy()
+    if java_home:
+        env["JAVA_HOME"] = java_home
+        env["PATH"] = os.path.join(java_home, "bin") + os.pathsep + env.get("PATH", "")
+
+    try:
+        proc = subprocess.run(
+            [mvn_bin, "-q", "-f", pom_path, "-DskipTests", "compile"],
+            capture_output=True, text=True, timeout=timeout_sec, env=env,
+        )
+    except subprocess.TimeoutExpired:
+        return ValidationResult(
+            file_name="(Maven 빌드)", check="MAVEN_BUILD", passed=False,
+            issues=[ValidationIssue(
+                issue_type="MAVEN_TIMEOUT", severity="BLOCKER",
+                message=f"mvn compile이 {timeout_sec}초 안에 끝나지 않았습니다(첫 실행은 의존성 다운로드로 느릴 수 있음 - 다시 시도해보세요).",
+            )],
+        )
+    except Exception as e:  # noqa: BLE001 - mvn 실행 자체가 실패하는 경우(권한 등)도 BLOCKER로 남긴다
+        return ValidationResult(
+            file_name="(Maven 빌드)", check="MAVEN_BUILD", passed=False,
+            issues=[ValidationIssue(issue_type="MAVEN_EXEC_ERROR", severity="BLOCKER", message=str(e))],
+        )
+
+    passed = proc.returncode == 0
+    issues: list[ValidationIssue] = []
+    if not passed:
+        output = (proc.stdout or "") + (proc.stderr or "")
+        # mvn -q는 성공하면 거의 조용하고 실패하면 [ERROR] 라인들에 실제 컴파일 에러가 담긴다.
+        # Maven이 같은 에러 목록을 "COMPILATION ERROR" 섹션과 "Failed to execute goal" 섹션에
+        # 두 번 반복해서 찍기 때문에(2026-08-28 실사용 확인 - 화면에서 똑같은 내용이 두 배로
+        # 보여서 읽기 어렵다는 피드백) 중복 줄과 도움말 잡음("[Help 1]" 등)을 걸러낸다.
+        _NOISE_MARKERS = (
+            "[Help 1]", "To see the full stack trace", "Re-run Maven using the -X switch",
+            "For more information about the errors",
+        )
+        seen: set[str] = set()
+        error_lines: list[str] = []
+        for ln in output.splitlines():
+            if "[ERROR]" not in ln:
+                continue
+            stripped = ln.strip()
+            if any(marker in stripped for marker in _NOISE_MARKERS) or not stripped:
+                continue
+            if stripped in seen:
+                continue
+            seen.add(stripped)
+            error_lines.append(stripped)
+        detail = "\n".join(error_lines) if error_lines else output[-4000:]
+        issues.append(ValidationIssue(
+            issue_type="MAVEN_COMPILE_FAILED", severity="BLOCKER",
+            message=f"mvn compile 실패(exit {proc.returncode}):\n{detail}",
+        ))
+    return ValidationResult(file_name="(Maven 빌드)", check="MAVEN_BUILD", passed=passed, issues=issues)

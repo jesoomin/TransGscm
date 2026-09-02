@@ -11,16 +11,39 @@ docs/07-tobe-structure.xlsx로 확정된 명명 규칙만 쓴다:
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 
-from converters import ConversionIssue
+from converters import ConversionIssue, dto_name_for_method
+from java_ast import extract_method_bodies, extract_methods  # noqa: F401 (재수출 - app.py가 여기서 import)
+
+
+def method_body_hash(body: str) -> str:
+    """메서드 본문의 공백 정규화 후 SHA-256 - agents/db.py의 CONV_METHOD.BODY_HASH,
+    find_duplicate_methods()가 이 값으로 화면 간 동일/유사 로직을 묶는다. 공백만 다른(들여쓰기,
+    줄바꿈) 메서드를 서로 다른 걸로 취급하지 않기 위해 정규화 후 해시한다.
+    """
+    normalized = re.sub(r"\s+", " ", body).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 @dataclass
 class SkeletonResult:
     files: dict[str, str] = field(default_factory=dict)
     issues: list[ConversionIssue] = field(default_factory=list)
+    # D BizUnit의 dbSelect("S00N", ...) 호출에서 뽑은 {원본 statement id: D 메서드명} 매핑
+    # (예: {"S001": "dPLA04701"}) - Mapper.xml의 <select id="S00N">을 D 메서드명 기준으로
+    # 다시 붙이는 converters.finalize_mapper_document()에 그대로 넘겨서 쓴다.
+    stmt_id_to_method: dict[str, str] = field(default_factory=dict)
+    # 파일(CONV_FILE) 단위보다 한 단계 더 내려간 메서드 단위 레지스트리. 각 원소:
+    # {"layer": "P"|"F"|"D", "method_name": AS-IS명, "method_name_tobe": TO-BE명(모르면 None),
+    #  "body_hash": method_body_hash() 결과, "conversion_method": ..., "mapper_stmt_id": D만 해당}
+    # agents/db.py의 CONV_METHOD에 그대로 적재한다(app.py가 file_id를 붙여서).
+    methods: list[dict] = field(default_factory=list)
+    # 콜그래프 엣지(P->F, F->D 위임). {"caller_layer","caller_method","callee_layer","callee_method"}.
+    # agents/db.py의 CONV_METHOD_CALL에 적재해서 영향도 분석(콜그래프 역추적)에 쓴다.
+    method_calls: list[dict] = field(default_factory=list)
 
     @property
     def warnings(self) -> list[str]:
@@ -60,45 +83,128 @@ def tobe_relpath(filename: str, package_p1: str, package_p2: str) -> str:
     return filename
 
 
-_METHOD_SIG_RE = re.compile(
-    r"public\s+IDataSet\s+(\w+)\s*\(([^)]*)\)", re.DOTALL
-)
-
 _BIZUNIT_METHOD_RE = re.compile(
     r'<method\s+id="([^"]+)"\s*>.*?<transactionId>([^<]*)</transactionId>', re.DOTALL
 )
 
-
-def extract_methods(java_text: str) -> list[str]:
-    """P/F/D java 소스에서 `public IDataSet xxx(...)` 형태의 메서드 이름을 뽑는다.
-
-    원본이 컴파일 안 되는 상태(PLA047에서 실제로 겪음)여도 정규식 기반이라 동작한다 -
-    문법 오류가 있어도 시그니처 텍스트 자체는 대개 온전하기 때문.
-    """
-    return [m.group(1) for m in _METHOD_SIG_RE.finditer(java_text)]
-
-
-def extract_method_bodies(java_text: str) -> dict[str, str]:
-    """각 메서드 시그니처 시작 지점부터 다음 메서드(또는 파일 끝)까지를 "본문"으로 대략 자른다.
-
-    중괄호 매칭을 정확히 하는 대신 다음 시그니처 등장 위치를 경계로 쓰는 근사치다 -
-    이 화면들처럼 클래스 안에 메서드 여러 개가 나란히 있는 전형적인 BizUnit 구조에는 충분하다.
-    """
-    matches = list(_METHOD_SIG_RE.finditer(java_text))
-    bodies: dict[str, str] = {}
-    for i, m in enumerate(matches):
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(java_text)
-        bodies[m.group(1)] = java_text[start:end]
-    return bodies
+# extract_methods/extract_method_bodies는 java_ast.py로 옮겼다(tree-sitter 우선 + 정규식 폴백,
+# 자세한 이유는 그 모듈 docstring 참고) - 위 import에서 재수출하므로 이 모듈을 쓰던 다른 코드는
+# 그대로 skeleton_gen에서 import해도 동작한다.
 
 
 def find_delegate_call(p_method_body: str, f_method_names: list[str]) -> str | None:
-    """P 메서드 본문에서 실제로 호출하는 F 메서드 이름을 찾는다(있는 것만 신뢰, 추측 안 함)."""
+    """P 메서드 본문에서 실제로 호출하는 F 메서드 이름을 찾는다(있는 것만 신뢰, 추측 안 함).
+
+    첫 번째로 매칭되는 이름 하나만 돌려준다 - Api 골격 생성은 "위임 대상 F 메서드 1개"만 있으면
+    되기 때문. 메서드 하나가 여러 F/D 메서드를 호출하는 경우까지 전부 보려면 find_all_calls를 쓴다
+    (agents/nctrid_graph.py의 콜그래프 빌더가 이 용도로 씀).
+    """
     for name in f_method_names:
         if re.search(rf"\.{re.escape(name)}\s*\(", p_method_body):
             return name
     return None
+
+
+def find_all_calls(method_body: str, candidate_names: list[str]) -> list[str]:
+    """메서드 본문에서 실제로 호출되는 후보 메서드 이름을 전부(등장 순서대로) 찾는다.
+
+    find_delegate_call은 "위임 대상 1개"만 필요한 골격 생성용이라 첫 매치에서 멈추지만, 콜그래프
+    분석은 한 메서드가 여러 메서드를 호출하는 경우(계산/분기가 있는 F 메서드가 D 메서드를 2개 이상
+    부르는 등)까지 전부 알아야 해서 이 함수를 따로 둔다.
+    """
+    found = []
+    for name in candidate_names:
+        if re.search(rf"\.{re.escape(name)}\s*\(", method_body):
+            found.append(name)
+    return found
+
+
+def find_bare_calls(method_body: str, candidate_names: list[str]) -> list[str]:
+    """메서드 본문에서 한정자 없이(같은 클래스 안의 메서드를 부르듯 `method(...)` 그대로, 앞에
+    `.`이 없는 형태로) 호출되는 후보 이름을 찾는다.
+
+    find_all_calls()는 `du.dXXX(...)`처럼 다른 객체를 거치는 계층 간 위임 호출만 잡도록
+    일부러 `.` 뒤에 오는 이름만 본다 - 그래서 같은 클래스 안에서 서로를 부르는 경우(P가 다른
+    P를, F가 다른 F를, D가 다른 D를 직접 호출)는 지금까지 콜그래프 어디에도 안 잡혔다
+    (agents/impact_analysis.py에 명시된 알려진 한계). 이 함수가 그 빈자리를 메운다 - 앞에 '.'이
+    오면(다른 객체의 동명 메서드) 제외해서 find_all_calls와 겹치지 않게 한다.
+    """
+    found = []
+    for name in candidate_names:
+        if re.search(rf"(?<!\.)\b{re.escape(name)}\s*\(", method_body):
+            found.append(name)
+    return found
+
+
+def extract_d_stmt_ids(d_java_text: str) -> dict[str, str]:
+    """D BizUnit 소스에서 {D 메서드명: dbSelect("S00N", ...)에 쓴 원본 statement id} 매핑을 뽑는다."""
+    return dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
+
+
+# F BizUnit 메서드가 "D 메서드 하나 호출하고 recordset 하나를 그대로 응답에 담아 돌려주는" 순수
+# 위임(delegation) 모양인지 판별한다. 예(실제 FPLA047 소스에서 확인):
+#
+#   public IDataSet fPLA047QrySelectRev(IDataSet requestData, IOnlineContext onlineCtx){
+#       IDataSet responseData = new DataSet();
+#       try{
+#           DPLA047 du = (DPLA047) lookupDataUnit(DPLA047.class);
+#           IRecordSet rs = du.dPLA04701(requestData, onlineCtx).getRecordSet("REV_LIST");
+#           responseData.putRecordset("REV_LIST", rs);
+#       } catch (BizRuntimeException be){ throw be; }
+#       catch (Exception e){ throw new BizRuntimeException("E0052", e); }
+#       return responseData;
+#   }
+#
+# 이 모양이면 계산/분기 로직이 전혀 없으므로 LLM 포팅 없이 곧바로 Store 위임 한 줄로 옮길 수 있다:
+#
+#   public List<Pla04701Dto> pla04701(Pla04701Dto dto){ return pla047Store.dPLA04701(dto); }
+#
+# 정규식은 이 정확한 모양(lookupDataUnit 1회 + getRecordSet/putRecordset이 같은 이름 1쌍)만
+# 매칭하고, 다른 statement가 하나라도 더 있으면(계산·분기·여러 D 메서드 호출 등) 매칭시키지
+# 않는다 - 애매하면 기존 LLM 포팅 스텁으로 그대로 떨어지는 게 안전하다(추측으로 로직을 지어내지
+# 않는다는 CLAUDE.md 원칙).
+_SIMPLE_DELEGATION_RE = re.compile(
+    r"""
+    \{\s*
+    IDataSet\s+(?P<resp>\w+)\s*=\s*new\s+DataSet\(\)\s*;\s*
+    try\s*\{\s*
+    \w+\s+(?P<du>\w+)\s*=\s*\(\s*\w+\s*\)\s*lookupDataUnit\(\s*\w+\.class\s*\)\s*;\s*
+    IRecordSet\s+(?P<rs>\w+)\s*=\s*(?P=du)\s*\.\s*(?P<dmethod>\w+)\s*\(\s*\w+\s*,\s*\w+\s*\)\s*
+        \.\s*getRecordSet\(\s*"(?P<rsname1>\w+)"\s*\)\s*;\s*
+    (?P=resp)\s*\.\s*putRecordset\(\s*"(?P<rsname2>\w+)"\s*,\s*(?P=rs)\s*\)\s*;\s*
+    \}\s*catch\s*\(\s*\w+\s+\w+\s*\)\s*\{\s*throw\s+\w+\s*;\s*\}\s*
+    catch\s*\(\s*\w+\s+\w+\s*\)\s*\{\s*throw\s+new\s+\w+\([^;]*\)\s*;\s*\}\s*
+    return\s+(?P=resp)\s*;\s*
+    \}
+    """,
+    re.VERBOSE | re.DOTALL,
+)
+
+
+def detect_simple_delegation(f_body: str) -> str | None:
+    """단순 위임 모양이면 위임 대상 D 메서드명(예: dPLA04701)을, 아니면 None을 돌려준다.
+
+    getRecordSet/putRecordset의 recordset 이름이 서로 다르면(원본이 실제로 이름을 바꿔치기하는
+    경우일 수 있어) 단순 위임으로 보지 않는다 - 안전한 쪽으로만 자동화한다.
+
+    끝에 \\Z(문자열 끝)를 강제하지 않는다 - java_ast.extract_method_bodies가 파일에 문법 오류가
+    있어 tree-sitter 경계를 못 쓰는 메서드는 정규식 근사치("다음 시그니처 전까지")로 경계를
+    잡는데, 이때 메서드 진짜 닫는 중괄호 뒤에 다음 메서드의 JavaDoc 주석까지 같이 딸려온다
+    (실측 확인: FPLA047.java의 fPLA047QrySelectRev가 실제로 이랬다) - 여기서 \\Z를 요구하면
+    이런 흔한 케이스를 전부 놓친다. match()가 이미 시작 위치는 고정하므로, 끝은 열어둬도
+    "본문 앞부분이 이 모양과 다르면 매칭 안 됨"이라는 안전성은 그대로 유지된다.
+    """
+    m = _SIMPLE_DELEGATION_RE.match(f_body.strip())
+    if not m or m.group("rsname1") != m.group("rsname2"):
+        return None
+    return m.group("dmethod")
+
+
+def strip_code_fence(text: str) -> str:
+    """LLM이 하지 말라고 해도 ```java ... ``` 로 감싸서 줄 때가 있어 방어적으로 벗겨낸다."""
+    text = text.strip()
+    m = re.match(r"^```[a-zA-Z]*\n(.*)\n```$", text, re.DOTALL)
+    return m.group(1) if m else text
 
 
 def splice_ported_method(service_java: str, method: str, ported_body_code: str) -> str:
@@ -240,7 +346,7 @@ def generate_dto(
         for msg in entry["issues"]:
             result.issues.append(ConversionIssue(
                 issue_type="DTO_FIELD_EXTRACT_INCOMPLETE", severity="WARNING",
-                message=f"{p_method}: {msg}",
+                message=f"{p_method}: {msg}", method_name=p_method,
             ))
 
         lines.append(f"    // ===== {nctrid or '(nctRid 미확인)'} ({p_method}) =====")
@@ -305,6 +411,17 @@ def generate_skeletons(
             ))
 
     f_methods_for_delegation = extract_methods(f_java_text) if f_java_text else []
+    f_bodies_for_delegation = extract_method_bodies(f_java_text) if f_java_text else {}
+
+    # F 메서드 원래 이름 -> (Service에 새로 붙일 이름, 위임 대상 D 메서드명). Api 생성과 Service
+    # 생성 둘 다 이 매핑이 있어야 한다 - Service 메서드명이 바뀌면 Api가 부르는 이름도 같이
+    # 바꿔야 컴파일이 되기 때문에 여기서 미리 한 번만 계산해서 공유한다.
+    simple_delegations: dict[str, tuple[str, str]] = {}
+    for f_method in f_methods_for_delegation:
+        d_method = detect_simple_delegation(f_bodies_for_delegation.get(f_method, ""))
+        if d_method:
+            renamed = d_method[1:].lower() if d_method[:1].lower() == "d" else d_method.lower()
+            simple_delegations[f_method] = (renamed, d_method)
 
     # ---- Api (Controller) ----
     if p_java_text:
@@ -322,6 +439,11 @@ def generate_skeletons(
             "import org.springframework.http.ResponseEntity;",
             "import org.springframework.web.bind.annotation.*;",
             "",
+        ]
+        if simple_delegations:
+            lines.append(f"import {base_pkg}.dto.*;")
+            lines.append("import java.util.List;")
+        lines += [
             "import java.util.Map;",
             "",
             f"// TODO: 원본 P BizUnit의 화면 검증 로직 유무를 다시 한번 확인할 것(PLA047은 순수 위임이었음, 다른 화면은 표본 확대 전)",
@@ -353,13 +475,34 @@ def generate_skeletons(
                         f"{method}의 본문에서 F 메서드 호출을 찾지 못했습니다 - Api가 존재하지 않을 수도 있는 "
                         f"service.{method}(...)를 임시로 호출하도록 생성했습니다. 원본을 직접 대조해서 고치세요."
                     ),
+                    method_name=method,
                 ))
+            result.methods.append({
+                "layer": "P", "method_name": method, "method_name_tobe": method,
+                "body_hash": method_body_hash(p_bodies.get(method, "")),
+                "conversion_method": "RULE_BASED_SKELETON", "mapper_stmt_id": None,
+                "nctrid": nctrid or None,
+            })
+            if delegate:
+                result.method_calls.append({
+                    "caller_layer": "P", "caller_method": method,
+                    "callee_layer": "F", "callee_method": delegate,
+                })
             call_target = delegate or method
+            # delegate가 단순 위임 F 메서드면 Service 쪽 메서드명이 이미 D 메서드 기준으로 바뀌었으니
+            # (예: fPLA047QrySelectRev -> pla04701) Api도 같은 이름으로 불러야 컴파일된다 - 동시에
+            # 파라미터/응답 타입도 Map<String,Object> 대신 실제 DTO로 맞춘다.
+            param_type, return_type, arg_name = "Map<String, Object>", "Map<String, Object>", "request"
+            if delegate and delegate in simple_delegations:
+                renamed, d_method = simple_delegations[delegate]
+                call_target = renamed
+                dto_name = dto_name_for_method(d_method)
+                param_type, return_type, arg_name = dto_name, f"List<{dto_name}>", "dto"
             lines += [
                 f"    // nctRid: {nctrid or '미확인 - .bizunit에서 못 찾음'}",
                 f'    @PostMapping("/{slug}")',
-                f"    public ResponseEntity<Map<String, Object>> {method}(@RequestBody Map<String, Object> request) {{",
-                f"        return ResponseEntity.ok(service.{call_target}(request));",
+                f"    public ResponseEntity<{return_type}> {method}(@RequestBody {param_type} {arg_name}) {{",
+                f"        return ResponseEntity.ok(service.{call_target}({arg_name}));",
                 f"    }}",
                 "",
             ]
@@ -374,17 +517,28 @@ def generate_skeletons(
     # ---- Service ----
     if f_java_text:
         f_methods = extract_methods(f_java_text)
+        f_bodies = extract_method_bodies(f_java_text)
         if not f_methods:
             result.issues.append(ConversionIssue(
                 issue_type="NO_METHODS_FOUND", severity="BLOCKER",
                 message="F 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.",
             ))
+
+        # 순수 위임(F가 D 메서드 하나만 부르고 recordset을 그대로 돌려주는 모양, 계산/분기 없음)인
+        # 메서드는 LLM 포팅 없이 곧바로 Store 위임 한 줄로 생성한다 - simple_delegations는 위
+        # Api 생성 단계와 공유하는 {F 원래 이름: (새 이름, D 메서드명)} 매핑(detect_simple_delegation 참고).
+
         lines = [
             f"package {base_pkg}.service;",
             "",
             "import org.springframework.stereotype.Service;",
             "import org.springframework.beans.factory.annotation.Autowired;",
             "",
+        ]
+        if simple_delegations:
+            lines.append(f"import {base_pkg}.dto.*;")
+        lines += [
+            "import java.util.List;",
             "import java.util.Map;",
             "",
             f"@Service",
@@ -395,6 +549,30 @@ def generate_skeletons(
             "",
         ]
         for method in f_methods:
+            delegation = simple_delegations.get(method)
+            body = f_bodies_for_delegation.get(method, "")
+            if delegation:
+                renamed, d_method = delegation
+                dto_name = dto_name_for_method(d_method)
+                lines += [
+                    f"    // 원본 {method}가 {d_method} 하나만 호출하고 recordset을 그대로 돌려주는 단순",
+                    f"    // 위임이라(계산/분기 없음) LLM 포팅 없이 규칙 기반으로 바로 옮겼다 - 원본과",
+                    f"    // 다르게 동작한다고 판단되면 사람이 확인할 것.",
+                    f"    public List<{dto_name}> {renamed}({dto_name} dto) {{",
+                    f"        return store.{d_method}(dto);",
+                    f"    }}",
+                    "",
+                ]
+                result.methods.append({
+                    "layer": "F", "method_name": method, "method_name_tobe": renamed,
+                    "body_hash": method_body_hash(body),
+                    "conversion_method": "RULE_BASED_DELEGATION", "mapper_stmt_id": None,
+                })
+                result.method_calls.append({
+                    "caller_layer": "F", "caller_method": method,
+                    "callee_layer": "D", "callee_method": d_method,
+                })
+                continue
             lines += [
                 f"    // PORT_START:{method}",
                 f"    // TODO(LLM 포팅 필요): 원본 F{screen_id}.{method}의 계산/분기 로직을 그대로 옮길 것.",
@@ -405,6 +583,11 @@ def generate_skeletons(
                 f"    // PORT_END:{method}",
                 "",
             ]
+            result.methods.append({
+                "layer": "F", "method_name": method, "method_name_tobe": None,
+                "body_hash": method_body_hash(body),
+                "conversion_method": "LLM_PENDING", "mapper_stmt_id": None,
+            })
         lines.append("}")
         result.files[f"{prefix}Service.java"] = "\n".join(lines)
     else:
@@ -416,13 +599,18 @@ def generate_skeletons(
     # ---- Store ----
     if d_java_text:
         d_methods = extract_methods(d_java_text)
+        d_bodies = extract_method_bodies(d_java_text)
         if not d_methods:
             result.issues.append(ConversionIssue(
                 issue_type="NO_METHODS_FOUND", severity="BLOCKER",
                 message="D 파일에서 `public IDataSet 메서드(...)` 시그니처를 찾지 못했습니다.",
             ))
         # dbSelect("S00N", ...) 호출에서 실제 매핑 statement id를 뽑아 Store가 참조할 수 있게 한다.
-        stmt_ids = dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
+        # Mapper.xml의 <select id="S00N">은 converters.finalize_mapper_document()가 이 D 메서드명
+        # 자체로 다시 붙이므로(예: S001 -> dPLA04701), Store도 처음부터 D 메서드명으로 참조한다.
+        stmt_ids = extract_d_stmt_ids(d_java_text)
+        result.stmt_id_to_method = {old_id: method for method, old_id in stmt_ids.items()}
+        namespace = f"{base_pkg}.store.{prefix}Store"
         lines = [
             f"package {base_pkg}.store;",
             "",
@@ -437,19 +625,27 @@ def generate_skeletons(
             f"@Repository",
             f"public class {prefix}Store {{",
             "",
+            f'    private static final String NS = "{namespace}.";',
+            "",
             f"    @Autowired",
             f"    private SqlSessionTemplate sqlSession;",
             "",
         ]
         for method in d_methods:
-            stmt_id = stmt_ids.get(method, "")
-            mapper_ref = f'"{prefix}Mapper.{stmt_id}"' if stmt_id else f'"{prefix}Mapper.TODO_확인필요"'
+            stmt_id = method if method in stmt_ids else ""
+            mapper_ref = f"NS + \"{stmt_id}\"" if stmt_id else f'NS + "TODO_확인필요_{method}"'
             lines += [
                 f"    public Map<String, Object> {method}(Map<String, Object> params) {{",
                 f"        return sqlSession.selectOne({mapper_ref}, params);",
                 f"    }}",
                 "",
             ]
+            result.methods.append({
+                "layer": "D", "method_name": method, "method_name_tobe": method,
+                "body_hash": method_body_hash(d_bodies.get(method, "")),
+                "conversion_method": "RULE_BASED_SKELETON",
+                "mapper_stmt_id": stmt_id or None,
+            })
         lines.append("}")
         result.files[f"{prefix}Store.java"] = "\n".join(lines)
     else:
@@ -457,5 +653,57 @@ def generate_skeletons(
             issue_type="MISSING_INPUT_FILE", severity="INFO",
             message="D(Java) 파일이 없어 Store 골격을 생성하지 않았습니다.",
         ))
+
+    # ---- 콜그래프 완전성 보강 (2026-09-03, 영향도 분석 정확도 개선) ----
+    # 위에서 method_calls에 넣은 엣지는 "코드 생성에 실제로 쓴" 단순 위임 1건뿐이다
+    # (find_delegate_call/detect_simple_delegation - 첫 번째 매치에서 멈추거나 아예 특정 패턴만
+    # 찾는다). 계산/분기가 있어 LLM 포팅이 필요한 메서드(대부분의 실제 업무 로직)는 이 위에서
+    # method_calls에 아무 것도 안 남았다 - 예를 들어 F 메서드 하나가 D 메서드 4개를 부르는 경우
+    # (실제 PLA047의 fPLA047QrySelectMainList) 이 골격 생성 로직만으로는 그 4개 호출 중 하나도
+    # 기록되지 않는다. `agents/impact_analysis.py`의 미사용 함수 탐지가 이 콜그래프를 그대로 쓰기
+    # 때문에, 엣지가 이렇게 비면 실제로는 호출되는 D 메서드가 "미사용"으로 오탐된다.
+    #
+    # 그래서 코드 생성과는 별개로, 실제로 존재하는 호출 전부를 find_all_calls()(계층 간,
+    # `.method(` 패턴 - agents/nctrid_graph.py의 콜그래프 빌더와 동일 로직)와 find_bare_calls()
+    # (같은 계층 내부, 한정자 없는 호출 - 지금까지 아무 데도 없던 신규 탐지)로 다시 훑어서
+    # method_calls를 채운다. 위에서 이미 넣은 엣지와 겹치면 건너뛴다(중복 삽입 방지).
+    p_methods_full = extract_methods(p_java_text) if p_java_text else []
+    p_bodies_full = extract_method_bodies(p_java_text) if p_java_text else {}
+    d_methods_full = extract_methods(d_java_text) if d_java_text else []
+    d_bodies_full = extract_method_bodies(d_java_text) if d_java_text else {}
+
+    _seen_edges = {
+        (c["caller_layer"], c["caller_method"], c["callee_layer"], c["callee_method"])
+        for c in result.method_calls
+    }
+
+    def _add_call_edge(caller_layer: str, caller_method: str, callee_layer: str, callee_method: str) -> None:
+        key = (caller_layer, caller_method, callee_layer, callee_method)
+        if key in _seen_edges:
+            return
+        _seen_edges.add(key)
+        result.method_calls.append({
+            "caller_layer": caller_layer, "caller_method": caller_method,
+            "callee_layer": callee_layer, "callee_method": callee_method,
+        })
+
+    for method in p_methods_full:
+        body = p_bodies_full.get(method, "")
+        for f in find_all_calls(body, f_methods_for_delegation):
+            _add_call_edge("P", method, "F", f)
+        for sibling in find_bare_calls(body, [m for m in p_methods_full if m != method]):
+            _add_call_edge("P", method, "P", sibling)
+
+    for method in f_methods_for_delegation:
+        body = f_bodies_for_delegation.get(method, "")
+        for d in find_all_calls(body, d_methods_full):
+            _add_call_edge("F", method, "D", d)
+        for sibling in find_bare_calls(body, [m for m in f_methods_for_delegation if m != method]):
+            _add_call_edge("F", method, "F", sibling)
+
+    for method in d_methods_full:
+        body = d_bodies_full.get(method, "")
+        for sibling in find_bare_calls(body, [m for m in d_methods_full if m != method]):
+            _add_call_edge("D", method, "D", sibling)
 
     return result

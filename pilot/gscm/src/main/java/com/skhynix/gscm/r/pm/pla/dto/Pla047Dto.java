@@ -15,6 +15,7 @@ public class Pla047Dto {
         private String chgProdModeCd; // AS-IS: CHG_PROD_MODE_CD
         private String chkSubtotal; // AS-IS: CHK_SUBTOTAL
         private String cooProfRateDieYn; // AS-IS: COO_PROF_RATE_DIE_YN
+        private String cooProfRateEqYn; // AS-IS: COO_PROF_RATE_EQ_YN
         private String cooProfRateProdYn; // AS-IS: COO_PROF_RATE_PROD_YN
         private String cooProfRateWfYn; // AS-IS: COO_PROF_RATE_WF_YN
         private String dim; // AS-IS: DIM
@@ -36,6 +37,8 @@ public class Pla047Dto {
         public void setChkSubtotal(String chkSubtotal) { this.chkSubtotal = chkSubtotal; }
         public String getCooProfRateDieYn() { return cooProfRateDieYn; }
         public void setCooProfRateDieYn(String cooProfRateDieYn) { this.cooProfRateDieYn = cooProfRateDieYn; }
+        public String getCooProfRateEqYn() { return cooProfRateEqYn; }
+        public void setCooProfRateEqYn(String cooProfRateEqYn) { this.cooProfRateEqYn = cooProfRateEqYn; }
         public String getCooProfRateProdYn() { return cooProfRateProdYn; }
         public void setCooProfRateProdYn(String cooProfRateProdYn) { this.cooProfRateProdYn = cooProfRateProdYn; }
         public String getCooProfRateWfYn() { return cooProfRateWfYn; }

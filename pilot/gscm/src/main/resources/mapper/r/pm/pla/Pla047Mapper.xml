@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL MAP 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
-<sqlMap namespace="DPLA047">
+<!DOCTYPE sqlMap PUBLIC "-//mybatid.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.skhynix.gscm.r.pm.pla.store.Pla047Store">
 	<sql id="queryCommon">
 	 /* PIVOT 적용 대상 쿼리 */
 			SELECT
 				/* DIMENSION 시작*/
 				${DIM}
 				/* DIMENSION 끝*/
-	<if test="SRCTYPE == 'UPPER2'">
+	<if test='"UPPER2".equals(SRCTYPE)'>
 		
 				, UPPER_CD1
 				, UPPER_CD2
 				, SORT_SEQ
 		
 	</if>	
-		<if test="SRCTYPE == 'COLCHG'">
+		<if test='"COLCHG".equals(SRCTYPE)'>
 			
 					, UPPER_CD1
 					, SORT_SEQ
@@ -23,13 +23,13 @@
 					, NET_DIE_300_CNT AS NET_DIE_300_CNT
 					, MQHYT_GBN
 					, MQHYT
-	<if test="CHKYN == 'N'">
+	<if test='"N".equals(CHKYN)'>
 		
 				, CUM2_YLD
 				, ODD_CUM2_YLD
 						
 	</if>	
-		<if test="CHKYN == 'Y'">
+		<if test='"Y".equals(CHKYN)'>
 		
 				/* ,(GOOD_DIE / NET_DIE_300_CNT) * 100 AS CUM2_YLD */
 				, CASE WHEN NET_DIE_300_CNT IS NULL THEN NULL
@@ -138,14 +138,14 @@
 							${DIM}
 							/* DIMENSION 끝*/
 				
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, SORT_SEQ
@@ -154,7 +154,7 @@
 								, MQHYT_GBN
 								, MQHYT
 								, NET_DIE_300_CNT
-				<if test="CHKYN == 'N'">
+				<if test='"N".equals(CHKYN)'>
 					
 							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) / NULLIF(NET_DIE_300_CNT,0) * 100 AS  CUM2_YLD
 							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) / NULLIF(NET_DIE_300_CNT,0) * 100 * SOM_EQ_QTY AS ODD_CUM2_YLD							
@@ -162,7 +162,7 @@
 							, SOM_DIE_QTY / NULLIF(WF_CONV_QTY,0) * SOM_EQ_QTY AS ODD_GOOD_DIE
 									
 				</if>	
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 					
 							, CUM2_YLD
 							, (CUM2_YLD * SOM_EQ_QTY) AS ODD_CUM2_YLD
@@ -306,26 +306,26 @@
 								/*============상단 체크박스 부분 시작 - 월 데이터 ====================*/
 		
 		
-			<if test="CHKYN == 'Y'">
+			<if test='"Y".equals(CHKYN)'>
 				
 					/*============조인 상단 부분 시작 ====================*/
 					SELECT /* 월 데이터 */	/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
 								
-					<if test="SRCTYPE == 'BASE'">
-						<if test="CHKTECHYN == 'Y'">
+					<if test='"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKTECHYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.TECH_CD,
 							
 						</if>
-						<if test="CHKMODEYN == 'Y'">
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.CHG_PROD_MODE_CD,
 							
 						</if>
 						</if>
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -333,7 +333,7 @@
 								A.SORT_SEQ ,
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -371,14 +371,14 @@
 										/* DIMENSION 시작*/
 										${DIM}
 										/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2
 								, MAX(SORT_SEQ) AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 									, UPPER_CD1
 									, MAX(SORT_SEQ) AS SORT_SEQ
@@ -390,12 +390,12 @@
 									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
 									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
 									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
-					<if test="CHKYN == 'N'">
+					<if test='"N".equals(CHKYN)'>
 						
 								, SUM(CUM2_YLD) AS  CUM2_YLD
 										
 					</if>	
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
 								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
@@ -432,14 +432,14 @@
 							${DIMORG}
 							/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -448,14 +448,14 @@
 								, MQHYT_GBN
 								, MQHYT
 								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
-				<if test="CHKYN == 'N'">
+				<if test='"N".equals(CHKYN)'>
 					
 							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
 							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
 							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
 									
 				</if>	
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 						
 								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
 								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
@@ -487,7 +487,7 @@
 										${DIMORG}
 										/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -495,7 +495,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -507,7 +507,7 @@
 								, TGT_YM AS MQHYT
 								/*기본정보*/
 								, NET_DIE_300_CNT
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 										
@@ -539,8 +539,8 @@
 								  ELSE COO_COST / BP_EXR END AS COO_COST 
 								FROM PMO_PROFBLT_IMPROV_PROD T1					
 					
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -549,13 +549,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -564,7 +564,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -577,7 +577,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -585,28 +585,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_MONTH}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -617,13 +617,13 @@
 									${DIMORG}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -632,20 +632,20 @@
 							, MQHYT_GBN
 							, MQHYT
 							/*============하단 체크박스 부분 시작 - 월 데이터=========================*/							
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 					
 						/*체크 박스의 디맨젼으로 감싼다*/
 						)
 						GROUP BY 	/* DIMENSION 시작*/ /*ROLLUP 적용전*/
 										${DIM}
 									/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2								
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 						
@@ -659,14 +659,14 @@
 						SELECT /* DIMENSION 시작*/ 
 									${DIM}
 								/* DIMENSION 끝*/							
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -679,7 +679,7 @@
 							  SELECT /* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/	
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -687,7 +687,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -699,14 +699,14 @@
 								, 'MONTH' AS MQHYT_GBN
 								, TGT_YM AS MQHYT								
 								, NET_DIE_300_CNT					
-					<if test="TYPE == 'DRAM'">
+					<if test='"DRAM".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
 								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
 						]]>				
 					</if>
-					<if test="TYPE == 'NAND'">
+					<if test='"NAND".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
@@ -719,8 +719,8 @@
 								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
 								FROM PMO_PROFBLT_IMPROV_PROD T1
 						
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -729,13 +729,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -744,7 +744,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -757,7 +757,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -765,28 +765,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_MONTH}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -797,13 +797,13 @@
 									${DIM}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -811,28 +811,28 @@
 				
 						) B
 				
-				<if test="SRCTYPE == 'BASE'">
-					<if test="CHKTECHYN == 'Y'">
+				<if test='"BASE".equals(SRCTYPE)'>
+					<if test='"Y".equals(CHKTECHYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.TECH_CD = B.TECH_CD
 						
 					</if>	
-					<if test="CHKMODEYN == 'Y'">
+					<if test='"Y".equals(CHKMODEYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
 						
 					</if>
 				</if>									
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
 								AND A.UPPER_CD2 = B.UPPER_CD2			
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
@@ -844,27 +844,27 @@
 					/*============하단 체크박스 부분 끝 - 월 데이터=========================*/	
 					UNION ALL
 					/*============하단 체크박스 부분 시작 - 분기 데이터=========================*/	
-		         <if test="CHKYN == 'Y'">
+		         <if test='"Y".equals(CHKYN)'>
 				
 					/*============조인 상단 부분 시작 ====================*/
 					SELECT /* 분기 데이터 */
 							/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
 								
-					<if test="SRCTYPE == 'BASE'">
-						<if test="CHKTECHYN == 'Y'">
+					<if test='"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKTECHYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.TECH_CD,
 							
 						</if>
-						<if test="CHKMODEYN == 'Y'">
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.CHG_PROD_MODE_CD,
 							
 						</if>
 						</if>
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -872,7 +872,7 @@
 								A.SORT_SEQ ,
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -910,14 +910,14 @@
 										/* DIMENSION 시작*/
 										${DIM}
 										/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2
 								, MAX(SORT_SEQ) AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 									, UPPER_CD1
 									, MAX(SORT_SEQ) AS SORT_SEQ
@@ -929,12 +929,12 @@
 									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
 									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
 									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
-					<if test="CHKYN == 'N'">
+					<if test='"N".equals(CHKYN)'>
 						
 								, SUM(CUM2_YLD) AS  CUM2_YLD
 										
 					</if>	
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
 								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
@@ -971,14 +971,14 @@
 							${DIMORG}
 							/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -987,14 +987,14 @@
 								, MQHYT_GBN
 								, MQHYT
 								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
-				<if test="CHKYN == 'N'">
+				<if test='"N".equals(CHKYN)'>
 					
 							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
 							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
 							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
 									
 				</if>	
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 						
 								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
 								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
@@ -1026,7 +1026,7 @@
 										${DIMORG}
 										/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -1034,7 +1034,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -1046,7 +1046,7 @@
 								, TGT_QUTR AS MQHYT
 								/*기본정보*/
 								, NET_DIE_300_CNT
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 										
@@ -1078,8 +1078,8 @@
 								  ELSE COO_COST / BP_EXR END AS COO_COST 
 								FROM PMO_PROFBLT_IMPROV_PROD T1					
 					
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1088,13 +1088,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1103,7 +1103,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -1116,7 +1116,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -1124,28 +1124,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_QUARTER}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -1156,13 +1156,13 @@
 									${DIMORG}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -1171,20 +1171,20 @@
 							, MQHYT_GBN
 							, MQHYT
 							/*============하단 체크박스 부분 시작 - 분기 데이터=========================*/							
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 					
 						/*체크 박스의 디맨젼으로 감싼다*/
 						)
 						GROUP BY 	/* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2								
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 						
@@ -1198,14 +1198,14 @@
 						SELECT /* DIMENSION 시작*/ 
 									${DIM}
 								/* DIMENSION 끝*/							
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -1218,7 +1218,7 @@
 							  SELECT /* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/	
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -1226,7 +1226,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -1238,14 +1238,14 @@
 								, 'QUARTER' AS MQHYT_GBN
 								, TGT_QUTR AS MQHYT								
 								, NET_DIE_300_CNT					
-					<if test="TYPE == 'DRAM'">
+					<if test='"DRAM".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
 								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
 						]]>				
 					</if>
-					<if test="TYPE == 'NAND'">
+					<if test='"NAND".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
@@ -1258,8 +1258,8 @@
 								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
 								FROM PMO_PROFBLT_IMPROV_PROD T1
 						
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1268,13 +1268,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1283,7 +1283,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -1296,7 +1296,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -1304,28 +1304,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_QUARTER}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -1336,13 +1336,13 @@
 									${DIM}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -1350,28 +1350,28 @@
 				
 						) B
 				
-				<if test="SRCTYPE == 'BASE'">
-					<if test="CHKTECHYN == 'Y'">
+				<if test='"BASE".equals(SRCTYPE)'>
+					<if test='"Y".equals(CHKTECHYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.TECH_CD = B.TECH_CD
 						
 					</if>	
-					<if test="CHKMODEYN == 'Y'">
+					<if test='"Y".equals(CHKMODEYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
 						
 					</if>
 				</if>									
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
 								AND A.UPPER_CD2 = B.UPPER_CD2			
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
@@ -1383,27 +1383,27 @@
 					/*============하단 체크박스 부분 끝 - 분기 데이터=========================*/		
 					UNION ALL
 					/*============하단 체크박스 부분 시작 - 반기 데이터=========================*/	
-		         <if test="CHKYN == 'Y'">
+		         <if test='"Y".equals(CHKYN)'>
 				
 					/*============조인 상단 부분 시작 ====================*/
 					SELECT /* 반기 데이터 */
 							/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
 								
-					<if test="SRCTYPE == 'BASE'">
-						<if test="CHKTECHYN == 'Y'">
+					<if test='"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKTECHYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.TECH_CD,
 							
 						</if>
-						<if test="CHKMODEYN == 'Y'">
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.CHG_PROD_MODE_CD,
 							
 						</if>
 						</if>
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -1411,7 +1411,7 @@
 								A.SORT_SEQ ,
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -1449,14 +1449,14 @@
 										/* DIMENSION 시작*/
 										${DIM}
 										/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2
 								, MAX(SORT_SEQ) AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 									, UPPER_CD1
 									, MAX(SORT_SEQ) AS SORT_SEQ
@@ -1468,12 +1468,12 @@
 									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
 									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
 									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
-					<if test="CHKYN == 'N'">
+					<if test='"N".equals(CHKYN)'>
 						
 								, SUM(CUM2_YLD) AS  CUM2_YLD
 										
 					</if>	
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
 								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
@@ -1510,14 +1510,14 @@
 							${DIMORG}
 							/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -1526,14 +1526,14 @@
 								, MQHYT_GBN
 								, MQHYT
 								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
-				<if test="CHKYN == 'N'">
+				<if test='"N".equals(CHKYN)'>
 					
 							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
 							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
 							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
 									
 				</if>	
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 						
 								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
 								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
@@ -1565,7 +1565,7 @@
 										${DIMORG}
 										/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -1573,7 +1573,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -1585,7 +1585,7 @@
 								, TGT_HALF AS MQHYT
 								/*기본정보*/
 								, NET_DIE_300_CNT
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 										
@@ -1617,8 +1617,8 @@
 								  ELSE COO_COST / BP_EXR END AS COO_COST 
 								FROM PMO_PROFBLT_IMPROV_PROD T1					
 					
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1627,13 +1627,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1642,7 +1642,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -1655,7 +1655,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -1663,28 +1663,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_HALF}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -1695,13 +1695,13 @@
 									${DIMORG}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -1710,20 +1710,20 @@
 							, MQHYT_GBN
 							, MQHYT
 							/*============하단 체크박스 부분 시작 - 반기 데이터=========================*/							
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 					
 						/*체크 박스의 디맨젼으로 감싼다*/
 						)
 						GROUP BY 	/* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2								
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 						
@@ -1737,14 +1737,14 @@
 						SELECT /* DIMENSION 시작*/ 
 									${DIM}
 								/* DIMENSION 끝*/							
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -1757,7 +1757,7 @@
 							  SELECT /* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/	
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -1765,7 +1765,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -1777,14 +1777,14 @@
 								, 'HALF' AS MQHYT_GBN
 								, TGT_HALF AS MQHYT								
 								, NET_DIE_300_CNT					
-					<if test="TYPE == 'DRAM'">
+					<if test='"DRAM".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
 								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
 						]]>				
 					</if>
-					<if test="TYPE == 'NAND'">
+					<if test='"NAND".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
@@ -1797,8 +1797,8 @@
 								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
 								FROM PMO_PROFBLT_IMPROV_PROD T1
 						
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1807,13 +1807,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -1822,7 +1822,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -1835,7 +1835,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -1843,28 +1843,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_HALF}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -1875,13 +1875,13 @@
 									${DIM}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -1889,28 +1889,28 @@
 				
 						) B
 				
-				<if test="SRCTYPE == 'BASE'">
-					<if test="CHKTECHYN == 'Y'">
+				<if test='"BASE".equals(SRCTYPE)'>
+					<if test='"Y".equals(CHKTECHYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.TECH_CD = B.TECH_CD
 						
 					</if>	
-					<if test="CHKMODEYN == 'Y'">
+					<if test='"Y".equals(CHKMODEYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
 						
 					</if>
 				</if>									
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
 								AND A.UPPER_CD2 = B.UPPER_CD2			
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
@@ -1922,27 +1922,27 @@
 					/*============하단 체크박스 부분 끝 - 반기 데이터=========================*/	
 											UNION ALL
 					/*============하단 체크박스 부분 시작 - 년도 데이터=========================*/	
-		         <if test="CHKYN == 'Y'">
+		         <if test='"Y".equals(CHKYN)'>
 				
 					/*============조인 상단 부분 시작 ====================*/
 					SELECT /* 년도 데이터 */
 							/* 이 영역은 어차피 체크가 된 영역이라서 DIM 단독은 안쓴다*/
 								
-					<if test="SRCTYPE == 'BASE'">
-						<if test="CHKTECHYN == 'Y'">
+					<if test='"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKTECHYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.TECH_CD,
 							
 						</if>
-						<if test="CHKMODEYN == 'Y'">
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 							A.SCM_FAMILY_CD,
 							A.CHG_PROD_MODE_CD,
 							
 						</if>
 						</if>
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -1950,7 +1950,7 @@
 								A.SORT_SEQ ,
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
@@ -1988,14 +1988,14 @@
 										/* DIMENSION 시작*/
 										${DIM}
 										/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2
 								, MAX(SORT_SEQ) AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 									, UPPER_CD1
 									, MAX(SORT_SEQ) AS SORT_SEQ
@@ -2007,12 +2007,12 @@
 									, CASE WHEN SUM(WF_CONV_QTY) IS NULL THEN NULL							
 									   WHEN SUM(WF_CONV_QTY) = 0 THEN 0 
 									ELSE SUM(NET_DIE_300_CNT * FAB_DEN_NUM * WF_CONV_QTY) / SUM(WF_CONV_QTY) END AS NET_DIE_300_CNT
-					<if test="CHKYN == 'N'">
+					<if test='"N".equals(CHKYN)'>
 						
 								, SUM(CUM2_YLD) AS  CUM2_YLD
 										
 					</if>	
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, CASE WHEN NVL(SUM(SOM_EQ_QTY),0) = 0 THEN 0 
 								  ELSE SUM(CUM2_YLD * SOM_EQ_QTY) / SUM(SOM_EQ_QTY) END AS CUM2_YLD
@@ -2048,14 +2048,14 @@
 							/* DIMENSION 시작*/
 							${DIMORG}
 							/* DIMENSION 끝*/					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -2064,14 +2064,14 @@
 								, MQHYT_GBN
 								, MQHYT
 								, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
-				<if test="CHKYN == 'N'">
+				<if test='"N".equals(CHKYN)'>
 					
 							, CASE WHEN SUM(SOM_EQ_QTY) IS NULL THEN NULL
 							       WHEN SUM(SOM_EQ_QTY) = 0 THEN 0 
 							  ELSE SUM(CUM2_YLD * ABS(SOM_EQ_QTY)) / SUM(ABS(SOM_EQ_QTY)) END AS CUM2_YLD
 									
 				</if>	
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 						
 								, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
 								, SUM(SOM_DIE_QTY) / NULLIF(SUM(WF_CONV_QTY),0) / MAX(NET_DIE_300_CNT) * 100 AS CUM2_YLD
@@ -2103,7 +2103,7 @@
 										${DIMORG}
 										/* DIMENSION 끝*/
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -2111,7 +2111,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -2123,7 +2123,7 @@
 								, TGT_YRAR AS MQHYT
 								/*기본정보*/
 								, NET_DIE_300_CNT
-					<if test="CHKYN == 'Y'">
+					<if test='"Y".equals(CHKYN)'>
 						
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 										
@@ -2155,8 +2155,8 @@
 								  ELSE COO_COST / BP_EXR END AS COO_COST 
 								FROM PMO_PROFBLT_IMPROV_PROD T1					
 					
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -2165,13 +2165,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -2180,7 +2180,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -2193,7 +2193,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -2201,28 +2201,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_QUARTER}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -2233,13 +2233,13 @@
 									${DIMORG}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -2248,20 +2248,20 @@
 							, MQHYT_GBN
 							, MQHYT
 							/*============하단 체크박스 부분 시작 - 년도 데이터=========================*/							
-				<if test="CHKYN == 'Y'">
+				<if test='"Y".equals(CHKYN)'>
 					
 						/*체크 박스의 디맨젼으로 감싼다*/
 						)
 						GROUP BY 	/* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, UPPER_CD2								
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 						
@@ -2275,14 +2275,14 @@
 						SELECT /* DIMENSION 시작*/ 
 									${DIM}
 								/* DIMENSION 끝*/							
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 							, MAX(SORT_SEQ) AS  SORT_SEQ
 					
 				</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								, UPPER_CD1
 								, MAX(SORT_SEQ) AS  SORT_SEQ
@@ -2295,7 +2295,7 @@
 							  SELECT /* DIMENSION 시작*/ 
 										${DIM}
 									/* DIMENSION 끝*/	
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								, T2.GTS_GVAL2 AS UPPER_CD1
 								, T2.GTS_GVAL3 AS UPPER_CD2
@@ -2303,7 +2303,7 @@
 								, T2.SORT_SEQ AS SORT_SEQ
 						
 					</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, T2.GTS_GVAL2 AS UPPER_CD1								
 								, T2.GTS_GVAL4 AS UPPER_CD3
@@ -2315,14 +2315,14 @@
 								, 'YRAR' AS MQHYT_GBN
 								, TGT_YRAR AS MQHYT								
 								, NET_DIE_300_CNT					
-					<if test="TYPE == 'DRAM'">
+					<if test='"DRAM".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024
 								ELSE TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) END AS FAB_DEN_NUM
 						]]>				
 					</if>
-					<if test="TYPE == 'NAND'">
+					<if test='"NAND".equals(TYPE)'>
 						<![CDATA[
 								, REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+') AS FAB_DEN_NUM
 								, CASE WHEN INSTR(FAB_DEN_CD, 'T') > 0 THEN (TO_NUMBER(REGEXP_SUBSTR(FAB_DEN_CD, '^[0-9]+')) * 1024) / 8
@@ -2335,8 +2335,8 @@
 								  ELSE SOM_DIE_QTY / NET_DIE_300_CNT / (CUM2_YLD / 100) END AS WF_CONV_QTY
 								FROM PMO_PROFBLT_IMPROV_PROD T1
 						
-					<if test="SRCTYPE != 'BASE'">
-						<if test="CHKMODEYN == 'Y'">
+					<if test='!"BASE".equals(SRCTYPE)'>
+						<if test='"Y".equals(CHKMODEYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -2345,13 +2345,13 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_MODE'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
 							
 						</if>
-						<if test="CHKAPPYN == 'Y'">
+						<if test='"Y".equals(CHKAPPYN)'>
 						
 								LEFT OUTER JOIN (
 									SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -2360,7 +2360,7 @@
 										AND SYS_TYP_CD = 'R'
 										AND GTS_ID = 'CODE'
 										AND GTS_TYP_CD = 'P-MIX_APP'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y'
 									) T2
 									ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.APP_LVL_1_CD = T2.GTS_GVAL4						
@@ -2373,7 +2373,7 @@
 									FROM MAD_GTS
 									WHERE SYS_TYP_CD = 'R'
 										AND GTS_ID = 'P-MIX EXPT_LIST'
-										AND GTS_ITEM_NM LIKE '##%'
+										AND GTS_ITEM_NM LIKE '#%'
 										AND USE_YN = 'Y')
 								AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 								AND SCM_FAMILY_CD = #{TYPE}
@@ -2381,28 +2381,28 @@
 								AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 								AND 'Y' = #{DISPLAY_YRAR}
 					
-					<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+					<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+					<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+					<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+					<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+					<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-					<if test="TYPE == 'NAND'">
-						<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+					<if test='"NAND".equals(TYPE)'>
+						<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -2413,13 +2413,13 @@
 									${DIM}
 								/* DIMENSION 끝*/
 				
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							, UPPER_CD1
 							, UPPER_CD2
 					
 			</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 							, UPPER_CD1	
 						
@@ -2427,28 +2427,28 @@
 				
 						) B
 				
-				<if test="SRCTYPE == 'BASE'">
-					<if test="CHKTECHYN == 'Y'">
+				<if test='"BASE".equals(SRCTYPE)'>
+					<if test='"Y".equals(CHKTECHYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.TECH_CD = B.TECH_CD
 						
 					</if>	
-					<if test="CHKMODEYN == 'Y'">
+					<if test='"Y".equals(CHKMODEYN)'>
 						
 							ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 							AND A.CHG_PROD_MODE_CD = B.CHG_PROD_MODE_CD
 						
 					</if>
 				</if>									
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
 								AND A.UPPER_CD2 = B.UPPER_CD2			
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								ON A.SCM_FAMILY_CD = B.SCM_FAMILY_CD
 								AND A.UPPER_CD1 = B.UPPER_CD1
@@ -2460,7 +2460,7 @@
 					/*============하단 체크박스 부분 끝 - 년도 데이터=========================*/	
 									)
 								)
-		         <if test="CHK_SSD_BUFFER_YN == 'N'">
+		         <if test='"N".equals(CHK_SSD_BUFFER_YN)'>
 						
 							WHERE UPPER_CD1 != 'SSD'
 							
@@ -2538,7 +2538,7 @@
 								, MAX(COO_COST_YR_COST) AS COO_COST_YR_COST
 						
 	</sql>
-	<select id="S001" parameterType="map" resultType="hashmap" fetchSize="50">
+	<select id="dPLA04701" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla04701Dto" resultType="map">
 	
 	/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S001 REV 조회 */
 	SELECT PLN_REV AS CODE
@@ -2559,7 +2559,7 @@
 					  ELSE 4 END , PLN_REV DESC		
 		
 	</select>
-	<select id="S002" parameterType="map" resultType="hashmap" fetchSize="50">
+	<select id="dPLA04702" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla04702Dto" resultType="map">
 	<![CDATA[
 	/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S002 동적 조회 */
 	SELECT   SUBSTR(LISTAGG(PIVOT_STR, ' ') WITHIN GROUP (ORDER BY SEQ),2) AS PIVOT_STR
@@ -2921,8 +2921,8 @@
 				, LISTAGG(',M' || WORK_YM || '_SALE_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS SALE_PROF_YR_PROF_ST_O
 				, LISTAGG(',M' || WORK_YM || '_SALES_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS SALES_PROF_YR_PROF_ST_O
 			]]>
-	<if test="SEARCH_TYPE == 'ODD'">
-		<if test="CHK_SUBTOTAL == 'Y'">		
+	<if test='"ODD".equals(SEARCH_TYPE)'>
+		<if test='"Y".equals(CHK_SUBTOTAL)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN M' || WORK_YM || '_VAR_COST_WF_SLS_COST ELSE CASE WHEN NVL(M' || WORK_YM || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE M' || WORK_YM || '_VAR_COST_YR_COST / M' || WORK_YM || '_WF_CONV_QTY_SALE_PLN END END AS M' || WORK_YM || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS VAR_COST_WF_SLS_COST_ST_O
@@ -2966,7 +2966,7 @@
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN M' || WORK_YM || '_SALES_PROF_PROD_PROF ELSE CASE WHEN NVL(M' || WORK_YM || '_ORG_QTY_SALE_PLN, 0) = 0 THEN 0 WHEN NVL(M' || WORK_YM || '_SALES_PROF_PROD_PROF, 0) = 0 THEN 0 ELSE (M' || WORK_YM || '_SALE_AMT_SALE_PLN - M' || WORK_YM || '_COO_COST_YR_COST) / M' || WORK_YM || '_ORG_QTY_SALE_PLN END END AS M' || WORK_YM || '_SALES_PROF_PROD_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS SALES_PROF_PROD_PROF_ST_O
 			
 		</if>
-		<if test="CHK_SUBTOTAL != 'Y'">		
+		<if test='!"Y".equals(CHK_SUBTOTAL)'>		
 			
 				, LISTAGG(',NVL(M' || WORK_YM || '_VAR_COST_WF_SLS_COST, 0) AS M' || WORK_YM || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS VAR_COST_WF_SLS_COST_ST_O
 				, LISTAGG(',NVL(M' || WORK_YM || '_CASH_COST_WF_SLS_COST, 0) AS M' || WORK_YM || '_CASH_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS CASH_COST_WF_SLS_COST_ST_O
@@ -3003,7 +3003,7 @@
 				
 		</if>
 	</if>
-	<if test="SEARCH_TYPE != 'ODD'">		
+	<if test='!"ODD".equals(SEARCH_TYPE)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN NVL(M' || WORK_YM || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE M' || WORK_YM || '_VAR_COST_YR_COST / M' || WORK_YM || '_WF_CONV_QTY_SALE_PLN END END AS M' || WORK_YM || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS VAR_COST_WF_SLS_COST_ST_O
@@ -3053,8 +3053,8 @@
 				, LISTAGG(',NVL(M' || WORK_YM || '_COGS_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YM) AS COGS_COST_YR_COST_ST_O
 				, LISTAGG(',NVL(M' || WORK_YM || '_COO_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YM) AS COO_COST_YR_COST_ST_O
 			
-		<if test="SEARCH_TYPE == 'ODD'">
-			<if test="CHK_SUBTOTAL == 'Y'">	
+		<if test='"ODD".equals(SEARCH_TYPE)'>
+			<if test='"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -3071,7 +3071,7 @@
 				, LISTAGG(,NVL(((M' || WORK_YM || '_SALE_AMT_SALE_PLN / NULLIF( M' || WORK_YM || '_SOM_PROD_QTY_SALE_PLN, 0)) - ( M' || WORK_YM || '_COO_COST_YR_COST / NULLIF( M' || WORK_YM || '_SOM_PROD_QTY_SALE_PLN, 0))) / NULLIF((M' || WORK_YM || '_SALE_AMT_SALE_PLN / NULLIF(M' || WORK_YM || '_SOM_PROD_QTY_SALE_PLN, 0)), 0) * 100 , 0) END END AS M' || WORK_YM || '_COO_PROF_RATE_WF @', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS COO_PROF_RATE_PROD_ST_O2				
 				
 			</if>	
-			<if test="CHK_SUBTOTAL != 'Y'">	
+			<if test='!"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				, LISTAGG(', CASE WHEN NVL(M' || WORK_YM || '_SALE_WF_SLS_PROF,0) = 0 THEN 0  ELSE @', ' ') WITHIN GROUP (ORDER BY WORK_YM) AS COO_PROF_RATE_WF_ST_O1
@@ -3086,7 +3086,7 @@
 				
 			</if>			
 		</if>
-		<if test="SEARCH_TYPE != 'ODD'">	
+		<if test='!"ODD".equals(SEARCH_TYPE)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -3277,8 +3277,8 @@
 				, LISTAGG(',Q' || WORK_YEAR_QUTR || '_SALE_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS SALE_PROF_YR_PROF_ST_O
 				, LISTAGG(',Q' || WORK_YEAR_QUTR || '_SALES_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS SALES_PROF_YR_PROF_ST_O
 			]]>
-	<if test="SEARCH_TYPE == 'ODD'">
-		<if test="CHK_SUBTOTAL == 'Y'">		
+	<if test='"ODD".equals(SEARCH_TYPE)'>
+		<if test='"Y".equals(CHK_SUBTOTAL)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN Q' || WORK_YEAR_QUTR || '_VAR_COST_WF_SLS_COST ELSE CASE WHEN NVL(Q' || WORK_YEAR_QUTR || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE Q' || WORK_YEAR_QUTR || '_VAR_COST_YR_COST / Q' || WORK_YEAR_QUTR || '_WF_CONV_QTY_SALE_PLN END END AS Q' || WORK_YEAR_QUTR || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS VAR_COST_WF_SLS_COST_ST_O
@@ -3322,7 +3322,7 @@
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN Q' || WORK_YEAR_QUTR || '_SALES_PROF_PROD_PROF ELSE CASE WHEN NVL(Q' || WORK_YEAR_QUTR || '_ORG_QTY_SALE_PLN, 0) = 0 THEN 0 WHEN NVL(Q' || WORK_YEAR_QUTR || '_SALES_PROF_PROD_PROF, 0) = 0 THEN 0 ELSE (Q' || WORK_YEAR_QUTR || '_SALE_AMT_SALE_PLN - Q' || WORK_YEAR_QUTR || '_COO_COST_YR_COST) / Q' || WORK_YEAR_QUTR || '_ORG_QTY_SALE_PLN END END AS Q' || WORK_YEAR_QUTR || '_SALES_PROF_PROD_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS SALES_PROF_PROD_PROF_ST_O
 			
 		</if>
-		<if test="CHK_SUBTOTAL != 'Y'">		
+		<if test='!"Y".equals(CHK_SUBTOTAL)'>		
 			
 				, LISTAGG(',NVL(Q' || WORK_YEAR_QUTR || '_VAR_COST_WF_SLS_COST, 0) AS Q' || WORK_YEAR_QUTR || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS VAR_COST_WF_SLS_COST_ST_O
 				, LISTAGG(',NVL(Q' || WORK_YEAR_QUTR || '_CASH_COST_WF_SLS_COST, 0) AS Q' || WORK_YEAR_QUTR || '_CASH_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS CASH_COST_WF_SLS_COST_ST_O
@@ -3359,7 +3359,7 @@
 				
 		</if>
 	</if>
-	<if test="SEARCH_TYPE != 'ODD'">		
+	<if test='!"ODD".equals(SEARCH_TYPE)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN NVL(Q' || WORK_YEAR_QUTR || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE Q' || WORK_YEAR_QUTR || '_VAR_COST_YR_COST / Q' || WORK_YEAR_QUTR || '_WF_CONV_QTY_SALE_PLN END END AS Q' || WORK_YEAR_QUTR || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS VAR_COST_WF_SLS_COST_ST_O
@@ -3409,8 +3409,8 @@
 				, LISTAGG(',NVL(Q' || WORK_YEAR_QUTR || '_COGS_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS COGS_COST_YR_COST_ST_O
 				, LISTAGG(',NVL(Q' || WORK_YEAR_QUTR || '_COO_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS COO_COST_YR_COST_ST_O
 			
-		<if test="SEARCH_TYPE == 'ODD'">
-			<if test="CHK_SUBTOTAL == 'Y'">	
+		<if test='"ODD".equals(SEARCH_TYPE)'>
+			<if test='"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -3427,7 +3427,7 @@
 				, LISTAGG(,NVL(((Q' || WORK_YEAR_QUTR || '_SALE_AMT_SALE_PLN / NULLIF( Q' || WORK_YEAR_QUTR || '_SOM_PROD_QTY_SALE_PLN, 0)) - ( Q' || WORK_YEAR_QUTR || '_COO_COST_YR_COST / NULLIF( Q' || WORK_YEAR_QUTR || '_SOM_PROD_QTY_SALE_PLN, 0))) / NULLIF((Q' || WORK_YEAR_QUTR || '_SALE_AMT_SALE_PLN / NULLIF(Q' || WORK_YEAR_QUTR || '_SOM_PROD_QTY_SALE_PLN, 0)), 0) * 100 , 0) END END AS Q' || WORK_YEAR_QUTR || '_COO_PROF_RATE_WF @', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS COO_PROF_RATE_PROD_ST_O2				
 				
 			</if>	
-			<if test="CHK_SUBTOTAL != 'Y'">	
+			<if test='!"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				, LISTAGG(', CASE WHEN NVL(Q' || WORK_YEAR_QUTR || '_SALE_WF_SLS_PROF,0) = 0 THEN 0  ELSE @', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_QUTR) AS COO_PROF_RATE_WF_ST_O1
@@ -3442,7 +3442,7 @@
 				
 			</if>			
 		</if>
-		<if test="SEARCH_TYPE != 'ODD'">	
+		<if test='!"ODD".equals(SEARCH_TYPE)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -3633,8 +3633,8 @@
 				, LISTAGG(',H' || WORK_YEAR_HALF || '_SALE_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS SALE_PROF_YR_PROF_ST_O
 				, LISTAGG(',H' || WORK_YEAR_HALF || '_SALES_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS SALES_PROF_YR_PROF_ST_O
 			]]>
-	<if test="SEARCH_TYPE == 'ODD'">
-		<if test="CHK_SUBTOTAL == 'Y'">		
+	<if test='"ODD".equals(SEARCH_TYPE)'>
+		<if test='"Y".equals(CHK_SUBTOTAL)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN H' || WORK_YEAR_HALF || '_VAR_COST_WF_SLS_COST ELSE CASE WHEN NVL(H' || WORK_YEAR_HALF || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE H' || WORK_YEAR_HALF || '_VAR_COST_YR_COST / H' || WORK_YEAR_HALF || '_WF_CONV_QTY_SALE_PLN END END AS H' || WORK_YEAR_HALF || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS VAR_COST_WF_SLS_COST_ST_O
@@ -3678,7 +3678,7 @@
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN H' || WORK_YEAR_HALF || '_SALES_PROF_PROD_PROF ELSE CASE WHEN NVL(H' || WORK_YEAR_HALF || '_ORG_QTY_SALE_PLN, 0) = 0 THEN 0 WHEN NVL(H' || WORK_YEAR_HALF || '_SALES_PROF_PROD_PROF, 0) = 0 THEN 0 ELSE (H' || WORK_YEAR_HALF || '_SALE_AMT_SALE_PLN - H' || WORK_YEAR_HALF || '_COO_COST_YR_COST) / H' || WORK_YEAR_HALF || '_ORG_QTY_SALE_PLN END END AS H' || WORK_YEAR_HALF || '_SALES_PROF_PROD_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS SALES_PROF_PROD_PROF_ST_O
 			
 		</if>
-		<if test="CHK_SUBTOTAL != 'Y'">		
+		<if test='!"Y".equals(CHK_SUBTOTAL)'>		
 			
 				, LISTAGG(',NVL(H' || WORK_YEAR_HALF || '_VAR_COST_WF_SLS_COST, 0) AS H' || WORK_YEAR_HALF || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS VAR_COST_WF_SLS_COST_ST_O
 				, LISTAGG(',NVL(H' || WORK_YEAR_HALF || '_CASH_COST_WF_SLS_COST, 0) AS H' || WORK_YEAR_HALF || '_CASH_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS CASH_COST_WF_SLS_COST_ST_O
@@ -3715,7 +3715,7 @@
 				
 		</if>
 	</if>
-	<if test="SEARCH_TYPE != 'ODD'">		
+	<if test='!"ODD".equals(SEARCH_TYPE)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN NVL(H' || WORK_YEAR_HALF || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE H' || WORK_YEAR_HALF || '_VAR_COST_YR_COST / H' || WORK_YEAR_HALF || '_WF_CONV_QTY_SALE_PLN END END AS H' || WORK_YEAR_HALF || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS VAR_COST_WF_SLS_COST_ST_O
@@ -3765,8 +3765,8 @@
 				, LISTAGG(',NVL(H' || WORK_YEAR_HALF || '_COGS_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS COGS_COST_YR_COST_ST_O
 				, LISTAGG(',NVL(H' || WORK_YEAR_HALF || '_COO_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS COO_COST_YR_COST_ST_O
 			
-		<if test="SEARCH_TYPE == 'ODD'">
-			<if test="CHK_SUBTOTAL == 'Y'">	
+		<if test='"ODD".equals(SEARCH_TYPE)'>
+			<if test='"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -3783,7 +3783,7 @@
 				, LISTAGG(,NVL(((H' || WORK_YEAR_HALF || '_SALE_AMT_SALE_PLN / NULLIF( H' || WORK_YEAR_HALF || '_SOM_PROD_QTY_SALE_PLN, 0)) - ( H' || WORK_YEAR_HALF || '_COO_COST_YR_COST / NULLIF( H' || WORK_YEAR_HALF || '_SOM_PROD_QTY_SALE_PLN, 0))) / NULLIF((H' || WORK_YEAR_HALF || '_SALE_AMT_SALE_PLN / NULLIF(H' || WORK_YEAR_HALF || '_SOM_PROD_QTY_SALE_PLN, 0)), 0) * 100 , 0) END END AS H' || WORK_YEAR_HALF || '_COO_PROF_RATE_WF @', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS COO_PROF_RATE_PROD_ST_O2				
 				
 			</if>	
-			<if test="CHK_SUBTOTAL != 'Y'">	
+			<if test='!"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				, LISTAGG(', CASE WHEN NVL(H' || WORK_YEAR_HALF || '_SALE_WF_SLS_PROF,0) = 0 THEN 0  ELSE @', ' ') WITHIN GROUP (ORDER BY WORK_YEAR_HALF) AS COO_PROF_RATE_WF_ST_O1
@@ -3798,7 +3798,7 @@
 				
 			</if>			
 		</if>
-		<if test="SEARCH_TYPE != 'ODD'">	
+		<if test='!"ODD".equals(SEARCH_TYPE)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -3989,8 +3989,8 @@
 				, LISTAGG(',Y' || WORK_YEAR || '_SALE_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS SALE_PROF_YR_PROF_ST_O
 				, LISTAGG(',Y' || WORK_YEAR || '_SALES_PROF_YR_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS SALES_PROF_YR_PROF_ST_O
 			]]>
-	<if test="SEARCH_TYPE == 'ODD'">
-		<if test="CHK_SUBTOTAL == 'Y'">		
+	<if test='"ODD".equals(SEARCH_TYPE)'>
+		<if test='"Y".equals(CHK_SUBTOTAL)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN Y' || WORK_YEAR || '_VAR_COST_WF_SLS_COST ELSE CASE WHEN NVL(Y' || WORK_YEAR || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE Y' || WORK_YEAR || '_VAR_COST_YR_COST / Y' || WORK_YEAR || '_WF_CONV_QTY_SALE_PLN END END AS Y' || WORK_YEAR || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS VAR_COST_WF_SLS_COST_ST_O
@@ -4034,7 +4034,7 @@
 				, LISTAGG(',CASE WHEN GRP_ID = 0 THEN Y' || WORK_YEAR || '_SALES_PROF_PROD_PROF ELSE CASE WHEN NVL(Y' || WORK_YEAR || '_ORG_QTY_SALE_PLN, 0) = 0 THEN 0 WHEN NVL(Y' || WORK_YEAR || '_SALES_PROF_PROD_PROF, 0) = 0 THEN 0 ELSE (Y' || WORK_YEAR || '_SALE_AMT_SALE_PLN - Y' || WORK_YEAR || '_COO_COST_YR_COST) / Y' || WORK_YEAR || '_ORG_QTY_SALE_PLN END END AS Y' || WORK_YEAR || '_SALES_PROF_PROD_PROF', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS SALES_PROF_PROD_PROF_ST_O
 			
 		</if>
-		<if test="CHK_SUBTOTAL != 'Y'">		
+		<if test='!"Y".equals(CHK_SUBTOTAL)'>		
 			
 				, LISTAGG(',NVL(Y' || WORK_YEAR || '_VAR_COST_WF_SLS_COST, 0) AS Y' || WORK_YEAR || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS VAR_COST_WF_SLS_COST_ST_O
 				, LISTAGG(',NVL(Y' || WORK_YEAR || '_CASH_COST_WF_SLS_COST, 0) AS Y' || WORK_YEAR || '_CASH_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS CASH_COST_WF_SLS_COST_ST_O
@@ -4071,7 +4071,7 @@
 				
 		</if>
 	</if>
-	<if test="SEARCH_TYPE != 'ODD'">		
+	<if test='!"ODD".equals(SEARCH_TYPE)'>		
 			
 				/*장당 원가*/
 				, LISTAGG(',CASE WHEN NVL(Y' || WORK_YEAR || '_WF_CONV_QTY_SALE_PLN, 0) = 0 THEN 0 ELSE Y' || WORK_YEAR || '_VAR_COST_YR_COST / Y' || WORK_YEAR || '_WF_CONV_QTY_SALE_PLN END END AS Y' || WORK_YEAR || '_VAR_COST_WF_SLS_COST', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS VAR_COST_WF_SLS_COST_ST_O
@@ -4121,8 +4121,8 @@
 				, LISTAGG(',NVL(Y' || WORK_YEAR || '_COGS_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS COGS_COST_YR_COST_ST_O
 				, LISTAGG(',NVL(Y' || WORK_YEAR || '_COO_COST_YR_COST, ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS COO_COST_YR_COST_ST_O
 			
-		<if test="SEARCH_TYPE == 'ODD'">
-			<if test="CHK_SUBTOTAL == 'Y'">	
+		<if test='"ODD".equals(SEARCH_TYPE)'>
+			<if test='"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -4139,7 +4139,7 @@
 				, LISTAGG(,NVL(((Y' || WORK_YEAR || '_SALE_AMT_SALE_PLN / NULLIF( Y' || WORK_YEAR || '_SOM_PROD_QTY_SALE_PLN, 0)) - ( Y' || WORK_YEAR || '_COO_COST_YR_COST / NULLIF( Y' || WORK_YEAR || '_SOM_PROD_QTY_SALE_PLN, 0))) / NULLIF((Y' || WORK_YEAR || '_SALE_AMT_SALE_PLN / NULLIF(Y' || WORK_YEAR || '_SOM_PROD_QTY_SALE_PLN, 0)), 0) * 100 , 0) END END AS Y' || WORK_YEAR || '_COO_PROF_RATE_WF @', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS COO_PROF_RATE_PROD_ST_O2				
 				
 			</if>	
-			<if test="CHK_SUBTOTAL != 'Y'">	
+			<if test='!"Y".equals(CHK_SUBTOTAL)'>	
 				
 				/*영업이익률 MAX*/
 				, LISTAGG(', CASE WHEN NVL(Y' || WORK_YEAR || '_SALE_WF_SLS_PROF,0) = 0 THEN 0  ELSE @', ' ') WITHIN GROUP (ORDER BY WORK_YEAR) AS COO_PROF_RATE_WF_ST_O1
@@ -4154,7 +4154,7 @@
 				
 			</if>			
 		</if>
-		<if test="SEARCH_TYPE != 'ODD'">	
+		<if test='!"ODD".equals(SEARCH_TYPE)'>	
 				
 				/*영업이익률 MAX*/
 				/*영업이익률(장당 영업이익 / 장당 매출액)*/
@@ -4185,16 +4185,16 @@
 			)
 		]]>
 		</select>
-		<select id="S003" parameterType="map" resultType="hashmap" fetchSize="1000">
+		<select id="dPLA04703" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla04703Dto" resultType="map">
 			
 				/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S003 장당 수익성분석 조회 (sub total 미적용) */
 				SELECT 
-			<if test="SRCTYPE == 'BASE'">
+			<if test='"BASE".equals(SRCTYPE)'>
 				
 					${DIM_OUTER}
 				
 			</if>	
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 				
 					, T1.SCM_FAMILY_CD
 					, T1.UPPER_CD1
@@ -4202,242 +4202,242 @@
 					, T1.SORT_SEQ 
 				
 			</if>	
-			<if test="SRCTYPE == 'COLCHG'">
+			<if test='"COLCHG".equals(SRCTYPE)'>
 				
 					, T1.SCM_FAMILY_CD
 					, T1.UPPER_CD1
 					, T1.SORT_SEQ 
 				
 			</if>	
-			<if test="CHKDASHBOARDYN != 'Y'">		
-				<if test="NET_DIE_YN == 'Y'">
+			<if test='!"Y".equals(CHKDASHBOARDYN)'>		
+				<if test='"Y".equals(NET_DIE_YN)'>
 					 NVL(TRIM(NET_DIE), ' ') AS NET_DIE
 				</if>
-				<if test="CUM2_YLD_MASTER_DATA_YN == 'Y'">
+				<if test='"Y".equals(CUM2_YLD_MASTER_DATA_YN)'>
 					 ${CUM2_YLD_MASTER_DATA} 
 				</if>
-				<if test="GOOD_DIE_MASTER_DATA_YN == 'Y'">
+				<if test='"Y".equals(GOOD_DIE_MASTER_DATA_YN)'>
 					 ${GOOD_DIE_MASTER_DATA} 
 				</if>			
-				<if test="WF_CONV_QTY_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(WF_CONV_QTY_SALE_PLN_YN)'>
 					 ${WF_CONV_QTY_SALE_PLN} 
 				</if>
-				<if test="SOM_EQ_QTY_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(SOM_EQ_QTY_SALE_PLN_YN)'>
 					 ${SOM_EQ_QTY_SALE_PLN} 
 				</if>
-				<if test="SOM_DIE_QTY_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(SOM_DIE_QTY_SALE_PLN_YN)'>
 					 ${SOM_DIE_QTY_SALE_PLN} 
 				</if>
-				<if test="ORG_QTY_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(ORG_QTY_SALE_PLN_YN)'>
 					 ${ORG_QTY_SALE_PLN} 
 				</if>
-				<if test="SALE_AMT_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(SALE_AMT_SALE_PLN_YN)'>
 					 ${SALE_AMT_SALE_PLN} 
 				</if>
-				<if test="ASP_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(ASP_SALE_PLN_YN)'>
 					 ${ASP_SALE_PLN} 
 				</if>
-				<if test="SALE_GRAV_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(SALE_GRAV_SALE_PLN_YN)'>
 					 ${SALE_GRAV_SALE_PLN} 
 				</if>
-				<if test="QTY_GRAV_SALE_PLN_YN == 'Y'">
+				<if test='"Y".equals(QTY_GRAV_SALE_PLN_YN)'>
 					 ${QTY_GRAV_SALE_PLN} 
 				</if>
-				<if test="SALES_PROF_GRAV_YN == 'Y'">
+				<if test='"Y".equals(SALES_PROF_GRAV_YN)'>
 					 ${SALES_PROF_GRAV} 
 				</if>
 			</if>
-				<if test="SALE_WF_SLS_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_WF_SLS_PROF_YN)'>
 					 ${SALE_WF_SLS_PROF} 
 				</if>
-				<if test="CNTRB_PROF_WF_SLS_PROF_YN == 'Y'">
+				<if test='"Y".equals(CNTRB_PROF_WF_SLS_PROF_YN)'>
 					 ${CNTRB_PROF_WF_SLS_PROF_ST_O} 
 				</if>
-				<if test="CASH_PROF_WF_SLS_PROF_YN == 'Y'">
+				<if test='"Y".equals(CASH_PROF_WF_SLS_PROF_YN)'>
 					 ${CASH_PROF_WF_SLS_PROF_ST_O} 
 				</if>
-				<if test="SALE_PROF_WF_SLS_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_PROF_WF_SLS_PROF_YN)'>
 					 ${SALE_PROF_WF_SLS_PROF_ST_O} 
 				</if>
-				<if test="SALES_PROF_WF_SLS_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALES_PROF_WF_SLS_PROF_YN)'>
 					 ${SALES_PROF_WF_SLS_PROF_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN == 'Y'">	
-					<if test="COO_COST_WF_SLS_COST_YN == 'Y'">
+				<if test='"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_WF_SLS_COST_YN)'>
 						 ${COO_COST_WF_SLS_COST_ST_O} 
 					</if>
-					<if test="COO_PROF_RATE_WF_YN == 'Y'">
+					<if test='"Y".equals(COO_PROF_RATE_WF_YN)'>
 						 ${COO_PROF_RATE_WF_COL} 
 					</if>
 				</if>				
-				<if test="SALE_EQ_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_EQ_PROF_YN)'>
 					 ${SALE_EQ_PROF} 
 				</if>
-				<if test="CNTRB_PROF_EQ_PROF_YN == 'Y'">
+				<if test='"Y".equals(CNTRB_PROF_EQ_PROF_YN)'>
 					 ${CNTRB_PROF_EQ_PROF_ST_O} 
 				</if>
-				<if test="CASH_PROF_EQ_PROF_YN == 'Y'">
+				<if test='"Y".equals(CASH_PROF_EQ_PROF_YN)'>
 					 ${CASH_PROF_EQ_PROF_ST_O} 
 				</if>
-				<if test="SALE_PROF_EQ_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_PROF_EQ_PROF_YN)'>
 					 ${SALE_PROF_EQ_PROF_ST_O} 
 				</if>
-				<if test="SALES_PROF_EQ_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALES_PROF_EQ_PROF_YN)'>
 					 ${SALES_PROF_EQ_PROF_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN == 'Y'">	
-					<if test="COO_COST_EQ_COST_YN == 'Y'">
+				<if test='"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_EQ_COST_YN)'>
 						 ${COO_COST_EQ_COST_ST_O} 
 					</if>
-					<if test="COO_PROF_RATE_EQ_YN == 'Y'">
+					<if test='"Y".equals(COO_PROF_RATE_EQ_YN)'>
 						 ${COO_PROF_RATE_EQ_COL} 
 					</if>
 				</if>
-				<if test="SALE_DIE_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_DIE_PROF_YN)'>
 					 ${SALE_DIE_PROF} 
 				</if>
-				<if test="CNTRB_PROF_DIE_PROF_YN == 'Y'">
+				<if test='"Y".equals(CNTRB_PROF_DIE_PROF_YN)'>
 					 ${CNTRB_PROF_DIE_PROF_ST_O} 
 				</if>
-				<if test="CASH_PROF_DIE_PROF_YN == 'Y'">
+				<if test='"Y".equals(CASH_PROF_DIE_PROF_YN)'>
 					 ${CASH_PROF_DIE_PROF_ST_O} 
 				</if>
-				<if test="SALE_PROF_DIE_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_PROF_DIE_PROF_YN)'>
 					 ${SALE_PROF_DIE_PROF_ST_O} 
 				</if>
-				<if test="SALES_PROF_DIE_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALES_PROF_DIE_PROF_YN)'>
 					 ${SALES_PROF_DIE_PROF_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN == 'Y'">	
-					<if test="COO_COST_DIE_COST_YN == 'Y'">
+				<if test='"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_DIE_COST_YN)'>
 						 ${COO_COST_DIE_COST_ST_O} 
 					</if>
-					<if test="COO_PROF_RATE_DIE_YN == 'Y'">
+					<if test='"Y".equals(COO_PROF_RATE_DIE_YN)'>
 						 ${COO_PROF_RATE_DIE_COL} 
 					</if>
 				</if>
-				<if test="SALE_PROD_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_PROD_PROF_YN)'>
 					 ${SALE_PROD_PROF} 
 				</if>
-				<if test="CNTRB_PROF_PROD_PROF_YN == 'Y'">
+				<if test='"Y".equals(CNTRB_PROF_PROD_PROF_YN)'>
 					 ${CNTRB_PROF_PROD_PROF_ST_O} 
 				</if>
-				<if test="CASH_PROF_PROD_PROF_YN == 'Y'">
+				<if test='"Y".equals(CASH_PROF_PROD_PROF_YN)'>
 					 ${CASH_PROF_PROD_PROF_ST_O} 
 				</if>
-				<if test="SALE_PROF_PROD_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_PROF_PROD_PROF_YN)'>
 					 ${SALE_PROF_PROD_PROF_ST_O} 
 				</if>
-				<if test="SALES_PROF_PROD_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALES_PROF_PROD_PROF_YN)'>
 					 ${SALES_PROF_PROD_PROF_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN == 'Y'">	
-					<if test="COO_COST_PROD_COST_YN == 'Y'">
+				<if test='"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_PROD_COST_YN)'>
 						 ${COO_COST_PROD_COST_ST_O} 
 					</if>
-					<if test="COO_PROF_RATE_PROD_YN == 'Y'">
+					<if test='"Y".equals(COO_PROF_RATE_PROD_YN)'>
 						 ${COO_PROF_RATE_PROD_COL} 
 					</if>
 				</if>
-				<if test="SALE_YR_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_YR_PROF_YN)'>
 					 ${SALE_YR_PROF} 
 				</if>
-				<if test="CNTRB_PROF_YR_PROF_YN == 'Y'">
+				<if test='"Y".equals(CNTRB_PROF_YR_PROF_YN)'>
 					 ${CNTRB_PROF_YR_PROF} 
 				</if>
-				<if test="CASH_PROF_YR_PROF_YN == 'Y'">
+				<if test='"Y".equals(CASH_PROF_YR_PROF_YN)'>
 					 ${CASH_PROF_YR_PROF} 
 				</if>
-				<if test="SALE_PROF_YR_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALE_PROF_YR_PROF_YN)'>
 					 ${SALE_PROF_YR_PROF} 
 				</if>
-				<if test="SALES_PROF_YR_PROF_YN == 'Y'">
+				<if test='"Y".equals(SALES_PROF_YR_PROF_YN)'>
 					 ${SALES_PROF_YR_PROF} 
 				</if>
-				<if test="CHKDASHBOARDYN == 'Y'">	
-					<if test="COO_COST_YR_COST_YN == 'Y'">
+				<if test='"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_YR_COST_YN)'>
 						 ${COO_COST_YR_COST} 
 					</if>
-					<if test="COO_PROF_RATE_YR_YN == 'Y'">
+					<if test='"Y".equals(COO_PROF_RATE_YR_YN)'>
 						 ${COO_PROF_RATE_YR} 
 					</if>
 				</if>
-				<if test="VAR_COST_WF_SLS_COST_YN == 'Y'">
+				<if test='"Y".equals(VAR_COST_WF_SLS_COST_YN)'>
 					 ${VAR_COST_WF_SLS_COST_ST_O} 
 				</if>
-				<if test="CASH_COST_WF_SLS_COST_YN == 'Y'">
+				<if test='"Y".equals(CASH_COST_WF_SLS_COST_YN)'>
 					 ${CASH_COST_WF_SLS_COST_ST_O} 
 				</if>
-				<if test="COGS_COST_WF_SLS_COST_YN == 'Y'">
+				<if test='"Y".equals(COGS_COST_WF_SLS_COST_YN)'>
 					 ${COGS_COST_WF_SLS_COST_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN != 'Y'">	
-					<if test="COO_COST_WF_SLS_COST_YN == 'Y'">
+				<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_WF_SLS_COST_YN)'>
 						 ${COO_COST_WF_SLS_COST_ST_O} 
 					</if>
 				</if>
-				<if test="VAR_COST_EQ_COST_YN == 'Y'">
+				<if test='"Y".equals(VAR_COST_EQ_COST_YN)'>
 					 ${VAR_COST_EQ_COST_ST_O} 
 				</if>
-				<if test="CASH_COST_EQ_COST_YN == 'Y'">
+				<if test='"Y".equals(CASH_COST_EQ_COST_YN)'>
 					 ${CASH_COST_EQ_COST_ST_O} 
 				</if>
-				<if test="COGS_COST_EQ_COST_YN == 'Y'">
+				<if test='"Y".equals(COGS_COST_EQ_COST_YN)'>
 					 ${COGS_COST_EQ_COST_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN != 'Y'">	
-					<if test="COO_COST_EQ_COST_YN == 'Y'">
+				<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_EQ_COST_YN)'>
 						 ${COO_COST_EQ_COST_ST_O} 
 					</if>
 				</if>
-				<if test="VAR_COST_DIE_COST_YN == 'Y'">
+				<if test='"Y".equals(VAR_COST_DIE_COST_YN)'>
 					 ${VAR_COST_DIE_COST_ST_O} 
 				</if>
-				<if test="CASH_COST_DIE_COST_YN == 'Y'">
+				<if test='"Y".equals(CASH_COST_DIE_COST_YN)'>
 					 ${CASH_COST_DIE_COST_ST_O} 
 				</if>
-				<if test="COGS_COST_DIE_COST_YN == 'Y'">
+				<if test='"Y".equals(COGS_COST_DIE_COST_YN)'>
 					 ${COGS_COST_DIE_COST_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN != 'Y'">	
-					<if test="COO_COST_DIE_COST_YN == 'Y'">
+				<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_DIE_COST_YN)'>
 						 ${COO_COST_DIE_COST_ST_O} 
 					</if>
 				</if>
-				<if test="VAR_COST_PROD_COST_YN == 'Y'">
+				<if test='"Y".equals(VAR_COST_PROD_COST_YN)'>
 					 ${VAR_COST_PROD_COST_ST_O} 
 				</if>
-				<if test="CASH_COST_PROD_COST_YN == 'Y'">
+				<if test='"Y".equals(CASH_COST_PROD_COST_YN)'>
 					 ${CASH_COST_PROD_COST_ST_O} 
 				</if>
-				<if test="COGS_COST_PROD_COST_YN == 'Y'">
+				<if test='"Y".equals(COGS_COST_PROD_COST_YN)'>
 					 ${COGS_COST_PROD_COST_ST_O} 
 				</if>
-				<if test="CHKDASHBOARDYN != 'Y'">	
-					<if test="COO_COST_PROD_COST_YN == 'Y'">
+				<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_PROD_COST_YN)'>
 						 ${COO_COST_PROD_COST_ST_O} 
 					</if>
 				</if>
-				<if test="VAR_COST_YR_COST_YN == 'Y'">
+				<if test='"Y".equals(VAR_COST_YR_COST_YN)'>
 					 ${VAR_COST_YR_COST} 
 				</if>
-				<if test="CASH_COST_YR_COST_YN == 'Y'">
+				<if test='"Y".equals(CASH_COST_YR_COST_YN)'>
 					 ${CASH_COST_YR_COST} 
 				</if>
-				<if test="COGS_COST_YR_COST_YN == 'Y'">
+				<if test='"Y".equals(COGS_COST_YR_COST_YN)'>
 					 ${COGS_COST_YR_COST} 
 				</if>
-				<if test="CHKDASHBOARDYN != 'Y'">	
-					<if test="COO_COST_YR_COST_YN == 'Y'">
+				<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+					<if test='"Y".equals(COO_COST_YR_COST_YN)'>
 						 ${COO_COST_YR_COST} 
 					</if>
 				</if>
-				<if test="CHKDASHBOARDYN == 'Y'">
+				<if test='"Y".equals(CHKDASHBOARDYN)'>
 					
 					 ${SOM_EQ_QTY_SALE_PLN} 
 					 ${ASP_SALE_PLN}
 					
-					<if test="GRAVYN == 'Y'">
+					<if test='"Y".equals(GRAVYN)'>
 						
 						${SALE_GRAV_SALE_PLN} 
 						${QTY_GRAV_SALE_PLN}
@@ -4533,7 +4533,7 @@
 					, (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER}) AS PLN_YW	
 					, 'ORG' AS DATA_GBN_CD
 					, (SELECT PLN_YM FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER}) AS PLN_YM
-				]]><if test="SRCTYPE == 'BASE'">
+				]]><if test='"BASE".equals(SRCTYPE)'>
 					
 						 ${DIM_OUTER_SEQ} 
 					
@@ -4547,14 +4547,14 @@
 						 ) T1
 						ORDER BY 
 										
-				<if test="SRCTYPE == 'BASE'">
+				<if test='"BASE".equals(SRCTYPE)'>
 					
 						/* DIMENSION 시작*/
 						${ORDER_BY}
 						/* DIMENSION 끝*/
 					
 				</if>
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							SCM_FAMILY_CD,
 							SORT_SEQ,
@@ -4562,7 +4562,7 @@
 							UPPER_CD2
 					
 				</if>
-				<if test="SRCTYPE == 'COLCHG'">
+				<if test='"COLCHG".equals(SRCTYPE)'>
 					
 							SCM_FAMILY_CD,
 							SORT_SEQ,
@@ -4570,8 +4570,8 @@
 					
 				</if>
 		</select>	
-<select id="S004" parameterType="map" resultType="hashmap" fetchSize="1000">
-	<if test="CHKDASHBOARDYN != 'Y'"> 	
+<select id="dPLA04704" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla04704Dto" resultType="map">
+	<if test='!"Y".equals(CHKDASHBOARDYN)'> 	
 		
 			/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S004 장당 수익성분석 조회 (sub total 적용) */
 			WITH BASIC_NETDIE AS (
@@ -4583,13 +4583,13 @@
 					, DECODE(FAB_DEN_NUM, 0, 1, FAB_DEN_NUM) AS YEAR_FAB_DEN_NUM
 					, NET_DIE_300_CNT AS YEAR_NET_DIE_300_CNT
 			
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 									
 					, UPPER_CD1
 					, UPPER_CD2
 				
 			</if>	
-			<if test="SRCTYPE == 'COLCHG'">
+			<if test='"COLCHG".equals(SRCTYPE)'>
 				
 					, UPPER_CD1
 				
@@ -4605,13 +4605,13 @@
 					, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
 					, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
 					
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 										
 						, UPPER_CD1
 						, UPPER_CD2
 					
 				</if>	
-				<if test="SRCTYPE == 'COLCHG'">
+				<if test='"COLCHG".equals(SRCTYPE)'>
 					
 						, UPPER_CD1
 					
@@ -4627,13 +4627,13 @@
 							, MAX(FAB_DEN_NUM) AS FAB_DEN_NUM
 							, MAX(NET_DIE_300_CNT) AS NET_DIE_300_CNT
 							
-						<if test="SRCTYPE == 'UPPER2'">
+						<if test='"UPPER2".equals(SRCTYPE)'>
 												
 								, UPPER_CD1
 								, UPPER_CD2
 							
 						</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 								, UPPER_CD1
 							
@@ -4647,14 +4647,14 @@
 										, TGT_YEAR AS MQHYT
 										, NET_DIE_300_CNT
 										
-								<if test="SRCTYPE == 'UPPER2'">
+								<if test='"UPPER2".equals(SRCTYPE)'>
 														
 										, T2.GTS_GVAL2 AS UPPER_CD1
 										, T2.GTS_GVAL3 AS UPPER_CD2
 										, T2.GTS_GVAL4 AS UPPER_CD3										
 									
 								</if>	
-								<if test="SRCTYPE == 'COLCHG'">
+								<if test='"COLCHG".equals(SRCTYPE)'>
 									
 										, T2.GTS_GVAL2 AS UPPER_CD1								
 										, T2.GTS_GVAL4 AS UPPER_CD3
@@ -4693,7 +4693,7 @@
 									ELSE COO_COST / BP_EXR END AS COO_COST 
 									FROM PMO_PROFBLT_IMPROV_PROD T1	
 									]]>	
-								<if test="CHKMODEYN == 'Y'">
+								<if test='"Y".equals(CHKMODEYN)'>
 								
 										LEFT OUTER JOIN (
 											SELECT GTS_GVAL1, GTS_GVAL2, GTS_GVAL3, GTS_GVAL4, SORT_SEQ
@@ -4702,7 +4702,7 @@
 												AND SYS_TYP_CD = 'R'
 												AND GTS_ID = 'CODE'
 												AND GTS_TYP_CD = 'P-MIX_MODE'
-												AND GTS_ITEM_NM LIKE '##%'
+												AND GTS_ITEM_NM LIKE '#%'
 												AND USE_YN = 'Y'
 											) T2
 											ON T1.SCM_FAMILY_CD = T2.GTS_GVAL1 AND T1.CHG_PROD_MODE_CD = T2.GTS_GVAL4	
@@ -4713,35 +4713,35 @@
 													FROM MAD_GTS
 													WHERE SYS_TYP_CD = 'R'
 														AND GTS_ID = 'P-MIX EXPT_LIST'
-														AND GTS_ITEM_NM LIKE '##%'
+														AND GTS_ITEM_NM LIKE '#%'
 														AND USE_YN = 'Y')
 												AND PLN_YW = (SELECT PLN_YW FROM PMI_PLN_REV WHERE PLN_REV = #{PLN_VER})
 												AND SCM_FAMILY_CD = #{TYPE}
 												AND DATA_GBN_CD = 'ORG'
 												AND TGT_YM BETWEEN #{FROM_YM} AND #{TO_YM}
 									
-								<if test="ARR_TECH_CD != null and ARR_TECH_CD.size() > 0">
+								<if test='ARR_TECH_CD != null and ARR_TECH_CD != ""'>
     AND TECH_CD IN
     <foreach item="item" collection="ARR_TECH_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-								<if test="ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD.size() > 0">
+								<if test='ARR_FAB_DEN_CD != null and ARR_FAB_DEN_CD != ""'>
     AND FAB_DEN_CD IN
     <foreach item="item" collection="ARR_FAB_DEN_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-								<if test="ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD.size() > 0">
+								<if test='ARR_CHG_PROD_MODE_CD != null and ARR_CHG_PROD_MODE_CD != ""'>
     AND CHG_PROD_MODE_CD IN
     <foreach item="item" collection="ARR_CHG_PROD_MODE_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-								<if test="ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD.size() > 0">
+								<if test='ARR_APP_LVL_1_CD != null and ARR_APP_LVL_1_CD != ""'>
     AND APP_LVL_1_CD IN
     <foreach item="item" collection="ARR_APP_LVL_1_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-								<if test="ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2.size() > 0">
+								<if test='ARR_PKG_TYP_CD2 != null and ARR_PKG_TYP_CD2 != ""'>
     AND PKG_TYP_CD2 IN
     <foreach item="item" collection="ARR_PKG_TYP_CD2" open="(" close=")" separator=",">#{item}</foreach>
 </if>
-								<if test="TYPE == 'NAND'">
-									<if test="ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD.size() > 0">
+								<if test='"NAND".equals(TYPE)'>
+									<if test='ARR_CELL_LAYER_TYP_CD != null and ARR_CELL_LAYER_TYP_CD != ""'>
     AND CELL_LAYER_TYP_CD IN
     <foreach item="item" collection="ARR_CELL_LAYER_TYP_CD" open="(" close=")" separator=",">#{item}</foreach>
 </if>
@@ -4754,13 +4754,13 @@
 												, MQHYT
 											/* DIMENSION 끝*/
 							
-							<if test="SRCTYPE == 'UPPER2'">
+							<if test='"UPPER2".equals(SRCTYPE)'>
 									
 											, UPPER_CD1
 											, UPPER_CD2
 									
 							</if>	
-							<if test="SRCTYPE == 'COLCHG'">
+							<if test='"COLCHG".equals(SRCTYPE)'>
 								
 									, UPPER_CD1	
 								
@@ -4772,13 +4772,13 @@
 												, MQHYT_GBN
 												, MQHYT
 							
-							<if test="SRCTYPE == 'UPPER2'">
+							<if test='"UPPER2".equals(SRCTYPE)'>
 									
 											, UPPER_CD1
 											, UPPER_CD2
 									
 							</if>	
-							<if test="SRCTYPE == 'COLCHG'">
+							<if test='"COLCHG".equals(SRCTYPE)'>
 								
 									, UPPER_CD1	
 								
@@ -4788,17 +4788,17 @@
 						)
 					, G_NETDIE AS (
 					SELECT 
-					<if test="SRCTYPE == 'BASE'">
+					<if test='"BASE".equals(SRCTYPE)'>
 						${GROUPING_NETDIE1}
 					</if>
-					<if test="SRCTYPE == 'UPPER2'">
+					<if test='"UPPER2".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1 ,
 								A.UPPER_CD2 
 						
 					</if>	
-					<if test="SRCTYPE == 'COLCHG'">
+					<if test='"COLCHG".equals(SRCTYPE)'>
 						
 								A.SCM_FAMILY_CD ,
 								A.UPPER_CD1
@@ -4815,17 +4815,17 @@
 					FROM (
 						SELECT
 						
-						<if test="SRCTYPE == 'BASE'">
+						<if test='"BASE".equals(SRCTYPE)'>
 							${GROUPING_NETDIE2}
 						</if>
-						<if test="SRCTYPE == 'UPPER2'">
+						<if test='"UPPER2".equals(SRCTYPE)'>
 							
 									NVL(SCM_FAMILY_CD, ' ') AS SCM_FAMILY_CD ,
 									NVL(UPPER_CD1, ' ') AS UPPER_CD1 ,
 									NVL(UPPER_CD2, ' ') AS UPPER_CD2
 							
 						</if>	
-						<if test="SRCTYPE == 'COLCHG'">
+						<if test='"COLCHG".equals(SRCTYPE)'>
 							
 									NVL(SCM_FAMILY_CD, ' ') AS SCM_FAMILY_CD ,
 									NVL(UPPER_CD1, ' ') AS UPPER_CD1 
@@ -4837,11 +4837,11 @@
 							FROM (
 								SELECT 
 									
-								<if test="SRCTYPE == 'BASE'">
+								<if test='"BASE".equals(SRCTYPE)'>
 									${GROUPING_NETDIE1}
 									${GROUPING_NETDIE4}
 								</if>
-								<if test="SRCTYPE == 'UPPER2'">
+								<if test='"UPPER2".equals(SRCTYPE)'>
 									
 											A.SCM_FAMILY_CD ,
 											A.UPPER_CD1 ,
@@ -4849,7 +4849,7 @@
 											GROUPING(A.SCM_FAMILY_CD) + GROUPING(A.UPPER_CD1) + GROUPING(A.UPPER_CD2) AS GRP_ID
 									
 								</if>	
-								<if test="SRCTYPE == 'COLCHG'">
+								<if test='"COLCHG".equals(SRCTYPE)'>
 									
 											A.SCM_FAMILY_CD ,
 											A.UPPER_CD1 ,
@@ -4861,17 +4861,17 @@
 									FROM (	
 										SELECT 
 										
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_NETDIE3}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 ,
 												UPPER_CD2
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 
@@ -4882,17 +4882,17 @@
 										FROM BASIC_NETDIE
 										GROUP BY 
 										
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_NETDIE3}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 ,
 												UPPER_CD2
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 
@@ -4902,17 +4902,17 @@
 										) A
 										GROUP BY ROLLUP (
 										
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_NETDIE1}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												A.SCM_FAMILY_CD ,
 												A.UPPER_CD1 ,
 												A.UPPER_CD2
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												A.SCM_FAMILY_CD ,
 												A.UPPER_CD1 
@@ -4924,17 +4924,17 @@
 										) A,
 										( SELECT
 										
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_NETDIE2}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												NVL(SCM_FAMILY_CD, ' ') AS SCM_FAMILY_CD ,
 												NVL(UPPER_CD1, ' ') AS UPPER_CD1 ,
 												NVL(UPPER_CD2, ' ') AS UPPER_CD2
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												NVL(SCM_FAMILY_CD, ' ') AS SCM_FAMILY_CD ,
 												NVL(UPPER_CD1, ' ') AS UPPER_CD1
@@ -4947,11 +4947,11 @@
 											FROM (
 												SELECT												
 												
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_NETDIE3}
 										${GROUPING_NETDIE5}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 ,
@@ -4959,7 +4959,7 @@
 												GROUPING(SCM_FAMILY_CD) + GROUPING(UPPER_CD1) + GROUPING(UPPER_CD2) AS GRP_ID
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 ,
@@ -4972,17 +4972,17 @@
 											FROM BASIC_NETDIE
 											GROUP BY ROLLUP (										
 													
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_NETDIE3}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1 ,
 												UPPER_CD2 
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												SCM_FAMILY_CD ,
 												UPPER_CD1
@@ -4995,17 +4995,17 @@
 									WHERE A.MQHYT = B.MQHYT
 									AND A.GRP_ID = B.GRP_ID
 									
-									<if test="SRCTYPE == 'BASE'">
+									<if test='"BASE".equals(SRCTYPE)'>
 										${GROUPING_WHERE}
 									</if>
-									<if test="SRCTYPE == 'UPPER2'">
+									<if test='"UPPER2".equals(SRCTYPE)'>
 										
 												AND A.SCM_FAMILY_CD = B.SCM_FAMILY_CD 
 												AND A.UPPER_CD1 = B.UPPER_CD1
 												AND A.UPPER_CD2 = B.UPPER_CD2	
 										
 									</if>	
-									<if test="SRCTYPE == 'COLCHG'">
+									<if test='"COLCHG".equals(SRCTYPE)'>
 										
 												AND A.SCM_FAMILY_CD = B.SCM_FAMILY_CD 
 												AND A.UPPER_CD1 = B.UPPER_CD1
@@ -5017,12 +5017,12 @@
 																					
 		SELECT
 	
-	<if test="SRCTYPE == 'BASE'">
+	<if test='"BASE".equals(SRCTYPE)'>
 		
 			${DIM_OUTER_SUB_TOTAL}
 		
 	</if>
-	<if test="SRCTYPE == 'UPPER2'">
+	<if test='"UPPER2".equals(SRCTYPE)'>
 		
 			CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total'
 			ELSE T1.SCM_FAMILY_CD END AS SCM_FAMILY_CD
@@ -5031,7 +5031,7 @@
 			, T1.UPPER_CD2
 		
 	</if>	
-	<if test="SRCTYPE == 'COLCHG'">
+	<if test='"COLCHG".equals(SRCTYPE)'>
 		
 			CASE WHEN MAX(GRP_ID) OVER() = GRP_ID THEN 'G-Total'
 			ELSE T1.SCM_FAMILY_CD END AS SCM_FAMILY_CD
@@ -5039,16 +5039,16 @@
 			, T1.UPPER_CD1
 		
 	</if>
-	<if test="CHKDASHBOARDYN != 'Y'">
-		<if test="NET_DIE_YN == 'Y'">
-			<if test="SRCTYPE == 'ODD'">
+	<if test='!"Y".equals(CHKDASHBOARDYN)'>
+		<if test='"Y".equals(NET_DIE_YN)'>
+			<if test='"ODD".equals(SRCTYPE)'>
 			<![CDATA[
 				, CASE WHEN MAX(GRP_ID) OVER() -1 <= GRP_ID = ${TECH_GRP_ID} THEN TO_CHAR((SELECT A.FAB_DEN_CD_NUM FROM G_NETDIE A WHERE A.MQHYT = ${YEAR} ${NETDIE_WHERE}))
 						WHEN GRP_ID > 0 THEN TO_CHAR((SELECT NET_DIE_300_CNT FROM G_NETDIE A WHERE A.MQHYT = ${YEAR} ${NETDIE_WHERE}))
 						ELSE NVL(TRIM(NET_DIE), ' ') END AS NET_DIE
 			]]>
 			</if>
-			<if test="SRCTYPE != 'ODD'">
+			<if test='!"ODD".equals(SRCTYPE)'>
 			<![CDATA[
 				, CASE WHEN GRP_ID > 0 THEN TO_CHAR((SELECT A.FAB_DEN_CD_NUM FROM G_NETDIE A WHERE A.MQHYT = ${YEAR} ${NETDIE_WHERE}))
 				  ELSE
@@ -5057,231 +5057,231 @@
 			]]>
 			</if>
 		</if>	
-		<if test="CUM2_YLD_MASTER_DATA_YN == 'Y'">
+		<if test='"Y".equals(CUM2_YLD_MASTER_DATA_YN)'>
 				${CUM2_COL} 
 		</if>
-		<if test="GOOD_DIE_MASTER_DATA_YN == 'Y'">
+		<if test='"Y".equals(GOOD_DIE_MASTER_DATA_YN)'>
 				${GOOD_DIE_COL} 
 		</if>			
-		<if test="WF_CONV_QTY_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(WF_CONV_QTY_SALE_PLN_YN)'>
 				${WF_CONV_QTY_SALE_PLN_ST_O} 
 		</if>
-		<if test="SOM_EQ_QTY_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(SOM_EQ_QTY_SALE_PLN_YN)'>
 				${SOM_EQ_QTY_SALE_PLN_ST_O} 
 		</if>
-		<if test="SOM_DIE_QTY_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(SOM_DIE_QTY_SALE_PLN_YN)'>
 				${SOM_DIE_QTY_SALE_PLN_ST_O} 
 		</if>
-		<if test="ORG_QTY_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(ORG_QTY_SALE_PLN_YN)'>
 				${ORG_QTY_SALE_PLN_ST_O} 
 		</if>
-		<if test="SALE_AMT_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(SALE_AMT_SALE_PLN_YN)'>
 				${SALE_AMT_SALE_PLN_ST_O} 
 		</if>
-		<if test="ASP_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(ASP_SALE_PLN_YN)'>
 				${ASP_SALE_PLN_ST_O} 
 		</if>
-		<if test="SALE_GRAV_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(SALE_GRAV_SALE_PLN_YN)'>
 				${SALE_GRAV_SALE_PLN_ST_O} 
 		</if>
-		<if test="QTY_GRAV_SALE_PLN_YN == 'Y'">
+		<if test='"Y".equals(QTY_GRAV_SALE_PLN_YN)'>
 				${QTY_GRAV_SALE_PLN_ST_O} 
 		</if>
-		<if test="SALES_PROF_GRAV_YN == 'Y'">
+		<if test='"Y".equals(SALES_PROF_GRAV_YN)'>
 				${SALES_PROF_GRAV_ST_O} 
 		</if>
 		</if>
-		<if test="SALE_WF_SLS_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_WF_SLS_PROF_YN)'>
 				${SALE_WF_SLS_PROF_ST_O} 
 		</if>
-		<if test="CNTRB_PROF_WF_SLS_PROF_YN == 'Y'">
+		<if test='"Y".equals(CNTRB_PROF_WF_SLS_PROF_YN)'>
 				${CNTRB_PROF_WF_SLS_PROF_ST_O} 
 		</if>		
-		<if test="CASH_PROF_WF_SLS_PROF_YN == 'Y'">
+		<if test='"Y".equals(CASH_PROF_WF_SLS_PROF_YN)'>
 				${CASH_PROF_WF_SLS_PROF_ST_O} 
 		</if>
-		<if test="SALE_PROF_WF_SLS_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_PROF_WF_SLS_PROF_YN)'>
 				${SALE_PROF_WF_SLS_PROF_ST_O} 
 		</if>
-		<if test="SALES_PROF_WF_SLS_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALES_PROF_WF_SLS_PROF_YN)'>
 				${SALES_PROF_WF_SLS_PROF_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN == 'Y'">	
-			<if test="COO_COST_WF_SLS_COST_YN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_WF_SLS_COST_YN)'>
 					${COO_COST_WF_SLS_COST_ST_O} 
 			</if>
-			<if test="COO_PROF_RATE_WF_YN == 'Y'">
+			<if test='"Y".equals(COO_PROF_RATE_WF_YN)'>
 					${COO_PROF_RATE_WF_COL} 
 			</if>
 		</if>				
-		<if test="SALE_EQ_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_EQ_PROF_YN)'>
 				${SALE_EQ_PROF_ST_O} 
 		</if>
-		<if test="CNTRB_PROF_EQ_PROF_YN == 'Y'">
+		<if test='"Y".equals(CNTRB_PROF_EQ_PROF_YN)'>
 				${CNTRB_PROF_EQ_PROF_ST_O} 
 		</if>
-		<if test="CASH_PROF_EQ_PROF_YN == 'Y'">
+		<if test='"Y".equals(CASH_PROF_EQ_PROF_YN)'>
 				${CASH_PROF_EQ_PROF_ST_O} 
 		</if>
-		<if test="SALE_PROF_EQ_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_PROF_EQ_PROF_YN)'>
 				${SALE_PROF_EQ_PROF_ST_O} 
 		</if>
-		<if test="SALES_PROF_EQ_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALES_PROF_EQ_PROF_YN)'>
 				${SALES_PROF_EQ_PROF_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN == 'Y'">	
-			<if test="COO_COST_EQ_COST_YN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_EQ_COST_YN)'>
 					${COO_COST_EQ_COST_ST_O} 
 			</if>
-			<if test="COO_PROF_RATE_EQ_YN == 'Y'">
+			<if test='"Y".equals(COO_PROF_RATE_EQ_YN)'>
 					${COO_PROF_RATE_EQ_COL} 
 			</if>
 		</if>
-		<if test="SALE_DIE_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_DIE_PROF_YN)'>
 				${SALE_DIE_PROF_ST_O} 
 		</if>
-		<if test="CNTRB_PROF_DIE_PROF_YN == 'Y'">
+		<if test='"Y".equals(CNTRB_PROF_DIE_PROF_YN)'>
 				${CNTRB_PROF_DIE_PROF_ST_O} 
 		</if>
-		<if test="CASH_PROF_DIE_PROF_YN == 'Y'">
+		<if test='"Y".equals(CASH_PROF_DIE_PROF_YN)'>
 				${CASH_PROF_DIE_PROF_ST_O} 
 		</if>
-		<if test="SALE_PROF_DIE_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_PROF_DIE_PROF_YN)'>
 				${SALE_PROF_DIE_PROF_ST_O} 
 		</if>
-		<if test="SALES_PROF_DIE_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALES_PROF_DIE_PROF_YN)'>
 				${SALES_PROF_DIE_PROF_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN == 'Y'">	
-			<if test="COO_COST_DIE_COST_YN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_DIE_COST_YN)'>
 					${COO_COST_DIE_COST_ST_O} 
 			</if>
-			<if test="COO_PROF_RATE_DIE_YN == 'Y'">
+			<if test='"Y".equals(COO_PROF_RATE_DIE_YN)'>
 					${COO_PROF_RATE_DIE_COL} 
 			</if>
 		</if>
-		<if test="SALE_PROD_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_PROD_PROF_YN)'>
 				${SALE_PROD_PROF} 
 		</if>
-		<if test="CNTRB_PROF_PROD_PROF_YN == 'Y'">
+		<if test='"Y".equals(CNTRB_PROF_PROD_PROF_YN)'>
 				${CNTRB_PROF_PROD_PROF_ST_O} 
 		</if>
-		<if test="CASH_PROF_PROD_PROF_YN == 'Y'">
+		<if test='"Y".equals(CASH_PROF_PROD_PROF_YN)'>
 				${CASH_PROF_PROD_PROF_ST_O} 
 		</if>
-		<if test="SALE_PROF_PROD_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_PROF_PROD_PROF_YN)'>
 				${SALE_PROF_PROD_PROF_ST_O} 
 		</if>
-		<if test="SALES_PROF_PROD_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALES_PROF_PROD_PROF_YN)'>
 				${SALES_PROF_PROD_PROF_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN == 'Y'">	
-			<if test="COO_COST_PROD_COST_YN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_PROD_COST_YN)'>
 					${COO_COST_PROD_COST_ST_O} 
 			</if>
-			<if test="COO_PROF_RATE_PROD_YN == 'Y'">
+			<if test='"Y".equals(COO_PROF_RATE_PROD_YN)'>
 					${COO_PROF_RATE_PROD_COL} 
 			</if>
 		</if>
-		<if test="SALE_YR_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_YR_PROF_YN)'>
 				${SALE_YR_PROF_ST_O} 
 		</if>
-		<if test="CNTRB_PROF_YR_PROF_YN == 'Y'">
+		<if test='"Y".equals(CNTRB_PROF_YR_PROF_YN)'>
 				${CNTRB_PROF_YR_PROF_ST_O} 
 		</if>
-		<if test="CASH_PROF_YR_PROF_YN == 'Y'">
+		<if test='"Y".equals(CASH_PROF_YR_PROF_YN)'>
 				${CASH_PROF_YR_PROF_ST_O} 
 		</if>
-		<if test="SALE_PROF_YR_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALE_PROF_YR_PROF_YN)'>
 				${SALE_PROF_YR_PROFV} 
 		</if>
-		<if test="SALES_PROF_YR_PROF_YN == 'Y'">
+		<if test='"Y".equals(SALES_PROF_YR_PROF_YN)'>
 				${SALES_PROF_YR_PROF_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN == 'Y'">	
-			<if test="COO_COST_YR_COST_YN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_YR_COST_YN)'>
 					${COO_COST_YR_COST_ST_O} 
 			</if>
-			<if test="COO_PROF_RATE_YR_YN == 'Y'">
+			<if test='"Y".equals(COO_PROF_RATE_YR_YN)'>
 					${COO_PROF_RATE_YR_ST_O} 
 			</if>
 		</if>
-		<if test="VAR_COST_WF_SLS_COST_YN == 'Y'">
+		<if test='"Y".equals(VAR_COST_WF_SLS_COST_YN)'>
 				${VAR_COST_WF_SLS_COST_ST_O} 
 		</if>
-		<if test="CASH_COST_WF_SLS_COST_YN == 'Y'">
+		<if test='"Y".equals(CASH_COST_WF_SLS_COST_YN)'>
 				${CASH_COST_WF_SLS_COST_ST_O} 
 		</if>
-		<if test="COGS_COST_WF_SLS_COST_YN == 'Y'">
+		<if test='"Y".equals(COGS_COST_WF_SLS_COST_YN)'>
 				${COGS_COST_WF_SLS_COST_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN != 'Y'">	
-			<if test="COO_COST_WF_SLS_COST_YN == 'Y'">
+		<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_WF_SLS_COST_YN)'>
 					${COO_COST_WF_SLS_COST_ST_O} 
 			</if>
 		</if>
-		<if test="VAR_COST_EQ_COST_YN == 'Y'">
+		<if test='"Y".equals(VAR_COST_EQ_COST_YN)'>
 				${VAR_COST_EQ_COST_ST_O} 
 		</if>
-		<if test="CASH_COST_EQ_COST_YN == 'Y'">
+		<if test='"Y".equals(CASH_COST_EQ_COST_YN)'>
 				${CASH_COST_EQ_COST_ST_O} 
 		</if>
-		<if test="COGS_COST_EQ_COST_YN == 'Y'">
+		<if test='"Y".equals(COGS_COST_EQ_COST_YN)'>
 				${COGS_COST_EQ_COST_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN != 'Y'">	
-			<if test="COO_COST_EQ_COST_YN == 'Y'">
+		<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_EQ_COST_YN)'>
 					${COO_COST_EQ_COST_ST_O} 
 			</if>
 		</if>
-		<if test="VAR_COST_DIE_COST_YN == 'Y'">
+		<if test='"Y".equals(VAR_COST_DIE_COST_YN)'>
 				${VAR_COST_DIE_COST_ST_O} 
 		</if>
-		<if test="CASH_COST_DIE_COST_YN == 'Y'">
+		<if test='"Y".equals(CASH_COST_DIE_COST_YN)'>
 				${CASH_COST_DIE_COST_ST_O} 
 		</if>
-		<if test="COGS_COST_DIE_COST_YN == 'Y'">
+		<if test='"Y".equals(COGS_COST_DIE_COST_YN)'>
 				${COGS_COST_DIE_COST_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN != 'Y'">	
-			<if test="COO_COST_DIE_COST_YN == 'Y'">
+		<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_DIE_COST_YN)'>
 					${COO_COST_DIE_COST_ST_O} 
 			</if>
 		</if>
-		<if test="VAR_COST_PROD_COST_YN == 'Y'">
+		<if test='"Y".equals(VAR_COST_PROD_COST_YN)'>
 				${VAR_COST_PROD_COST_ST_O} 
 		</if>
-		<if test="CASH_COST_PROD_COST_YN == 'Y'">
+		<if test='"Y".equals(CASH_COST_PROD_COST_YN)'>
 				${CASH_COST_PROD_COST_ST_O} 
 		</if>
-		<if test="COGS_COST_PROD_COST_YN == 'Y'">
+		<if test='"Y".equals(COGS_COST_PROD_COST_YN)'>
 				${COGS_COST_PROD_COST_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN != 'Y'">	
-			<if test="COO_COST_PROD_COST_YN == 'Y'">
+		<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_PROD_COST_YN)'>
 					${COO_COST_PROD_COST_ST_O} 
 			</if>
 		</if>
-		<if test="VAR_COST_YR_COST_YN == 'Y'">
+		<if test='"Y".equals(VAR_COST_YR_COST_YN)'>
 				${VAR_COST_YR_COST_ST_O} 
 		</if>
-		<if test="CASH_COST_YR_COST_YN == 'Y'">
+		<if test='"Y".equals(CASH_COST_YR_COST_YN)'>
 				${CASH_COST_YR_COST_ST_O} 
 		</if>
-		<if test="COGS_COST_YR_COST_YN == 'Y'">
+		<if test='"Y".equals(COGS_COST_YR_COST_YN)'>
 				${COGS_COST_YR_COST_ST_O} 
 		</if>
-		<if test="CHKDASHBOARDYN != 'Y'">	
-			<if test="COO_COST_YR_COST_YN == 'Y'">
+		<if test='!"Y".equals(CHKDASHBOARDYN)'>	
+			<if test='"Y".equals(COO_COST_YR_COST_YN)'>
 					${COO_COST_YR_COST_ST_O} 
 			</if>
 		</if>
-		<if test="CHKDASHBOARDYN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>
 			
 				${SOM_EQ_QTY_SALE_PLN_ST_O} 
 				${ASP_SALE_PLN_ST_O}
 			
-			<if test="GRAVYN == 'Y'">
+			<if test='"Y".equals(GRAVYN)'>
 				
 				${SALE_GRAV_SALE_PLN_ST_O} 
 				${QTY_GRAV_SALE_PLN_ST_O}
@@ -5381,13 +5381,13 @@
 			, GRP_ID
 			FROM (
 				SELECT 
-		]]><if test="SRCTYPE == 'BASE'">
+		]]><if test='"BASE".equals(SRCTYPE)'>
 			
 				${DIM_OUTER}
 				, ${DIM_GROUP} AS GRP_ID
 			
 		</if>
-		<if test="SRCTYPE == 'UPPER2'">
+		<if test='"UPPER2".equals(SRCTYPE)'>
 			
 					T1.SCM_FAMILY_CD,
 					MAX(SORT_SEQ) AS SORT_SEQ,
@@ -5396,7 +5396,7 @@
 					GROUPING(T1.SCM_FAMILY_CD) + GROUPING(T1.UPPER_CD1) + GROUPING(T1.UPPER_CD2) AS GRP_ID
 			
 		</if>
-		<if test="SRCTYPE == 'COLCHG'">
+		<if test='"COLCHG".equals(SRCTYPE)'>
 			
 					T1.SCM_FAMILY_CD,
 					MAX(SORT_SEQ) AS SORT_SEQ,
@@ -5465,7 +5465,7 @@
 				${COGS_COST_YR_COST_ST}
 				${COO_COST_YR_COST_ST}
 			
-		<if test="CHKDASHBOARDYN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>
 			
 					${COO_PROF_RATE_WF_ST}
 					${COO_PROF_RATE_EQ_ST}
@@ -5476,12 +5476,12 @@
 		</if>
 			FROM (
 				SELECT 
-			<if test="SRCTYPE == 'BASE'">
+			<if test='"BASE".equals(SRCTYPE)'>
 				
 					${DIM_OUTER}
 				
 			</if>
-			<if test="SRCTYPE == 'UPPER2'">
+			<if test='"UPPER2".equals(SRCTYPE)'>
 				
 						T1.SCM_FAMILY_CD,
 						T1.SORT_SEQ,
@@ -5489,7 +5489,7 @@
 						T1.UPPER_CD2
 				
 			</if>
-			<if test="SRCTYPE == 'COLCHG'">
+			<if test='"COLCHG".equals(SRCTYPE)'>
 				
 						T1.SCM_FAMILY_CD,
 						T1.SORT_SEQ,
@@ -5556,7 +5556,7 @@
 				${COGS_COST_YR_COST}
 				${COO_COST_YR_COST}
 			
-		<if test="CHKDASHBOARDYN == 'Y'">
+		<if test='"Y".equals(CHKDASHBOARDYN)'>
 			
 					${COO_PROF_RATE_WF}
 					${COO_PROF_RATE_EQ}
@@ -5573,19 +5573,19 @@
 						 ) T1
 						GROUP BY ROLLUP(
 						
-				<if test="SRCTYPE == 'BASE'">
+				<if test='"BASE".equals(SRCTYPE)'>
 											
 						${DIM_OUTER}
 					
 				</if>
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							T1.SCM_FAMILY_CD,							
 							T1.UPPER_CD1,
 							T1.UPPER_CD2
 					
 				</if>
-				<if test="SRCTYPE == 'COLCHG'">
+				<if test='"COLCHG".equals(SRCTYPE)'>
 					
 							T1.SCM_FAMILY_CD,							
 							T1.UPPER_CD
@@ -5595,14 +5595,14 @@
 					) T1
 				ORDER BY 
 				
-				<if test="SRCTYPE == 'BASE'">
+				<if test='"BASE".equals(SRCTYPE)'>
 					
 						CASE WHEN MAX(GRP_ID) OVER () = GRP_ID THEN 0 ELSE 1 END,
 						${ORDER_BY}
 						, GRP_ID
 					
 				</if>
-				<if test="SRCTYPE == 'UPPER2'">
+				<if test='"UPPER2".equals(SRCTYPE)'>
 					
 							CASE WHEN MAX(GRP_ID) OVER () = GRP_ID THEN 0 ELSE 1 END,
 							SCM_FAMILY_CD,
@@ -5611,7 +5611,7 @@
 							UPPER_CD2
 					
 				</if>
-				<if test="SRCTYPE == 'COLCHG'">
+				<if test='"COLCHG".equals(SRCTYPE)'>
 					
 							CASE WHEN MAX(GRP_ID) OVER () = GRP_ID THEN 0 ELSE 1 END,
 							SCM_FAMILY_CD,
@@ -5620,7 +5620,7 @@
 					
 				</if>
 </select>
-	<select id="S005" parameterType="map" resultType="hashmap" fetchSize="50">
+	<select id="dPLA04705" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla04705Dto" resultType="map">
 		
 		/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S005 장당 수익성 업데이트 시각 조회 */
 		SELECT TO_CHAR(A.CRT_TM, 'YYYY-MM-DD HH24:MI:SS') AS CRT_TM
@@ -5630,7 +5630,7 @@
 			AND ROWNUM = 1
 			
 	</select>
-	<select id="S006" parameterType="map" resultType="hashmap" fetchSize="50">
+	<select id="dPLA04706" parameterType="com.skhynix.gscm.r.pm.pla.dto.Pla04706Dto" resultType="map">
 		
 		/* Biz: gscm.r.pm.pla.plab.db.DPLA047.S006 REV 기간 조회 */
 		SELECT DISTINCT B.PLN_REV
@@ -5648,5 +5648,4 @@
 			ORDER BY B.PLN_REV, WORK_YEAR
 			
 	</select>
-</sqlMap>
-
+</mapper>

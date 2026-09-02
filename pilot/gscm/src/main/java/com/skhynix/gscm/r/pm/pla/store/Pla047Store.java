@@ -11,31 +11,33 @@ import java.util.Map;
 @Repository
 public class Pla047Store {
 
+    private static final String NS = "com.skhynix.gscm.r.pm.pla.store.Pla047Store.";
+
     @Autowired
     private SqlSessionTemplate sqlSession;
 
     public Map<String, Object> dPLA04701(Map<String, Object> params) {
-        return sqlSession.selectOne("Pla047Mapper.S001", params);
+        return sqlSession.selectOne(NS + "dPLA04701", params);
     }
 
     public Map<String, Object> dPLA04702(Map<String, Object> params) {
-        return sqlSession.selectOne("Pla047Mapper.S002", params);
+        return sqlSession.selectOne(NS + "dPLA04702", params);
     }
 
     public Map<String, Object> dPLA04703(Map<String, Object> params) {
-        return sqlSession.selectOne("Pla047Mapper.S003", params);
+        return sqlSession.selectOne(NS + "dPLA04703", params);
     }
 
     public Map<String, Object> dPLA04704(Map<String, Object> params) {
-        return sqlSession.selectOne("Pla047Mapper.S004", params);
+        return sqlSession.selectOne(NS + "dPLA04704", params);
     }
 
     public Map<String, Object> dPLA04705(Map<String, Object> params) {
-        return sqlSession.selectOne("Pla047Mapper.S005", params);
+        return sqlSession.selectOne(NS + "dPLA04705", params);
     }
 
     public Map<String, Object> dPLA04706(Map<String, Object> params) {
-        return sqlSession.selectOne("Pla047Mapper.S006", params);
+        return sqlSession.selectOne(NS + "dPLA04706", params);
     }
 
 }

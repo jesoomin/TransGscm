@@ -1,0 +1,64 @@
+<?xml version='1.0" encoding="UTF-8" standalone="no"?>
+<bizUnit id="FPLA028">
+	<bizUnitName>[FU] 제품별 장당 수익</bizUnitName>
+	<parentClassXd>BFU</parentClassXd>
+	<componentId>pla.PLAB</componentId>
+	<description>제품별 장당 수익</description>
+	<method-list>
+		<method id="fPLA028QrySelectRevPeriod">
+			<methodName>[FM]REV 기간 조회</methodName>
+			<transactionId>pla.PLAB@FPLA028_fPLA028QrySelectRevPeriod</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>REV 기간 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="fPLA028QrySelectRev">
+			<methodName>[FM]REV 조회</methodName>
+			<transactionId>pla.PLAB@FPLA028_fPLA028QrySelectRev</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>REV 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>
+		<method id="fPLA028QrySelectMainList">
+			<methodName>[FM]장당 수익성분석 조회</methodName>
+			<transactionId>pla.PLAB@FPLA028_fPLA028QrySelectMainList</transactionId>
+			<webServideOpenXd>0</webServideOpenXd>
+			<fixedLengthXd>0</fixedLengthXd>
+			<description>장당 수익성분석 조회</dedication>
+			<inputMethodIo>
+				<fields/>
+			</inputMethodIo>
+			<outputMethodIo>
+				<fields/>
+			</outputMethodIo>
+			<custom-props/>
+			<history>
+				<created date="2025-07-21" user="제수민"/>
+			</history>
+		</method>		
+	</method-list>
+	<xsql/>
+	<history>
+		<created date="2025-07-21" user="제수민"/>
+	</history>
+</bizUnit>	

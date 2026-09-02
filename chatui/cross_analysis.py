@@ -41,13 +41,44 @@ def _normalize(text: str) -> str:
 
 
 def _extract_tobe_methods(java_text: str) -> dict[str, str]:
-    """TO-BE Service/Store 파일에서 메서드 이름->본문을 뽑는다(다음 시그니처 전까지를 본문으로 근사)."""
-    matches = list(_TOBE_METHOD_SIG_RE.finditer(java_text))
+    """TO-BE Service/Store 메서드 이름과 실제 중괄호 본문을 뽑는다.
+
+    다음 메서드 시그니처까지를 본문으로 간주하면 마지막 `}`와 클래스 끝 주석이 섞여 잘못된
+    중복으로 이어질 수 있다. 문자열과 주석은 완전한 Java 파싱 없이도 중괄호 깊이에 영향을
+    주지 않도록 건너뛴다.
+    """
     methods: dict[str, str] = {}
-    for i, m in enumerate(matches):
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(java_text)
-        methods[m.group(1)] = java_text[start:end]
+    for match in _TOBE_METHOD_SIG_RE.finditer(java_text):
+        start = match.end()
+        depth = 1
+        i = start
+        quote: str | None = None
+        while i < len(java_text) and depth:
+            char = java_text[i]
+            following = java_text[i + 1] if i + 1 < len(java_text) else ""
+            if quote:
+                if char == "\\":
+                    i += 2
+                    continue
+                if char == quote:
+                    quote = None
+            elif char in ('"', "'"):
+                quote = char
+            elif char == "/" and following == "/":
+                newline = java_text.find("\n", i + 2)
+                i = len(java_text) if newline == -1 else newline
+                continue
+            elif char == "/" and following == "*":
+                end_comment = java_text.find("*/", i + 2)
+                i = len(java_text) if end_comment == -1 else end_comment + 2
+                continue
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+            i += 1
+        if depth == 0:
+            methods[match.group(1)] = java_text[start:i - 1]
     return methods
 
 
@@ -91,18 +122,22 @@ def analyze_pilot_folder(pilot_root: Path) -> CrossAnalysisResult:
         )
         return result
 
-    body_index: dict[str, list[str]] = {}
+    body_indexes: dict[str, dict[str, list[str]]] = {
+        "SERVICE_METHOD_BODY": {},
+        "STORE_METHOD_BODY": {},
+    }
     stmt_index: dict[str, list[str]] = {}
 
     for service_path in service_like_paths:
         screen = _screen_prefix(service_path.name)
+        kind = "SERVICE_METHOD_BODY" if service_path.name.endswith("Service.java") else "STORE_METHOD_BODY"
         text = service_path.read_text(encoding="utf-8", errors="replace")
         for name, body in _extract_tobe_methods(text).items():
             norm = _normalize(body)
             if len(norm) < _MIN_MEANINGFUL_LEN:
                 continue
             key = hashlib.sha256(norm.encode("utf-8")).hexdigest()
-            body_index.setdefault(key, []).append(f"{screen}:{service_path.name}:{name}")
+            body_indexes[kind].setdefault(key, []).append(f"{screen}:{service_path.name}:{name}")
 
     for mapper_path in mapper_paths:
         screen = _screen_prefix(mapper_path.name)
@@ -114,14 +149,15 @@ def analyze_pilot_folder(pilot_root: Path) -> CrossAnalysisResult:
             key = hashlib.sha256(norm.encode("utf-8")).hexdigest()
             stmt_index.setdefault(key, []).append(f"{screen}:{mapper_path.name}:{stmt_id}")
 
-    for key, locations in body_index.items():
-        distinct_screens = {loc.split(":", 1)[0] for loc in locations}
-        if len(distinct_screens) > 1:
-            result.duplicate_groups.append(DuplicateGroup(
-                kind="SERVICE_METHOD_BODY",
-                preview=locations[0],
-                locations=locations,
-            ))
+    for kind, body_index in body_indexes.items():
+        for locations in body_index.values():
+            distinct_screens = {loc.split(":", 1)[0] for loc in locations}
+            if len(distinct_screens) > 1:
+                result.duplicate_groups.append(DuplicateGroup(
+                    kind=kind,
+                    preview=locations[0],
+                    locations=locations,
+                ))
 
     for key, locations in stmt_index.items():
         distinct_screens = {loc.split(":", 1)[0] for loc in locations}

@@ -1,0 +1,1 @@
+<mapper><select id="find">SELECT ITEM_ID, ITEM_NAME, ITEM_CATEGORY, CREATED_AT FROM ITEM WHERE STATUS = #{status} AND ACTIVE_YN = 'Y' ORDER BY ITEM_ID</select></mapper>

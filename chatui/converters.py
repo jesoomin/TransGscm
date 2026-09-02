@@ -6,6 +6,8 @@ CLAUDE.md 핵심 원칙: 결정론적으로 풀리는 변환에는 LLM을 쓰지
 멘토 코멘트(docs/06-mentor-feedback.md §2) 규칙 그대로:
     #var# -> #{var},  $var$ -> ${var}
     <isEqual>/<isNotEqual>/<isNull>/<isNotNull>/<isGreaterThan> 등 -> <if test="...">
+    (isEqual/isNotEqual이 문자열과 비교할 때는 PROP == 'VALUE'가 아니라 "VALUE".equals(PROP)
+     스타일로 만든다 - PROP가 null이어도 안전하고, 이 프로젝트 Mapper.xml 전체 관례와도 맞다)
     <isNotEmpty>+<iterate> -> <if>+<foreach>
     <dynamic prepend="WHERE"> -> <where>,  <dynamic prepend="SET"> -> <set>
     <![CDATA[ ... ]]> 는 꼭 필요한 곳(안에 &/</> 같은 XML 예약문자가 실제로 있는 경우)에만 남긴다.
@@ -31,6 +33,8 @@ class ConversionIssue:
     severity: str  # BLOCKER | WARNING | INFO
     message: str
     line_no: int | None = None
+    method_name: str | None = None  # 이슈가 특정 메서드에 귀속되면 AS-IS 메서드명(agents/db.py의
+    # CONV_ISSUE.METHOD_ID 연결에 씀) - 파일 전체 이슈(XML 파싱 오류 등)는 None으로 둔다
 
 
 @dataclass
@@ -52,6 +56,15 @@ def _compare_literal(value: str) -> str:
     return value if _NUMERIC_RE.match(value) else f"'{value}'"
 
 
+def _compare_literal_dquote(value: str) -> str:
+    """.equals() 스타일에서 쓸 문자열 리터럴 - 큰따옴표로 감싼다.
+
+    <if> 태그의 속성 구분자는 작은따옴표(test='...')를 쓰기로 했으므로(이 프로젝트 Mapper.xml
+    관례, 예: <if test='"UPPER2".equals(SRCTYPE)'>), 안쪽 OGNL 문자열 리터럴은 큰따옴표를 쓴다.
+    """
+    return f'"{value}"'
+
+
 # --- 1) isNotEmpty(prepend="AND col", property="ARR_x") + iterate(...) -> if + foreach ------
 _ISNOTEMPTY_ITERATE_RE = re.compile(
     r'<isNotEmpty\s+prepend="AND\s+([A-Za-z0-9_]+)"\s+property="([A-Za-z0-9_]+)"\s*>'
@@ -65,8 +78,10 @@ _ISNOTEMPTY_ITERATE_RE = re.compile(
 def _replace_isnotempty_iterate(text: str) -> str:
     def _sub(m: re.Match) -> str:
         col, arr = m.group(1), m.group(2)
+        # 이 프로젝트 Mapper.xml 전체 관례(ARR_TECH_CD != null and ARR_TECH_CD != "")를 따른다 -
+        # List.size() > 0가 아니라 != ""로 빈 상태를 확인한다(원본 XSQL 화면들에서 실제로 쓰던 형태).
         return (
-            f'<if test="{arr} != null and {arr}.size() > 0">\n'
+            f"<if test='{arr} != null and {arr} != \"\"'>\n"
             f'    AND {col} IN\n'
             f'    <foreach item="item" collection="{arr}" open="(" close=")" separator=",">'
             f'#{{item}}</foreach>\n'
@@ -94,8 +109,17 @@ def _replace_comparison_tags(text: str) -> str:
     for tag, op in _COMPARISON_OPS.items():
         open_re = re.compile(rf'<{tag}\s+property="([A-Za-z0-9_.]+)"\s+compareValue="([^"]*)"\s*>')
 
-        def _sub(m: re.Match, _op=op) -> str:
+        def _sub(m: re.Match, _tag=tag, _op=op) -> str:
             prop, value = m.group(1), m.group(2)
+            is_string_literal = not _NUMERIC_RE.match(value)
+            # isEqual/isNotEqual이 문자열 리터럴과 비교하는 경우는 "VALUE".equals(PROP) 스타일로
+            # 만든다 - 이 프로젝트 Mapper.xml 전체 관례(예: <if test='"COLCHG".equals(SRCTYPE)'>)와
+            # 맞추기 위함. PROP가 null이어도 안전하고(리터럴.equals(null) == false), 숫자 비교
+            # (isGreaterThan 등, .equals() 관용구가 없는 부등호 비교)는 건드리지 않는다.
+            if _tag == "isEqual" and is_string_literal:
+                return f"<if test='{_compare_literal_dquote(value)}.equals({prop})'>"
+            if _tag == "isNotEqual" and is_string_literal:
+                return f"<if test='!{_compare_literal_dquote(value)}.equals({prop})'>"
             return f'<if test="{prop} {_op} {_compare_literal(value)}">'
 
         before = text
@@ -184,6 +208,56 @@ def _replace_bind_vars(text: str) -> str:
     text = re.sub(r"#([A-Za-z_][A-Za-z0-9_]*)#", r"#{\1}", text)
     text = re.sub(r"\$([A-Za-z_][A-Za-z0-9_]*)\$", r"${\1}", text)
     return text
+
+
+# --- 7b) iBatis식 리터럴 # 이스케이프(##) 정리 --------------------------------------------------
+# iBatis는 #var#가 바인드 변수라서, 문자열 안에 진짜 # 한 글자를 쓰려면 ##로 이스케이프해야 했다
+# (예: LIKE '##%'). MyBatis는 #{...} 형태만 특별 취급하고 맨 # 하나는 그냥 문자라서 이스케이프가
+# 필요 없다 - 그대로 두면 LIKE 패턴에 불필요한 #이 하나 더 남는 문법 오류가 된다.
+def _simplify_escaped_hash(text: str) -> str:
+    return text.replace("##", "#")
+
+
+# --- 7c) SQL 본문에 그대로 남은 부등호(<=, >=, <, >)를 CDATA로 감싼다 --------------------------
+# <if test="..."> 같은 태그의 속성값 안에 있는 &lt;/&gt;(isLessThan 등에서 이미 생성한 것)는
+# 속성값이라 엔티티 이스케이프 그대로 둬야 하므로 건드리지 않는다(그 줄엔 test=가 있어 걸러진다).
+# 원본 XSQL이 WHERE 절 등 SQL 본문에 &lt;=/&gt;= 형태로 이스케이프해둔 것만, 이 Mapper.xml 전체
+# 관례(리터럴 부등호 + CDATA)에 맞게 되돌린다 - 연속된 줄들을 각각 따로 감싸면(<![CDATA[..]]>를
+# 줄마다 여닫으면) 열고 닫는 지점이 계속 반복돼서 실제 관례(예: WHERE~AND 절 전체를 CDATA 하나로
+# 감싸고 여는 줄/닫는 줄을 따로 둠)와 다르다 - 그래서 연속된 대상 줄을 묶어서 CDATA 하나로 열고,
+# 마지막 대상 줄 다음에 닫는다(대상이 아닌 줄이나 <if>/test= 같은 보호 대상 줄을 만나면 거기서 끊는다).
+_ENTITY_OP_RE = re.compile(r"&lt;=|&gt;=|&lt;|&gt;")
+
+
+def _is_cdata_protected_line(line: str) -> bool:
+    return "<![CDATA[" in line or "]]>" in line or "test=" in line or "<if" in line or "<when" in line
+
+
+def _wrap_raw_comparison_operators(text: str) -> str:
+    lines = text.split("\n")
+    out_lines: list[str] = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        if _is_cdata_protected_line(line) or not _ENTITY_OP_RE.search(line):
+            out_lines.append(line)
+            i += 1
+            continue
+        # 여기서부터 부등호가 있는 줄이 연속되는 구간을 한 덩어리로 묶는다.
+        leading_ws = line[: len(line) - len(line.lstrip())]
+        group: list[str] = []
+        while i < n and not _is_cdata_protected_line(lines[i]) and _ENTITY_OP_RE.search(lines[i]):
+            unescaped = (
+                lines[i].replace("&lt;=", "<=").replace("&gt;=", ">=")
+                .replace("&lt;", "<").replace("&gt;", ">")
+            )
+            group.append(unescaped.strip())
+            i += 1
+        out_lines.append(f"{leading_ws}<![CDATA[")
+        out_lines.extend(f"{leading_ws}{g}" for g in group)
+        out_lines.append(f"{leading_ws}]]>")
+    return "\n".join(out_lines)
 
 
 # CDATA 블록 안에 이게 있으면 정확성 버그다: <![CDATA[...]]> 안에서는 XML 파서가 <if>/<where>/
@@ -280,6 +354,8 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
     text = _replace_dynamic_tags(text)
     text = _replace_standalone_iterate(text)
     text = _replace_bind_vars(text)
+    text = _simplify_escaped_hash(text)
+    text = _wrap_raw_comparison_operators(text)
     text = _strip_cdata(text, issues)
 
     for tag in _KNOWN_REMAINING_TAGS:
@@ -321,6 +397,107 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
                 f"변환 결과가 유효한 XML이 아닙니다: {xml_error}. 원본 XSQL 자체의 태그 짝이 안 맞을 수 있습니다 "
                 f"(문법 치환 규칙 문제가 아니라 원본 데이터 문제일 가능성이 높음) - 원본과 대조해서 확인하세요."
             ),
+        ))
+
+    return ConversionResult(mybatis_xml=text, issues=issues)
+
+
+def dto_name_for_method(method: str) -> str:
+    """D/F BizUnit 메서드명(예: dPLA04701)에서 DTO 클래스명(Pla04701Dto)을 만든다.
+
+    앞의 계층 접두어(d/f/p 한 글자)만 떼고, skeleton_gen.to_prefix()와 같은 규칙(첫 글자만
+    대문자, 나머지 소문자)을 적용한다 - Mapper.xml의 <select> parameterType과 Store/Service가
+    참조하는 DTO 클래스명을 항상 같은 규칙으로 만들기 위해 한 곳에 모아뒀다(중복 구현 방지).
+    """
+    base = method[1:] if method[:1].lower() in ("d", "f", "p") else method
+    return base[:1].upper() + base[1:].lower() + "Dto"
+
+
+# --- 문서 구조(DOCTYPE/root/namespace/select id·parameterType·resultType) 정리 -----------------
+# convert_xsql_fragment()는 SQL 본문(태그/바인드 변수) 문법만 다룬다 - 화면ID/패키지/D 메서드명
+# 같은 컨텍스트가 있어야 아는 문서 뼈대 변환은 이 함수가 별도로 맡는다(app.py가 generate_skeletons
+# 결과의 stmt_id_to_method와 함께 순서대로 호출).
+_OLD_DOCTYPE_RE = re.compile(
+    r'<!DOCTYPE\s+sqlMap\s+PUBLIC\s+"-//iBATIS\.com//DTD SQL MAP 2\.0//EN"\s*'
+    r'"http://ibatis\.apache\.org/dtd/sql-map-2\.dtd">'
+)
+_NEW_DOCTYPE = (
+    '<!DOCTYPE sqlMap PUBLIC "-//mybatid.org//DTD Mapper 3.0//EN" '
+    '"http://mybatis.org/dtd/mybatis-3-mapper.dtd">'
+)
+_SELECT_OPEN_RE = re.compile(
+    r'<select\s+id="(?P<id>\w+)"\s+parameterType="(?P<ptype>[^"]*)"\s+resultType="(?P<rtype>[^"]*)"'
+    r'(?:\s+fetchSize="\d+")?\s*>'
+)
+
+
+def finalize_mapper_document(
+    mybatis_text: str,
+    screen_id: str,
+    package_p1: str,
+    package_p2: str,
+    stmt_id_to_method: dict[str, str],
+) -> ConversionResult:
+    """XSQL 문서 전체를 감싸는 뼈대를 TO-BE 관례로 맞춘다(SQL 본문은 건드리지 않음):
+
+        <!DOCTYPE sqlMap ...iBATIS.com...>          -> <!DOCTYPE sqlMap ...mybatid.org...>
+        <sqlMap namespace="DPLA047">                 -> <mapper namespace="{패키지}.store.{화면}Store">
+        <select id="S001" parameterType="map" ...>   -> <select id="dPLA04701" parameterType="{패키지}.dto.Pla04701Dto" ...>
+
+    DOCTYPE 문자열은 실제 mybatis.org 표준 표기가 아니라(root 이름이 mapper가 아니라 sqlMap,
+    도메인도 mybatid.org로 오타처럼 보인다) - 하지만 이 프로젝트 Mapper.xml 전체가 이 정확한
+    문자열을 관례로 쓰고 있어(사람이 명시적으로 확인) 임의로 "고치지" 않고 그대로 맞춘다.
+    """
+    prefix = screen_id[:1].upper() + screen_id[1:].lower()
+    base_pkg = f"com.skhynix.gscm.r.{package_p1}.{package_p2}"
+    namespace = f"{base_pkg}.store.{prefix}Store"
+    issues: list[ConversionIssue] = []
+
+    text = mybatis_text
+
+    # 4) DOCTYPE
+    text = _OLD_DOCTYPE_RE.sub(_NEW_DOCTYPE, text)
+
+    # 5) 루트 엘리먼트 + namespace
+    text = re.sub(r'<sqlMap\s+namespace="[^"]*"\s*>', f'<mapper namespace="{namespace}">', text)
+    stripped = text.rstrip()
+    if stripped.endswith("</sqlMap>"):
+        text = stripped[: -len("</sqlMap>")] + "</mapper>\n"
+
+    # 6) <select id="S00N" parameterType="map" resultType="hashmap" fetchSize="N"> 정리
+    had_fetch_size = "fetchSize=" in text
+
+    def _select_sub(m: re.Match) -> str:
+        old_id = m.group("id")
+        method = stmt_id_to_method.get(old_id)
+        if not method:
+            issues.append(ConversionIssue(
+                issue_type="STMT_ID_MAP_MISSING", severity="WARNING",
+                message=(
+                    f'<select id="{old_id}">를 D BizUnit의 dbSelect("{old_id}", ...) 호출과 매칭하지 '
+                    "못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요."
+                ),
+            ))
+            new_id = old_id
+        else:
+            new_id = method
+
+        param_type = m.group("ptype").strip()
+        if param_type == "map" and method:
+            # D 메서드명이 화면ID+번호 패턴을 벗어나는 경우(드묾)는 사람이 확인할 것.
+            param_type = f"{base_pkg}.dto.{dto_name_for_method(method)}"
+
+        result_type = m.group("rtype").strip()
+        if result_type.lower() == "hashmap":
+            result_type = "map"
+
+        return f'<select id="{new_id}" parameterType="{param_type}" resultType="{result_type}">'
+
+    text = _SELECT_OPEN_RE.sub(_select_sub, text)
+    if had_fetch_size:
+        issues.append(ConversionIssue(
+            issue_type="FETCH_SIZE_DROPPED", severity="INFO",
+            message="fetchSize 속성은 MyBatis 변환 시 제거했습니다 - 필요하면 <select>에 수동으로 다시 넣으세요.",
         ))
 
     return ConversionResult(mybatis_xml=text, issues=issues)
