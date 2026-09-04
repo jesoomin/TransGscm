@@ -17,7 +17,7 @@ Nexacro14(프론트) + NEXCORE(백엔드, Spring 기반 BizUnit 프레임워크)
 - **콜그래프 역순으로 진행한다: XSQL → Store → Service → Api.** 하위 계층(SQL/데이터 접근)이 확정돼야 상위 계층(Service/Controller) 시그니처가 안 흔들린다. Api부터 먼저 잡고 Store를 나중에 끼워 맞추지 않는다.
 - **스켈레톤 먼저, LLM은 빈 본문만 채운다.** 클래스·메서드·DTO 골격은 규칙 기반으로 100% 확정한 뒤에 LLM을 호출한다. 골격까지 LLM에 맡기면 화면마다 구조가 미묘하게 달라진다.
 - **화면 하나를 통째로 넣지 말고 5개 fragment로 나눠 처리한다**: `.BIZUNIT`(스키마) / P Java / F Java / D Java / XSQL. 각 fragment 단위로 검증·리뷰가 가능해야 한다.
-- **화면(스크린)마다 변환 전에 계획을 파일로 고정한다** (`conversion-plan.json` 등). 계획 없이 바로 코드를 생성하지 않는다 — 계획이 있어야 리뷰·재현·재실행이 가능하다.
+- **화면(스크린)마다 변환 전에 계획을 파일로 고정한다** (`conversion-plan.json` 등). 계획 없이 바로 코드를 생성하지 않는다 — 계획이 있어야 리뷰·재현·재실행이 가능하다. **구현됨(2026-09-04)**: `agents/conversion_plan.py`, 파이프라인의 `plan_all` 노드가 `convert_all`보다 먼저 돌면서 `tracking/conversion-plans/{화면}-conversion-plan.json`에 기록한다(LLM 미사용, 전부 정적 분석). 트랙(Refactor/Reimagine)은 자동으로 정하지 않고 항상 `UNDECIDED`로 두며 판단 근거만 `track_signals`에 채운다 — 트랙 결정은 사람 몫이다.
 - **Refactor(구조보존) / Reimagine(재설계) 두 트랙으로 나눈다.** 단순조회·CRUD류(다수)는 1:1 구조보존 변환, 복합화면·특수 로직·원본 자체가 이미 망가진 화면(예: PLA047의 FPLA047 로직처럼 원본 자체에 결함이 많은 경우)은 업무 규칙만 추출해 재설계하는 Reimagine 트랙으로 뺀다. 전부 같은 방식으로 밀어붙이지 않는다.
 - **작업 단위로 커밋한다.** 화면 하나가 거대 단일 커밋으로 나오면 아무도 리뷰할 수 없다 — Store/Service/Api/Mapper 등 계층별로 나눠 커밋한다.
 - 변환 결과는 반드시 빌드/린트를 통과해야 완료로 인정한다. 사람 리뷰 없는 자동 커밋/배포는 금지.

@@ -470,6 +470,11 @@ def _pipeline_state_to_batch_results(
             "skel_method_calls": final_state.get("skel_method_calls", {}).get(screen_id, []),
             "saved_files": 0, "saved": False,
             "ai_recommendations": ai_by_screen.get(screen_id, {}),
+            "plan": final_state.get("plans", {}).get(screen_id),
+            "plan_path": final_state.get("plan_paths", {}).get(screen_id),
+            # LLM 호출이 끝내 실패해 스텁이 남은 메서드 - 인수인계 문서가 "사람이 직접 옮겨야 할
+            # 메서드"로 표시한다(agents/handoff_report.py).
+            "port_errors": [e for e in final_state.get("port_errors", []) if e[0] == screen_id],
         })
     return results
 
@@ -742,9 +747,85 @@ def _render_validation_issue_list(
                 )
 
 
+def _render_conversion_plan(plan: dict | None, plan_path: str | None) -> None:
+    """변환 전에 고정된 계획서(agents/conversion_plan.py)를 사람이 검토할 수 있게 보여준다.
+
+    계획서 자체는 파이프라인이 코드 생성 전에 이미 파일로 써둔 것이고(tracking/conversion-plans/),
+    여기서는 그 내용을 읽기 좋게 펼쳐 보여주기만 한다 - 값을 여기서 다시 계산하지 않는다.
+    """
+    if not plan:
+        st.info(
+            "이 화면의 변환 계획이 없습니다 - 파이프라인을 다시 실행하면 0단계에서 생성됩니다"
+            "(예전 실행 결과를 보고 있는 경우일 수 있습니다)."
+        )
+        return
+
+    if plan_path:
+        st.caption(f"계획 파일: `{plan_path}` (변환 **전에** 기록됨 - CLAUDE.md \"계획 없이 코드 생성 금지\")")
+
+    signals = plan.get("track_signals", {})
+    est = plan.get("estimated_llm_calls", {})
+    cols = st.columns(4)
+    cols[0].metric("트랙", plan.get("track", "UNDECIDED"))
+    cols[1].metric("nctRid", signals.get("nctrid_count", 0))
+    cols[2].metric("LLM 포팅 대상", len(plan.get("llm_porting_targets", [])))
+    cols[3].metric("예상 산출 파일", len(plan.get("expected_outputs", [])))
+
+    if plan.get("unsupported_db_verbs"):
+        st.error(
+            "이 화면의 D 계층에 **이 변환기가 다루지 못하는 verb**가 있습니다: "
+            + ", ".join(f"{m}({', '.join('db' + v for v in vs)})"
+                        for m, vs in plan["unsupported_db_verbs"].items())
+            + " — 변환기는 dbSelect만 지원해서 Store 코드가 selectOne으로 생성됩니다(맞지 않음). "
+            "지금까지 확보한 원본이 전부 조회 전용이라 이 경로는 검증된 적이 없습니다 - "
+            "자동 변환 결과를 믿지 말고 사람이 직접 확인하세요."
+        )
+
+    if signals.get("as_is_source_broken"):
+        broken = {k: v for k, v in signals.get("as_is_unbalanced_braces", {}).items() if v}
+        st.warning(
+            f"AS-IS 원본의 중괄호가 맞지 않습니다({broken}) - 원본이 그대로는 컴파일되지 않는 "
+            "상태라는 뜻입니다. CLAUDE.md가 이런 화면을 Reimagine 트랙 후보로 들었습니다 - "
+            "트랙 결정은 사람 몫이라 자동으로 정하지 않았습니다."
+        )
+
+    st.markdown("**예상 산출 파일**")
+    st.dataframe(
+        [
+            {"파일": o["file"], "TO-BE 경로": o["tobe_path"], "변환 방식": o["conversion_method"]}
+            for o in plan.get("expected_outputs", [])
+        ],
+        hide_index=True,
+    )
+
+    st.markdown("**LLM 호출 예상**")
+    st.caption(
+        f"2단계 포팅 {est.get('porting', 0)}건 - 단순 위임 {est.get('porting_skipped_rule_based', 0)}건은 "
+        "규칙 기반으로 생성돼 LLM을 부르지 않습니다. AI 추천은 nctRid당 1회로 "
+        f"{est.get('ai_recommend', 0)}건 예상(5단계를 켠 경우)."
+    )
+    if plan.get("rule_based_delegations"):
+        st.caption("단순 위임(규칙 기반 생성): " + ", ".join(
+            f"{k} → {v}" for k, v in plan["rule_based_delegations"].items()
+        ))
+
+    with st.expander("원본 fragment 목록 / 계획서 원문(JSON)", expanded=False):
+        st.dataframe(
+            [
+                {"fragment": name, "존재": info.get("present"), "줄수": info.get("lines"),
+                 "AS-IS 경로": info.get("as_is_path")}
+                for name, info in plan.get("fragments", {}).items()
+            ],
+            hide_index=True,
+        )
+        st.code(json.dumps(plan, ensure_ascii=False, indent=2), language="json")
+
+
 def _render_batch_screen_detail(
     screen_id: str, files: dict, validation_results: list, review_findings: dict,
     buckets: dict | None = None, package_p1: str = "TODO", package_p2: str = "TODO",
+    plan: dict | None = None, plan_path: str | None = None,
+    entry: dict | None = None, handoff_path: str | None = None,
 ) -> None:
     """전체 자동 진행 결과 목록에서 화면 하나를 클릭했을 때, 그 화면의 포팅된 소스/정적 검증/
     품질·취약점 스캔/AI 추천 상세를 탭으로 보여준다. 단일 화면 흐름(tab_result)의 렌더링 스타일을
@@ -762,13 +843,31 @@ def _render_batch_screen_detail(
 
     blocker_n = sum(1 for r in validation_results if not r.passed)
     review_n = sum(len(v) for v in review_findings.values())
-    tab_files, tab_validation, tab_review, tab_ai, tab_diff = st.tabs([
+    tab_plan, tab_handoff, tab_files, tab_validation, tab_review, tab_ai, tab_diff = st.tabs([
+        "📋 변환 계획",
+        "📝 인수인계",
         f"📄 소스 ({len(files)}개 파일)",
         f"🔍 정적 검증 ({len(validation_results) - blocker_n}/{len(validation_results)} 통과)",
         f"🛡️ 품질/취약점 스캔 ({review_n}건)",
         "🎨 AI 추천",
         "🧪 차등 테스트",
     ])
+
+    with tab_plan:
+        _render_conversion_plan(plan, plan_path)
+
+    with tab_handoff:
+        if entry is None:
+            st.info("인수인계 문서를 만들 결과가 없습니다 - 파이프라인을 다시 실행하세요.")
+        else:
+            from agents.handoff_report import build_handoff_report
+
+            report_md = build_handoff_report(entry)
+            if handoff_path:
+                st.caption(f"파일: `{handoff_path}` (그대로 메일/zip으로 전달할 수 있습니다)")
+            _copy_button("📋 인수인계 문서 복사", report_md, key=f"handoff_copy_{screen_id}")
+            with st.container(height=520):
+                st.markdown(report_md)
 
     with tab_files:
         source_tabs = st.tabs(list(files.keys()))
@@ -893,7 +992,7 @@ if input_mode == "폴더 경로 지정":
                     f"Dto {_est['to_be']['Dto.java']}·Mapper {_est['to_be']['Mapper.xml']}) - 화면마다 "
                     "P/F/D 원본이 실제로 있는지에 따라 달라지는 추정치이며, 실제 결과는 1단계 실행 후 확정됩니다."
                 )
-            opt_cols = st.columns([1, 1])
+            opt_cols = st.columns([2, 1, 1])
             with opt_cols[0]:
                 pipeline_include_ai = st.checkbox(
                     "5단계(AI 추천) 포함", value=True, key="pipeline_include_ai",
@@ -902,8 +1001,18 @@ if input_mode == "폴더 경로 지정":
                 )
             with opt_cols[1]:
                 pipeline_max_retries = st.number_input(
-                    "2단계 LLM 호출 실패 시 재시도 횟수", min_value=0, max_value=5, value=2,
+                    "호출 실패 재시도", min_value=0, max_value=5, value=2,
                     key="pipeline_max_retries",
+                    help="2단계에서 LLM Gateway 호출 자체가 실패한(타임아웃/네트워크) 메서드를 "
+                         "다시 시도하는 라운드 수입니다.",
+                )
+            with opt_cols[2]:
+                pipeline_max_repair = st.number_input(
+                    "오류 수리 라운드", min_value=0, max_value=5, value=2,
+                    key="pipeline_max_repair",
+                    help="3단계 정적 검증에서 BLOCKER가 난 'LLM이 포팅한' 메서드를 오류 메시지와 "
+                         "함께 다시 LLM에 보내 고치게 하는 라운드 수입니다(0이면 수리 안 함). "
+                         "라운드마다 수리 대상 메서드 수만큼 LLM 호출이 추가됩니다.",
                 )
 
             package_map: dict[str, tuple[str, str]] = {}
@@ -918,6 +1027,9 @@ if input_mode == "폴더 경로 지정":
                 )
 
             _STAGE_LABELS = {
+                # 0단계는 사용자가 정의한 7단계 밖이지만, CLAUDE.md "계획 없이 바로 코드를
+                # 생성하지 않는다" 원칙에 따라 변환 전에 반드시 먼저 도는 준비 단계라 같이 보여준다.
+                0: "변환 계획 수립 (tracking/conversion-plans/)",
                 1: "1단계 규칙기반 변환 (LLM 미사용)",
                 2: "2단계 LLM 포팅",
                 3: "정적 검증 (규칙기반)",
@@ -931,14 +1043,14 @@ if input_mode == "폴더 경로 지정":
                 placeholder.markdown(f"{icon} **{num}. {_STAGE_LABELS[num]}**{extra}")
 
             if st.button(
-                f"▶️ 파이프라인 시작 (1~7단계, {len(pipeline_target_ids)}개 화면)",
+                f"▶️ 파이프라인 시작 (계획 수립 + 1~7단계, {len(pipeline_target_ids)}개 화면)",
                 disabled=not pipeline_target_ids, key="pipeline_start_btn",
             ):
                 from agents.workflow_graph import run_pipeline_part_a
 
                 pipeline_screens = {sid: screens[sid] for sid in pipeline_target_ids}
-                stage_placeholders = {n: st.empty() for n in range(1, 8)}
-                for n in range(1, 8):
+                stage_placeholders = {n: st.empty() for n in range(0, 8)}
+                for n in range(0, 8):
                     _render_stage_line(stage_placeholders[n], n, "⏳", " — 대기")
                 if not pipeline_include_ai:
                     _render_stage_line(stage_placeholders[5], 5, "⏭️", " — 건너뜀(선택 해제됨)")
@@ -967,7 +1079,16 @@ if input_mode == "폴더 경로 지정":
                 _counts = {"port": 0, "total_port": None, "ai": 0}
 
                 def _pipeline_progress_cb(node_name: str, partial: dict) -> None:
-                    if node_name == "convert_all":
+                    if node_name == "plan_all":
+                        _written = partial.get("plan_paths", {}) or {}
+                        _ok = [k for k in _written if not k.startswith("_")]
+                        _render_stage_line(
+                            stage_placeholders[0], 0, "✅",
+                            f" — 완료 ({len(_ok)}개 화면 계획 기록)"
+                            + (f" · {_written.get('_error')}" if "_error" in _written else ""),
+                        )
+                        _render_stage_line(stage_placeholders[1], 1, "🔄", " — 진행 중")
+                    elif node_name == "convert_all":
                         pending = partial.get("pending_methods", {}) or {}
                         _counts["total_port"] = sum(len(v) for v in pending.values())
                         _render_stage_line(stage_placeholders[1], 1, "✅", f" — 완료 (전체 {total_screens}개 화면)")
@@ -1016,6 +1137,7 @@ if input_mode == "폴더 경로 지정":
                 final_state = run_pipeline_part_a(
                     pipeline_screens, package_map,
                     include_ai_recommend=pipeline_include_ai, max_retries=pipeline_max_retries,
+                    max_repair_retries=pipeline_max_repair, all_paths=all_paths,
                     progress_cb=_pipeline_progress_cb,
                 )
                 if pipeline_include_ai:
@@ -1025,9 +1147,28 @@ if input_mode == "폴더 경로 지정":
                         extra = " — 완료 (대상 nctRid 없음)"
                     _render_stage_line(stage_placeholders[5], 5, "✅", extra)
 
+                # 3단계에서 BLOCKER가 나서 LLM에게 다시 고치게 한 라운드가 있었으면 그 사실을
+                # 남긴다(수리 자체는 repair_gate 노드가 그래프 안에서 처리 - 여기선 표시만).
+                _repair_rounds = final_state.get("repair_round", 0)
+                if _repair_rounds:
+                    _render_stage_line(
+                        stage_placeholders[3], 3, "✅",
+                        f" — 완료 (BLOCKER 수리 {_repair_rounds}라운드 수행 후 재검증)",
+                    )
+
                 pipeline_batch_results = _pipeline_state_to_batch_results(
                     final_state, pipeline_screens, all_paths, package_map,
                 )
+
+                # 화면별 "미변환 사유 + 수동 처리 가이드"를 파일로 남긴다(멘토 코멘트 §A) - 새로
+                # 계산하는 값 없이 위 결과를 사람이 읽을 순서로 재구성만 한다.
+                from agents.handoff_report import write_reports
+
+                try:
+                    handoff_paths = write_reports(pipeline_batch_results)
+                except OSError as e:
+                    handoff_paths = {}
+                    st.warning(f"인수인계 문서 기록 실패(변환 결과에는 영향 없음): {e}")
 
                 _render_stage_line(stage_placeholders[6], 6, "🔄", " — 진행 중 (임시 사본 준비 중)")
                 _render_stage_line(stage_placeholders[7], 7, "⏳", " — 대기")
@@ -1047,6 +1188,7 @@ if input_mode == "폴더 경로 지정":
                 st.session_state["pipeline_package_map"] = package_map
                 st.session_state["pipeline_batch_results"] = pipeline_batch_results
                 st.session_state["pipeline_stage67_preview"] = stage67_preview
+                st.session_state["pipeline_handoff_paths"] = handoff_paths
                 st.session_state["pipeline_saved"] = False
                 st.rerun()
 
@@ -1092,6 +1234,11 @@ if input_mode == "폴더 경로 지정":
                             selected_pipeline_screen, match["files"], match["validation_results"],
                             match["review_findings"], match.get("buckets"),
                             match.get("package_p1", "TODO"), match.get("package_p2", "TODO"),
+                            plan=match.get("plan"), plan_path=match.get("plan_path"),
+                            entry=match,
+                            handoff_path=(st.session_state.get("pipeline_handoff_paths") or {}).get(
+                                selected_pipeline_screen
+                            ),
                         )
 
                 stage67_preview = st.session_state.get("pipeline_stage67_preview")

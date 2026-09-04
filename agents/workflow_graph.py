@@ -21,11 +21,13 @@ chatui/quality_scanner.py의 기존 함수를 그대로 호출하는 얇은 래�
 - **병렬 제어**: F BizUnit 메서드는 서로 독립적인 로직이라(원본도 별개 IDataSet 메서드) 동시에
   LLM Gateway에 보낼 수 있다. LangGraph의 `Send`로 메서드 개수만큼 `port_one_method`를 동시
   실행하고, `splice` 노드에서 한 곳으로 모아 순서 상관없이 Service.java에 이어붙인다.
-- **피드백 루프**: 지금 구현한 재시도는 "LLM 호출 자체가 실패한 메서드"(타임아웃/네트워크
-  오류 등)만 `max_retries`(기본 2)까지 다시 시도하는 좁은 범위다. "정적 검증에서 BLOCKER가
-  나온 코드를 LLM에게 다시 보여주고 고치게 하는" 수리 루프(Reflection)는 docs/06-mentor-feedback.md
-  §J가 6번(LLM 파이프라인) 다음 7번으로 명시적으로 미룬 단계라 여기서 새로 만들지 않았다 -
-  범위를 부풀려 말하지 않는다.
+- **피드백 루프(이 화면 1개짜리 ScreenState 그래프 한정)**: 지금 구현한 재시도는 "LLM 호출
+  자체가 실패한 메서드"(타임아웃/네트워크 오류 등)만 `max_retries`(기본 2)까지 다시 시도하는
+  좁은 범위다. "정적 검증에서 BLOCKER가 나온 코드를 LLM에게 다시 보여주고 고치게 하는" 수리
+  루프(Reflection)는 아래 폴더 전체용 `PipelineState` 그래프에 2026-09-04에 추가했다(사용자가
+  AlphaTrans/ReCodeAgent/MatchFixAgent 검토 후 명시적으로 요청 - docs/06-mentor-feedback.md §D).
+  이 단일 화면 그래프에는 아직 없다(파일 업로드 모드 전용이라 우선순위가 낮음) - 자세한 설계는
+  `repair_gate_node`/`_repair_prompt` 참고.
 - **사람 승인 게이트**: CLAUDE.md 핵심 원칙("사람 리뷰 없는 자동 커밋/배포는 금지")에 따라 이
   그래프는 저장(pilot/ 폴더 기록, DB 적재)을 하지 않는다. `scan` 다음이 곧 END다 - 검증/스캔
   결과를 사람이 chatui/app.py에서 보고 승인해야 그 다음(저장)으로 넘어간다.
@@ -54,7 +56,6 @@ for _p in (str(_PROJECT_ROOT), str(_CHATUI_DIR)):
 from converters import convert_xsql_fragment, finalize_mapper_document  # noqa: E402
 from skeleton_gen import (  # noqa: E402
     extract_method_bodies,
-    extract_methods,
     generate_dto,
     generate_skeletons,
     splice_ported_method,
@@ -99,7 +100,49 @@ class ScreenState(TypedDict, total=False):
     review_findings: dict
 
 
-def _port_prompt(method: str, body: str) -> str:
+# 2026-09-04 정정: 처음엔 "Map 값은 전부 String이다"라고 단정해서 넣었는데, 그건 AS-IS(NEXCORE
+# Dataset)의 관례지 TO-BE 코드의 사실이 아니다. TO-BE에서 이 Map은 출처마다 런타임 타입이 다르다 -
+# 요청은 Jackson JSON 역직렬화(숫자 -> Integer/Double), Store 반환값은 MyBatis/Oracle 매핑
+# (숫자 -> BigDecimal, 날짜 -> Timestamp), AS-IS에서 그대로 옮겨온 값은 String. 틀린 모델을
+# LLM에게 가르치지 않도록 "타입이 고정돼 있지 않다"는 사실과 방어적 변환 규칙만 남긴다.
+_VALUE_TYPE_NOTE = (
+    "**Map<String,Object> 값 타입 주의**: 이 Map의 값은 런타임 타입이 한 가지로 고정돼 있지 않다 - "
+    "요청(request)은 JSON 역직렬화 결과라 숫자가 Integer/Double로, store 반환값은 MyBatis/Oracle "
+    "매핑 결과라 숫자가 BigDecimal·날짜가 Timestamp로, AS-IS에서 그대로 넘어온 값은 String으로 들어올 "
+    "수 있다. 그래서 `(Double) map.get(...)`처럼 특정 타입으로 직접 캐스팅하면 ClassCastException이 "
+    "난다(이 프로젝트에서 실제로 겪었다). 숫자로 써야 하면 "
+    "`Double.valueOf(String.valueOf(map.get(...)))`처럼 문자열을 거쳐 방어적으로 변환하고, 값이 "
+    "null일 수 있는 경우도 같이 처리해라."
+)
+
+
+def _callee_note(callees: list[str] | None) -> str:
+    """이 F 메서드가 원본에서 실제로 호출하는 D 메서드 목록을 포팅 프롬프트에 명시한다.
+
+    AlphaTrans(FSE 2025)가 프래그먼트를 번역할 때 콜러/콜리 의존관계를 명시적 메타데이터로
+    넘기는 것과 같은 발상이다 - LLM이 D 메서드 이름을 추측하게 두지 않고, 이미 결정론적으로
+    생성된 Store 메서드 이름을 그대로 쓰도록 강제해서 "존재하지 않는 메서드를 호출하는" 실수
+    (validators.py의 UNRESOLVED_STORE_CALL)를 애초에 줄인다.
+    """
+    if not callees:
+        return ""
+    call_forms = ", ".join(f"store.{c}(...)" for c in callees)
+    return (
+        f"\n\n**호출 대상 참고**: 이 메서드는 원본에서 D 계층 메서드 {', '.join(callees)}를 "
+        f"호출한다. Store 계층에는 이미 이 이름 그대로 메서드가 만들어져 있으니, 포팅한 코드에서도 "
+        f"정확히 이 이름으로 {call_forms} 형태로 호출해라(새로 이름을 짓거나 존재하지 않는 메서드를 "
+        "부르지 마라)."
+    )
+
+
+_RATIONALE_NOTE = (
+    "메서드 본문 맨 첫 줄에 `// AI 변경 요약: <한 줄>` 주석을 추가해라 - 원본 대비 무엇을 어떻게 "
+    "옮겼는지(NEXCORE 의존 제거 방식, 타입 변환 처리 등) 한 줄로 요약한 것이다. 이건 사람이 리뷰할 "
+    "때 보는 변경 가이드이므로 반드시 채워라(빈 문자열이나 원본 그대로 옮겼다는 말만 반복하지 말 것)."
+)
+
+
+def _port_prompt(method: str, body: str, callees: list[str] | None = None) -> str:
     return (
         f"다음은 NEXCORE(BizUnit) F(Function) 계층 Java 메서드 {method}의 본문이다. "
         "이 로직(계산/분기/문자열 처리 등)을 하나도 빠짐없이 그대로 유지하면서, "
@@ -110,8 +153,31 @@ def _port_prompt(method: str, body: str) -> str:
         "원본에 컴파일 에러나 미선언 변수가 있어도 그 부분을 고치지 말고 원본 그대로 옮긴 뒤 "
         "`// FIXME(원본 버그): ...` 로 표시해라. "
         f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 "
-        "완성된 메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라.\n\n"
-        f"원본 메서드 본문:\n```\n{body}\n```"
+        "완성된 메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라."
+        + _callee_note(callees)
+        + f"\n\n{_VALUE_TYPE_NOTE}\n\n{_RATIONALE_NOTE}"
+        + f"\n\n원본 메서드 본문:\n```\n{body}\n```"
+    )
+
+
+def _repair_prompt(method: str, current_code: str, error_message: str) -> str:
+    """정적 검증에서 BLOCKER가 난 방금 포팅한 메서드를 다시 LLM에게 보여주고 그 오류만 고치게
+    한다(MatchFixAgent/ACToR 패턴, docs/06-mentor-feedback.md §D) - `repair_gate_node`가 호출
+    대상을 정하고, 이 함수는 그 대상 1건에 대한 프롬프트만 만든다. 업무 로직 재설계를 막기 위해
+    "이 오류만 고쳐라"를 반복해서 강조한다 - 안 그러면 LLM이 김에 코드를 통째로 다시 짜서 원본
+    로직이 바뀔 위험이 있다.
+    """
+    return (
+        f"다음은 방금 포팅한 Spring 서비스 메서드 {method}의 현재 코드다. 정적 검증에서 아래 오류가 "
+        f"났다:\n{error_message}\n\n"
+        "**이 오류만 고쳐라** - 계산/분기 등 업무 로직은 절대 바꾸지 말고, 오류의 직접 원인이 되는 "
+        "구문/구조 문제만 최소한으로 고쳐라. 원본 자체에 있던 결함을 `// FIXME(원본 버그)`로 표시만 "
+        "해두고 옮긴 거라면, 그 부분은 정적 검증을 통과할 수 있는 최소한의 형태로만 고치고(예: 짝이 "
+        "안 맞는 중괄호 보정) 로직 자체를 새로 설계하지 마라. "
+        f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 완성된 "
+        "메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라. "
+        "메서드 본문 첫 줄에 `// AI 수정: <무엇을 왜 고쳤는지 한 줄>` 주석을 추가해라.\n\n"
+        f"현재 코드:\n```\n{current_code}\n```"
     )
 
 
@@ -168,7 +234,21 @@ def _convert_screen(
 
     prefix = to_prefix(screen_id)
     service_fname = f"{prefix}Service.java"
-    pending = extract_methods(f_java) if f_java and service_fname in files else []
+    # LLM 포팅이 **실제로 필요한** 메서드만 담는다(2026-09-04 수정). 예전엔 F 메서드를 전부
+    # 넣었는데, generate_skeletons가 "단순 위임"으로 판정한 메서드는 이미 규칙 기반 코드
+    # (`return store.dXXX(dto);`)로 생성돼 PORT_START/PORT_END 스텁이 없다 - 그런 메서드에 LLM을
+    # 돌려봐야 splice_ported_method가 마커를 못 찾아 결과를 버린다. 게다가 버려지니 영원히
+    # ported_methods에 안 들어가서 route_after_splice_all이 "아직 안 된 메서드"로 보고 재시도
+    # 라운드마다 다시 호출했다(PLA047 실측: 유효 1건에 호출 5건, 80% 낭비). 생성기가 스스로 남긴
+    # conversion_method 기록을 그대로 신뢰한다 - 여기서 detect_simple_delegation을 다시 부르면
+    # 두 판정이 어긋날 수 있다.
+    pending = (
+        [
+            m["method_name"] for m in skel.methods
+            if m.get("layer") == "F" and m.get("conversion_method") == "LLM_PENDING"
+        ]
+        if service_fname in files else []
+    )
 
     return {
         "files": files,
@@ -357,9 +437,14 @@ def _merge_dicts(a: dict, b: dict) -> dict:
 class PipelineState(TypedDict, total=False):
     # 입력 (읽기 전용)
     screens: dict[str, dict]  # {screen_id: {"P": {...}, "F": {...}, "D": {...}}} - agents/source_scan.scan_folder() 결과
+    all_paths: dict[str, dict]  # {screen_id: {"P.java": 원본경로, ...}} - 계획서에 AS-IS 경로를 남기는 용도
     package_map: dict[str, tuple[str, str]]  # {screen_id: (package_p1, package_p2)}
     include_ai_recommend: bool
     max_retries: int
+
+    # Stage 0 (plan_all - 코드 생성 전에 화면별 변환 계획을 파일로 고정, 2026-09-04)
+    plans: dict[str, dict]  # {screen_id: agents/conversion_plan.build_screen_plan() 결과}
+    plan_paths: dict[str, str]  # {screen_id: 기록된 conversion-plan.json 경로}
 
     # Stage 1 (convert_all - 단일 노드, 화면마다 순차 루프)
     files: Annotated[dict[str, dict[str, str]], _merge_dicts]  # {screen_id: {fname: content}}
@@ -380,8 +465,37 @@ class PipelineState(TypedDict, total=False):
     validation_results: Annotated[dict[str, list], _merge_dicts]  # {screen_id: [ValidationResult,...]}
     review_findings: Annotated[dict[str, dict], _merge_dicts]  # {screen_id: {fname: [ConversionIssue,...]}}
 
+    # 수리 루프 (validate_all -> repair_gate -> port_one_screen_method(재사용) -> splice_all ->
+    # validate_all ... 최대 max_repair_retries 라운드, 2026-09-04 추가). repair_round/repair_targets는
+    # repair_gate_node 하나만 쓰는 값이라 리듀서 없이 매번 덮어쓴다(병렬 브랜치가 동시에 안 씀).
+    max_repair_retries: int
+    repair_round: int
+    repair_targets: list[tuple[str, str, str]]  # [(screen_id, method, error_message), ...]
+
     # Stage 5 (ai_recommend_one: Send 병렬 (화면, nctRid) 단위)
     ai_recommend_results: Annotated[list[tuple[str, str, object]], operator.add]  # (screen_id, p_method, ReactVariantResult)
+
+
+def plan_all_node(state: PipelineState) -> dict:
+    """Stage 0: 코드를 만들기 **전에** 화면별 변환 계획을 세우고 파일로 고정한다.
+
+    CLAUDE.md 핵심 원칙("계획 없이 바로 코드를 생성하지 않는다")을 구조적으로 보장하려고 그래프
+    맨 앞(convert_all 이전)에 둔다 - app.py가 나중에 따로 쓰는 방식이면 계획 파일이 변환 *후에*
+    생겨서 원칙의 취지가 깨진다. LLM은 쓰지 않는다(전부 정적 분석).
+
+    쓰는 위치는 `tracking/conversion-plans/`이지 `pilot/`이 아니다 - "승인 전까지 pilot/엔 아무
+    파일도 안 생긴다"는 보장은 그대로 지킨다(agents/conversion_plan.py docstring 참고).
+    """
+    from agents.conversion_plan import build_plans, write_plans
+
+    plans = build_plans(
+        state.get("screens", {}), state.get("package_map", {}), state.get("all_paths", {}),
+    )
+    try:
+        plan_paths = write_plans(plans)
+    except OSError as e:  # 계획 파일을 못 써도 변환 자체는 계속한다 - 다만 조용히 넘기진 않는다
+        plan_paths = {"_error": f"계획 파일 기록 실패: {e}"}
+    return {"plans": plans, "plan_paths": plan_paths}
 
 
 def convert_all_node(state: PipelineState) -> dict:
@@ -421,16 +535,26 @@ def convert_all_node(state: PipelineState) -> dict:
 
 
 def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: PipelineState) -> list[Send]:
-    """대상 (화면, F메서드) 조합을 전부 독립된 port_one_screen_method 실행으로 병렬 디스패치한다."""
+    """대상 (화면, F메서드) 조합을 전부 독립된 port_one_screen_method 실행으로 병렬 디스패치한다.
+
+    각 메서드가 실제로 호출하는 D 메서드 목록(skel_method_calls에 이미 있음)을 같이 실어 보내서
+    포팅 프롬프트에 의존관계 힌트로 쓴다(`_callee_note` 참고, AlphaTrans식 콜리 메타데이터 주입).
+    """
     screens = state.get("screens", {})
+    skel_calls = state.get("skel_method_calls", {})
     body_cache: dict[str, dict[str, str]] = {}
     sends = []
     for screen_id, method in screen_method_pairs:
         if screen_id not in body_cache:
             f_java = screens.get(screen_id, {}).get("F", {}).get("java") or ""
             body_cache[screen_id] = extract_method_bodies(f_java)
+        callees = [
+            c["callee_method"] for c in skel_calls.get(screen_id, [])
+            if c.get("caller_layer") == "F" and c.get("caller_method") == method and c.get("callee_layer") == "D"
+        ]
         sends.append(Send("port_one_screen_method", {
             "_screen_id": screen_id, "_method": method, "_method_body": body_cache[screen_id].get(method, ""),
+            "_callees": callees,
         }))
     return sends
 
@@ -444,12 +568,22 @@ def route_after_convert_all(state: PipelineState):
 
 def port_one_screen_method_node(state: dict) -> dict:
     """병렬 실행 노드 - (화면, 메서드) 조합 1개를 LLM Gateway에 보내 포팅한다. port_one_method_node와
-    로직은 동일하고, 결과에 screen_id만 같이 실어 나른다(여러 화면이 섞여서 디스패치되므로)."""
+    로직은 동일하고, 결과에 screen_id만 같이 실어 나른다(여러 화면이 섞여서 디스패치되므로).
+
+    `_repair_error`가 실려 있으면(repair_gate_node가 재디스패치한 경우) 원본 재포팅이 아니라
+    "방금 포팅한 코드의 이 오류만 고쳐라" 프롬프트(_repair_prompt)를 쓴다 - 같은 노드를 재사용해서
+    splice_all로 합쳐지는 경로(port_results 리듀서)를 그대로 타게 한다(새 수렴 지점을 안 만듦).
+    """
     screen_id = state["_screen_id"]
     method = state["_method"]
     body = state["_method_body"]
+    repair_error = state.get("_repair_error")
+    prompt = (
+        _repair_prompt(method, body, repair_error)
+        if repair_error else _port_prompt(method, body, state.get("_callees"))
+    )
     try:
-        raw = chat(messages=[{"role": "user", "content": _port_prompt(method, body)}])
+        raw = chat(messages=[{"role": "user", "content": prompt}])
         return {"port_results": [(screen_id, method, strip_code_fence(raw))]}
     except Exception as e:  # LLM Gateway 타임아웃/네트워크 오류 등 - 코드 자체의 버그가 아니다
         return {"port_errors": [(screen_id, method, str(e))]}
@@ -490,6 +624,72 @@ def validate_all_node(state: PipelineState) -> dict:
     for screen_id, screen_files in state.get("files", {}).items():
         results[screen_id] = validate_screen(screen_files, to_prefix(screen_id))
     return {"validation_results": results}
+
+
+def _find_repairable_targets(state: PipelineState) -> list[tuple[str, str, str]]:
+    """방금 validate_all이 낸 BLOCKER 이슈 중, "LLM이 실제로 포팅한 F 메서드"에 귀속된 것만 골라
+    (screen_id, method, 합친 오류 메시지) 목록으로 돌려준다.
+
+    규칙 기반으로 생성된 골격(Api/Store/단순위임 Service)의 BLOCKER는 대상에서 뺀다 - 그건
+    생성기 자체의 버그지 LLM이 고칠 수 있는 게 아니고, LLM에게 규칙 기반 코드를 고치라고 시키면
+    "결정론적으로 가능한 건 LLM에 맡기지 않는다" 원칙에 어긋난다. `pending_methods[screen_id]`가
+    convert_all 시점에 뽑은 "LLM 포팅이 필요했던 F 메서드 목록"이라 이 필터의 기준이 된다.
+    validators.py가 2026-09-03에 method_name을 채우기 시작해서 이 필터가 가능해졌다.
+    """
+    pending = state.get("pending_methods", {})
+    validation_results = state.get("validation_results", {})
+    grouped: dict[tuple[str, str], list[str]] = {}
+    for screen_id, results in validation_results.items():
+        llm_ported = set(pending.get(screen_id, []))
+        if not llm_ported:
+            continue
+        for r in results:
+            if r.check not in ("JAVA_STATIC", "CROSS_LAYER_REF"):
+                continue
+            for issue in r.issues:
+                if issue.severity != "BLOCKER" or issue.method_name not in llm_ported:
+                    continue
+                grouped.setdefault((screen_id, issue.method_name), []).append(issue.message)
+    return [(sid, m, " / ".join(msgs)) for (sid, m), msgs in grouped.items()]
+
+
+def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState) -> list[Send]:
+    """수리 대상(화면, 메서드, 오류메시지)마다 현재(방금 포팅된, 오류 있는) 코드를 찾아
+    port_one_screen_method로 재디스패치한다 - `_repair_error`가 실려 있으면 그 노드가 자동으로
+    _repair_prompt를 쓴다."""
+    files_by_screen = state.get("files", {})
+    sends = []
+    for screen_id, method, error_message in targets:
+        prefix = to_prefix(screen_id)
+        service_fname = f"{prefix}Service.java"
+        service_java = files_by_screen.get(screen_id, {}).get(service_fname, "")
+        bodies = extract_method_bodies(service_java)
+        sends.append(Send("port_one_screen_method", {
+            "_screen_id": screen_id, "_method": method, "_method_body": bodies.get(method, ""),
+            "_repair_error": error_message,
+        }))
+    return sends
+
+
+def repair_gate_node(state: PipelineState) -> dict:
+    """validate_all 직후 항상 거치는 게이트 - 수리할 게 있고 라운드 예산이 남았으면 라운드를
+    1 증가시켜 repair_targets를 채우고, 아니면 빈 채로 둔다(라우팅 함수는 상태를 못 바꾸므로
+    "카운터 증가"는 반드시 노드에서 해야 한다 - route_after_repair_gate는 여기서 채운 값을 읽기만
+    한다).
+    """
+    targets = _find_repairable_targets(state)
+    round_used = state.get("repair_round", 0)
+    max_repair = state.get("max_repair_retries", 2)
+    if not targets or round_used >= max_repair:
+        return {"repair_targets": []}
+    return {"repair_round": round_used + 1, "repair_targets": targets}
+
+
+def route_after_repair_gate(state: PipelineState):
+    targets = state.get("repair_targets") or []
+    if not targets:
+        return "scan_all"
+    return _dispatch_repairs(targets, state)
 
 
 def scan_all_node(state: PipelineState) -> dict:
@@ -548,18 +748,26 @@ def ai_recommend_one_node(state: dict) -> dict:
 
 def build_pipeline_graph():
     builder = StateGraph(PipelineState)
+    builder.add_node("plan_all", plan_all_node)
     builder.add_node("convert_all", convert_all_node)
     builder.add_node("port_one_screen_method", port_one_screen_method_node)
     builder.add_node("splice_all", splice_all_node)
     builder.add_node("validate_all", validate_all_node)
+    builder.add_node("repair_gate", repair_gate_node)
     builder.add_node("scan_all", scan_all_node)
     builder.add_node("ai_recommend_one", ai_recommend_one_node)
 
-    builder.add_edge(START, "convert_all")
+    builder.add_edge(START, "plan_all")
+    builder.add_edge("plan_all", "convert_all")
     builder.add_conditional_edges("convert_all", route_after_convert_all, ["port_one_screen_method", "validate_all"])
     builder.add_edge("port_one_screen_method", "splice_all")
     builder.add_conditional_edges("splice_all", route_after_splice_all, ["port_one_screen_method", "validate_all"])
-    builder.add_edge("validate_all", "scan_all")
+    # validate_all은 이제 곧장 scan_all로 안 가고 항상 repair_gate를 거친다 - 방금 검증한 BLOCKER
+    # 중 LLM이 포팅한 메서드에 귀속된 게 있으면(그리고 라운드 예산이 남으면) port_one_screen_method로
+    # 되돌아가 오류만 고치게 하고, 그 결과는 splice_all -> validate_all로 다시 흘러 재검증된다
+    # (2026-09-04 추가, MatchFixAgent/ACToR식 검증-수리 루프 - docs/06-mentor-feedback.md §D).
+    builder.add_edge("validate_all", "repair_gate")
+    builder.add_conditional_edges("repair_gate", route_after_repair_gate, ["port_one_screen_method", "scan_all"])
     builder.add_conditional_edges("scan_all", route_after_scan_all, ["ai_recommend_one", END])
     builder.add_edge("ai_recommend_one", END)
     return builder.compile()
@@ -579,10 +787,12 @@ def get_pipeline_graph():
 # 단계인지"를 노드 이름만 보고 알 수 있게 한다. port_one_screen_method/ai_recommend_one은 화면×
 # 메서드/nctRid 단위로 여러 번 실행되므로 진행 카운터("N/M 완료")로 따로 집계한다(app.py 쪽 책임).
 STAGE_BY_NODE = {
+    "plan_all": (0, "변환 계획 수립"),
     "convert_all": (1, "1단계 규칙기반 변환"),
     "port_one_screen_method": (2, "2단계 LLM 포팅"),
     "splice_all": (2, "2단계 LLM 포팅"),
     "validate_all": (3, "정적 검증"),
+    "repair_gate": (3, "정적 검증(수리 판단)"),
     "scan_all": (4, "품질·취약점 스캔"),
     "ai_recommend_one": (5, "AI 추천 변환 소스"),
 }
@@ -593,6 +803,8 @@ def run_pipeline_part_a(
     package_map: dict[str, tuple[str, str]],
     include_ai_recommend: bool = True,
     max_retries: int = 2,
+    max_repair_retries: int = 2,
+    all_paths: dict[str, dict] | None = None,
     progress_cb=None,
 ) -> PipelineState:
     """폴더 안 화면 전체를 1~5단계까지 LangGraph로 진행한다(저장 안 함 - 사람 승인 후 app.py가
@@ -602,10 +814,16 @@ def run_pipeline_part_a(
     app.py가 이걸로 st.status() 스테퍼를 실시간 갱신한다(STAGE_BY_NODE로 노드명 -> 단계 번호 매핑).
     반환값은 LangGraph가 리듀서로 정확히 합친 최종 state 전체다("values" 스트림 모드의 마지막
     항목을 그대로 씀 - 수동으로 다시 합치지 않는다, 리듀서 로직을 직접 흉내내면 실수하기 쉬움).
+
+    max_repair_retries: 정적 검증에서 BLOCKER가 난 "LLM이 포팅한 메서드"를 다시 LLM에게 보여주고
+    고치게 하는 라운드 수 상한(repair_gate_node 참고, 2026-09-04 추가) - 화면당이 아니라 그래프
+    전체에서 공유하는 라운드 수라는 점이 max_retries(호출 실패 재시도)와 같다. 라운드마다 LLM
+    호출이 추가로 늘어나니(수리 대상 메서드 수만큼) 기본값 2로 낮게 잡았다.
     """
     initial: PipelineState = {
-        "screens": screens, "package_map": package_map,
+        "screens": screens, "package_map": package_map, "all_paths": all_paths or {},
         "include_ai_recommend": include_ai_recommend, "max_retries": max_retries,
+        "max_repair_retries": max_repair_retries,
         "port_results": [], "port_errors": [], "ported_methods": [], "ai_recommend_results": [],
     }
     graph = get_pipeline_graph()

@@ -24,3 +24,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# 회사 전달용으로 만든 배포 zip (git archive 산출물, 소스 아님)
+TransGscm.zip

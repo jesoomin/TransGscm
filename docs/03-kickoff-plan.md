@@ -173,7 +173,7 @@
 - [x] iBatis → MyBatis 변환 모듈 v0 — `chatui/converters.py`. PLA047에서 검증한 4종 규칙(`isEqual`/`isNotEqual`/`isNotEmpty`+`iterate`/바인드 변수) + 멘토 코멘트의 `isNull`/`isNotNull`/`isGreaterThan` 등/`dynamic prepend`도 규칙만 준비. **실제로 검증된 건 PLA047뿐**이라 다른 화면 XSQL에 돌려서 결과를 반드시 확인할 것. 변환 후 XML well-formed 여부까지 자동 체크해서 경고로 보여줌(원본 태그 불일치를 여기서 잡아냄)
 - [x] BizUnit 메서드 시그니처 → Controller(`{화면}Api`)/Service/Store 골격 생성기 v0 — `chatui/skeleton_gen.py`. PLA047 실 소스로 동작 검증: P 메서드가 실제로 호출하는 F 메서드를 본문에서 찾아 Api→Service 연결까지 정확히 맞춤(단순 이름 매칭이 아님). D 메서드는 `dbSelect("S00N", ...)` 호출에서 매퍼 statement id를 뽑아 Store가 참조하도록 생성. **골격만 규칙 기반, Service 메서드 본문은 항상 TODO 스텁 — LLM 포팅은 별도 단계**
 - [x] `.BIZUNIT` 필드 → DTO 생성기 — `chatui/skeleton_gen.py`의 `extract_dto_fields`/`generate_dto` (규칙 기반, LLM 아님). `.BIZUNIT`의 `<fields/>`가 비어있을 때 nctRid(P 메서드)별로 요청 필드는 delegate F 메서드의 `getField` 호출, 응답 필드는 P 메서드의 `putRecordset` 호출에서 역추출. PLA047로 검증: RPLA04701은 15개 요청 필드 전부 채워짐, RPLA04702/03은 F가 `getFieldMap()`을 통째로 넘기는 구조라 개별 필드를 못 찾아 TODO+WARNING으로 표시(추측하지 않고 사람 확인 필요 처리). 필드 타입은 전부 String/`List<Map<>>`로 잠정 지정(원본에 실제 타입 미선언)
-- [ ] 화면별 변환 전에 `conversion-plan.json`(대상 fragment, 트랙(Refactor/Reimagine), 예상 산출 파일 목록)을 먼저 생성해 고정 — 계획 없이 바로 코드 생성하지 않는다
+- [x] 화면별 변환 전에 `conversion-plan.json`(대상 fragment, 트랙(Refactor/Reimagine), 예상 산출 파일 목록)을 먼저 생성해 고정 — 계획 없이 바로 코드 생성하지 않는다. **`agents/conversion_plan.py`(2026-09-04)**. LLM 미사용(전부 정적 분석)이라 변환 결과에 의존하지 않고 변환 **전에** 돌 수 있다. 파이프라인에서는 `plan_all` 노드가 그래프 맨 앞(`START -> plan_all -> convert_all`)에서 돌면서 `tracking/conversion-plans/{화면}-conversion-plan.json`에 기록한다 — `pilot/`이 아니라 추적용 폴더에 쓰는 이유는 "승인 전까지 pilot/엔 아무 파일도 안 생긴다"는 보장을 깨지 않으면서 계획은 정의상 승인 *이전에* 있어야 하기 때문. 담는 내용: 5개 fragment 존재 여부·줄수·SHA-256, nctRid 목록, 예상 산출 파일과 TO-BE 경로·변환 방식, LLM 포팅 대상 메서드, 단순 위임(규칙 기반 생성) 메서드, 예상 LLM 호출 수, 트랙(항상 `UNDECIDED` — CLAUDE.md/Phase 3가 "사람이 결정"이라 자동 배정하지 않음)과 판단 근거 신호. **PLA047 실측**: LLM 포팅 대상 1건(`fPLA047QrySelectMainList`)·단순 위임 2건으로 정확히 갈렸고, `track_signals.as_is_unbalanced_braces`가 `F.java: 14`를 잡아내 "원본이 그대로는 컴파일 안 됨"(=CLAUDE.md가 든 Reimagine 후보 기준)을 자동으로 표시했다. 계획서가 드러낸 비효율은 곧바로 고쳤다(아래 항목 참고). UI는 화면별 상세보기에 "📋 변환 계획" 탭으로 노출(Streamlit `AppTest`로 렌더링 검증).
 - [x] **업로드→변환 챗팅 UI v0** — `chatui/app.py` (Streamlit, 로컬 전용). 화면 1개 분량 P/F/D `.java`/`.bizunit`+XSQL을 업로드하면 위 결정론적 변환기를 돌려 결과를 화면에 보여주고, "저장" 버튼을 눌러야만 `pilot/{screen}/`에 파일이 생긴다(자동 커밋 없음). Service 로직 LLM 포팅은 별도 버튼으로 분리(실험적, 결과 검토 필수 문구 표시). 실행: `pip install -r requirements.txt` 후 `streamlit run chatui/app.py` → `http://localhost:8501`. 이 개발 환경엔 Streamlit이 없어 UI 자체는 실행 검증 못 함(내부 변환 로직만 PLA047 실 소스로 검증됨)
 - [x] Validation(정적 검증, 1단계) — `chatui/validators.py` 신규 구현(변환기와 분리된 검증기, CLAUDE.md "Translator/Validator 분리" 원칙). Maven/Gradle 프로젝트(pom.xml, 의존성)가 아직 없어 진짜 컴파일은 못 하지만, 그 전 단계로 정적 검사를 한다: Java 파일 중괄호 균형(문자열/주석 인식), LLM 포팅 후 남은 PORT_START 스텁 탐지, 계층 간 실제 호출 대상 존재 확인(Api의 service.xxx() → Service 정의 여부, Service의 store.xxx() → Store 정의 여부, Store가 참조하는 매퍼 statement id → Mapper.xml 존재 여부), Mapper.xml well-formed 여부·statement id 중복·바인드 표현식 짝. 결과는 PASS/FAIL로 `CONV_FILE.BUILD_CHECK`에 저장되고 실패 이슈는 `CONV_ISSUE`에 `detected_by='chatui/validators.py'`로 쌓인다. PLA047로 실 DB 검증: Api/Store/Dto/계층간참조 PASS, Service는 원본 버그(중괄호 누락) 보존 때문에 의도대로 FAIL, XSQL은 알려진 태그 불일치로 의도대로 FAIL — 전부 실제로 CONV_FILE/CONV_ISSUE에 기록됨 확인.
 - [x] Maven 빌드 검증(실제 `mvn compile`) — `pilot/gscm/pom.xml`(최소 스캐폴드, 사내 표준 parent POM/내부 리포지토리 좌표는 미확인이라 공개 Maven Central 좌표로만 채움 — TODO로 표시) + `chatui/validators.py`의 `check_maven_build()`. app.py 사이드바 "🔨 Maven 빌드 검증" 버튼에서 실행. `com.skhynix.gscm.common.controller.CommonApiResponse`(Pla047Api.java가 참조하지만 어디에도 정의돼 있지 않던 클래스)도 실사용 시그니처(`createSuccess(T)`)만 채워 최소 구현으로 추가함 - 나머지(에러 팩토리 등)는 플랫폼팀 확정 필요.
@@ -326,9 +326,162 @@ LangGraph StateGraph가 있었지만 `run_screen_conversion()`이 `.invoke()`(�
   `find_error_methods()`/`build_impact_dashboard()`가 BLOCKER 이슈를 실제로 메서드에 연결해서
   집계함을 확인(합성 화면 `ZZTEST996`/`ZZTEST997`/`ZZTEST998`으로 테스트 후 CONV_ISSUE/
   CONV_METHOD/CONV_FILE 정리해서 DB에 흔적 안 남김), `st.dataframe` 렌더링을 Streamlit
-  `AppTest`로 예외 없이 확인. **알려진 한계**: 브레이스 불일치처럼 스택이 한번 어긋나면 보고
-  줄 번호가 실제 문제 지점이 아니라 그 뒤 아무 메서드(흔히 파일 마지막 메서드)로 쏠릴 수 있다
-  (정규식 기반 근사치의 한계, AST가 아님) - 확정 판정이 아니라 검토 후보로 계속 취급한다.
+  `AppTest`로 예외 없이 확인. ~~**알려진 한계**: 브레이스 불일치처럼 스택이 한번 어긋나면 보고
+  줄 번호가 실제 문제 지점이 아니라 그 뒤 아무 메서드로 쏠릴 수 있다~~ → **2026-09-04에 해소됨**
+  (아래 "의존성 주입 + 수리 루프" 3번 참고 - 메서드 단위 균형 검사로 바꿔서 정확히 귀속된다).
+
+- **의존성 계약 주입 + 검증-수리 루프 + 변경 사유(2026-09-04, 사용자 요청 - AlphaTrans/
+  ReCodeAgent/AWS Transform 검토 반영)** — 사용자가 "함수 간 의존성(map/list 형변환 포함)을
+  분석해 Planner를 LLM과 일관되게 적용하고, 오류가 있으면 다시 고쳐 재수행하며, 변경 가이드를
+  제공하라"고 요청. 먼저 실제 논문을 확인해서 근거를 맞췄다([AlphaTrans, FSE 2025](https://arxiv.org/html/2410.24117v4),
+  [ReCodeAgent](https://arxiv.org/html/2604.07341v1)):
+  - AlphaTrans는 프래그먼트마다 **콜러/콜리, 입출력 타입, 임포트, 상속 관계**를 메타데이터로
+    뽑아 콜그래프 역순으로 번역한다 - 이 프로젝트가 이미 하고 있는 것(5-fragment 분해, 역순
+    변환, `CONV_METHOD_CALL`)과 거의 같고, **빠져 있던 건 "그 메타데이터를 LLM 프롬프트에 실제로
+    넣는 것"** 하나였다. 실측 수치도 확인: 문법 정확도 96.40% vs 기능 동등성 25.14% - 의존성
+    인식 번역만으로는 정확도가 안 따라온다는 뜻이라, 검증 기반 수리 루프가 정당화된다.
+  - ReCodeAgent의 Analyzer는 **타 언어의 관용적 라이브러리 대체**를 찾는 게 핵심인데, 이 프로젝트는
+    닫힌 집합(NEXCORE API)을 결정론적 템플릿으로 치환하는 문제라 그 부분은 해당 없음 - 도입하지
+    않았다(범용성 명목으로 안 쓰는 기능을 만들지 않는다).
+
+  **반영한 것 3가지**:
+  1. **의존성 계약 주입** - `_dispatch_ports_all()`이 콜그래프(`skel_method_calls`)에서 그 F
+     메서드가 실제 호출하는 D 메서드 목록을 뽑아 프롬프트에 명시(`_callee_note`). LLM이 Store
+     메서드 이름을 추측하지 않고 이미 생성된 이름을 그대로 쓰게 해서 `UNRESOLVED_STORE_CALL`을
+     사전 차단한다. 여기에 NEXCORE Dataset 관례(모든 값이 String이라 직접 캐스팅하면
+     ClassCastException - 실제로 겪은 사례)도 고정 지침으로 넣었다.
+  2. **검증-수리 루프** - `validate_all -> repair_gate -> port_one_screen_method(수리 프롬프트)
+     -> splice_all -> validate_all` 순환을 추가(MatchFixAgent/ACToR 패턴, §D). **LLM이 포팅한
+     메서드에 귀속된 BLOCKER만** 대상이고(규칙 기반 생성물은 제외 - LLM이 고칠 문제가 아님),
+     라운드 상한(`max_repair_retries`, 기본 2, UI에서 조절)이 있는 고정 파이프라인이다 - CLAUDE.md
+     "완전 자율 탐색형 에이전트를 만들지 않는다"에 맞춰 무한 재분석 루프는 의도적으로 안 만들었다.
+  3. **변경 사유(변경 가이드)** - 포팅/수리 결과 첫 줄에 `// AI 변경 요약:` / `// AI 수정:`
+     주석을 남기게 했다(react_variant.py의 `rationale`과 같은 패턴).
+
+  **이 과정에서 발견해 고친 실제 결함 2건**:
+  - `splice_ported_method()`가 PORT 마커를 지워버려서 **수리 결과가 조용히 버려졌다** - 마커를
+    유지하도록 바꿔 재스플라이스가 가능하게 했다. "아직 포팅 안 됨" 판정은 마커가 아니라 스텁
+    본문(`UnsupportedOperationException`)으로 하도록 `_check_unspliced_markers()`도 같이 바꿈.
+  - `_check_brace_balance()`가 파일 전체 스택 방식이라 **어느 메서드가 깨졌는지 구조적으로 알 수
+    없었다**(중괄호 하나가 빠지면 뒤 '}'들이 역할을 당겨써서 결국 클래스 '{'가 미닫힘으로 남음).
+    메서드 조각별로 균형을 따로 보는 `_check_method_brace_balance()`를 추가해 정확히 귀속시킨다 -
+    이게 없으면 가장 흔한 BLOCKER인 중괄호 오류가 수리 루프에 아예 안 잡혔다(실측 확인).
+
+  **검증**: LLM을 목(mock)으로 바꿔 "1차 포팅은 깨진 코드 → 수리 요청엔 고친 코드"를 결정론적으로
+  재현 - 노드 순서가 `...validate_all → repair_gate → port_one_screen_method → splice_all →
+  validate_all → repair_gate → scan_all`로 정확히 돌고, 1라운드 만에 정적 검증 통과(`issues: []`),
+  수리 주석 반영 확인. 예산 소진 케이스(2라운드 후 포기 → scan_all)도 별도 확인. 실 LLM 1화면
+  (PLA047) 실행에서는 LLM이 주입된 콜리 이름을 그대로 사용(`store.dPLA04702/03/04/05`)하고 변경
+  요약 주석을 생성, 전 파일 정적 검증 통과. 포팅 실패(스텁 잔존) 케이스에서 PORTING_INCOMPLETE
+  귀속도 정상. pytest·헤드리스 부팅 통과. **못 한 것**: 브라우저가 없어 UI 클릭 흐름은 여전히
+  미검증이고, 지금 fixture가 PLA047 복제 50벌이라 **유형 다양성이 없어** 수리 루프의 라운드 수·
+  프롬프트 문구가 다른 유형 화면에도 맞는지는 Phase 3 이후에 재확인해야 한다.
+
+- **위 작업에 대한 자기 비판과 후속 정정(2026-09-04)** — 사용자가 "적용한 게 잘 한 것인지
+  비판적으로 다시 검토하라"고 해서 되짚은 결과 두 가지를 인정하고 고쳤다:
+  1. **틀린 지침을 프롬프트에 넣었었다(수정 완료)**. 처음엔 "Map<String,Object> 값은 전부
+     String으로 담긴다"고 단정해서 넣었는데, 그건 **AS-IS(NEXCORE Dataset)의 관례지 TO-BE의
+     사실이 아니다** - TO-BE에서 이 Map은 출처마다 타입이 다르다(요청은 Jackson JSON 역직렬화라
+     숫자가 Integer/Double, store 반환값은 MyBatis/Oracle 매핑이라 BigDecimal/Timestamp, AS-IS에서
+     그대로 온 값만 String). 방어적 변환을 시키는 의도는 맞았지만 LLM에게 틀린 데이터 모델을
+     가르치고 있었다. `_VALUE_TYPE_NOTE`로 이름과 문구를 바꿔 "타입이 고정돼 있지 않다"는 사실만
+     남기고 방어적 변환 + null 처리를 요구하도록 정정했다.
+  2. **수리 루프의 효용을 과대평가했었다(설계는 유지, 기대치만 정정)**. ① 요즘 LLM은 중괄호를
+     거의 안 틀려서 실제로는 잘 안 걸린다(실 LLM 실행에선 첫 시도에 전부 통과했고, 테스트는 깨진
+     코드를 일부러 주입해야 했다). ② 가장 현실적인 트리거였을 `UNRESOLVED_STORE_CALL`은 같이 넣은
+     콜리 이름 주입이 예방해버려서 **두 변경이 서로를 잡아먹는다**. ③ 무엇보다 정적 검증만
+     피드백으로 쓰므로 AlphaTrans 기준 이미 96.4%였던 *문법* 쪽만 개선하고, 정작 문제인 *기능
+     동등성 25.1%* 쪽은 못 건드린다. 그래도 만드는 과정에서 기존 코드의 실제 결함 2건(splice가
+     수리 결과를 버리던 문제, 중괄호 오류가 메서드에 귀속 안 되던 문제)을 찾아 고쳤으므로 순효과는
+     남았다. **기능 동등성을 건드리려면 포팅된 Service를 실제로 실행할 수단(테스트 동반 생성 또는
+     Spring Boot 기동)이 필요하다 - 그게 없다는 게 이 프로젝트의 진짜 병목**이고, AlphaTrans/
+     ReCodeAgent가 레포의 기존 테스트로 검증하는 것과 갈리는 지점이다(Phase 4~5 과제로 남김).
+
+- **2단계 LLM 호출 낭비 제거(2026-09-04)** — 위 계획서(`conversion_plan.py`)가 "포팅 호출 3건 중
+  1건만 반영됨"을 드러내서 원인을 파봤더니, 추정보다 더 나빴다. `_convert_screen()`이
+  `pending_methods`에 **F 메서드를 전부** 담고 있었는데, 그중 단순 위임 메서드는 이미 규칙 기반
+  코드(`return store.dXXX(dto);`)로 생성돼 PORT_START/PORT_END 스텁이 없다 → LLM 결과가
+  `splice_ported_method`에서 버려진다 → 버려지니 `ported_methods`에 영영 안 들어간다 →
+  `route_after_splice_all`이 "아직 안 된 메서드"로 보고 **재시도 라운드마다 또 호출**한다.
+  **PLA047 실측: 유효 1건에 LLM 호출 5건(80% 낭비), 단순 위임 2건은 각각 2회씩 호출됨.** 단순
+  비효율이 아니라 재시도 루프가 성공할 수 없는 대상을 계속 재시도하던 버그다.
+  `_convert_screen()`이 `skel.methods` 중 `conversion_method == "LLM_PENDING"`인 것만 pending에
+  담도록 고쳤다 - 생성기가 스스로 남긴 기록을 신뢰하는 방식이라 `detect_simple_delegation`을
+  다시 부르는 것보다 두 판정이 어긋날 위험이 없다. **결과: 호출 5건 → 1건.** 단일 화면
+  ScreenState 그래프도 같은 `_convert_screen()`을 쓰므로 함께 고쳐졌다. 부수 효과로
+  `route_after_splice_all`의 재시도 판정과 `repair_gate`의 수리 대상 필터도 정확해졌다(규칙 기반
+  생성물이 더 이상 후보로 안 잡힘). **검증**: 목 LLM로 호출 1건·단순 위임 규칙 코드 보존·전
+  항목 검증 통과 확인, 실 LLM 1화면 실행에서도 노드 순서가
+  `plan_all → convert_all → port(1회) → splice_all → validate_all → repair_gate → scan_all`로
+  깔끔하게 정리되고 전 파일 검증 통과. 계획서의 `estimated_llm_calls`도 더 이상 존재하지 않는
+  낭비를 보고하지 않도록 `porting`/`porting_skipped_rule_based`로 정정했다.
+
+- **멘토 코멘트 미반영 항목 재점검 + 조회 전용 가정 노출(2026-09-04)** — 사용자가 "멘토 의견 중
+  반영 안 된 부분을 비판적으로 다시 검토하라"고 해서 §1~§J를 코드로 대조했다. 확인된 것만 적는다.
+
+  **실제로 고친 것 — D 계층 조회(SELECT) 전용 가정(멘토 §6의 insert/update/delete 리스크)**:
+  변환 체인 전체가 SELECT만 가정하고 있었다 - `extract_d_stmt_ids`는 `dbSelect`만 인식,
+  Store 생성은 무조건 `sqlSession.selectOne(...)`, `finalize_mapper_document`는 `<select>`만
+  정규화. 확보한 원본(PLA047)이 `dbSelect` 6개·`<select>` 6개로 **조회 전용**이라 이 경로는 한 번도
+  검증된 적이 없다. **그런데 지원을 지금 만들지는 않았다** - insert/update 샘플이 하나도 없어서
+  본 적 없는 패턴에 규칙을 짜는 건 CLAUDE.md "확인되지 않은 규칙 추측 금지" 위반이기 때문이다.
+  대신 **미지원을 조기에, 이름 붙여 드러내도록** 했다: `skeleton_gen.extract_d_db_calls()`/
+  `unsupported_db_verbs()`(verb 화이트리스트를 두지 않고 `db<Verb>("id")` 호출을 있는 그대로 잡아
+  dbSelect가 아닌 것만 보고), Store 생성 시 해당 메서드 위에 `// TODO(미지원 verb: dbInsert)`
+  주석 + `UNSUPPORTED_DB_VERB` BLOCKER 이슈(메서드 귀속), 그리고 변환 **전에** 계획서
+  (`conversion-plan.json`)의 `unsupported_db_verbs`/`track_signals.has_unsupported_db_verbs`와
+  UI 계획 탭 경고로 노출. 예전에는 이런 화면이 `TODO_확인필요_xxx` → `MISSING_STATEMENT`로 늦고
+  엉뚱한 메시지로만 걸렸다. **검증**: 합성 D 파일(dbSelect/dbInsert/dbUpdate+dbDelete 혼합)로
+  메서드별 verb 정확 탐지(다중 verb 포함)·BLOCKER 이슈·주석 생성 확인, 실제 PLA047에서는 오탐 0건
+  (미지원 verb 없음, 전 항목 검증 통과) 확인.
+
+  **검토했지만 "지금 하면 안 된다"고 판단한 것(이유 포함)**:
+  - **공통 응답/예외 규약을 생성 템플릿에 주입(멘토 §J 우선순위 3번)** — `CommonApiResponse` 등이
+    `skeleton_gen.py`/`_port_prompt` 어디에도 주입돼 있지 않은 게 사실이다. 하지만 `docs/09`가
+    아직 **미확정**(HTTP status 정책 등 열린 질문)이라, 지금 주입하면 멘토가 §2에서 경고한 바로 그
+    상황("공통 모듈은 사람이 먼저 확정하고 그 다음 강제 컨텍스트로 주입")이 뒤집힌다. **사람 결정
+    대기 항목이지 코드 과제가 아니다.**
+  - **진짜 javac 에러를 수리 루프에 피드백(멘토 §G)** — 저장 전 임시 사본으로 real javac 에러를
+    이미 만들고 있어 연결은 가능하다. 하지만 ① 수리 루프 자체가 거의 안 걸리는 게 실측이라 트리거를
+    강화해도 효용이 없고 ② Maven이 pilot 트리 **전체**를 빌드해 라운드마다 수 분 + 다른 화면의 기존
+    오류가 섞인다. 비용 대비 효용이 나쁘다.
+  - **HUMAN_EDIT_RATIO 측정(멘토 §H, "가장 중요")** — `CONV_FILE.HUMAN_EDIT_RATIO` 컬럼만 있고 한
+    번도 채운 적이 없는 게 맞다(코드에 기록 지점 0개). 다만 아직 사람이 리뷰·수정한 화면이 0건이라
+    지금 측정하면 빈 값만 나온다 - **측정 시점이 아직 안 왔다.**
+  - **MCP 도입** — 리포지토리에 MCP 흔적은 하나도 없다. 도입하지 않기로 판단한 이유: ① MCP의 핵심
+    가치는 모델이 도구를 동적으로 고르는 것인데 CLAUDE.md/멘토 §I가 똑같이 "완전 자율 탐색형
+    에이전트를 만들지 않는다(1,416회 반복엔 고정 파이프라인이 낫다)"고 못 박았다 ② 진짜 병목(유형
+    다양성, 실행 가능한 검증) 중 아무것도 해결하지 못한다 ③ **미루는 비용이 0이다** - `agents/*.py`가
+    이미 Streamlit 의존 없는 순수 함수라 나중에 얇은 어댑터로 감싸면 된다. 나중에 한다면 범위는
+    **읽기 전용 조회**(nctRid 조회, 영향도 질의, 미사용 함수)로 한정하고 변환 실행은 노출하지 않는다.
+  - **정당하게 막혀 있는 것**: 파일럿 유형 다양성(§5), RAG(§C, 프로젝트가 스스로 연기), `.xjs`
+    추출(§1, 샘플 없음), Refactor/Reimagine 분류(§F, 사람 결정+다양성 필요), 테스트 동반 생성(§B,
+    포팅 코드를 실행할 환경 자체가 없음 - 이게 기능 동등성 25% 격차의 근본 원인).
+
+  **다음 후보로 남긴 것**: 사용자가 제안한 **영향도 질의 팝업**(버튼 → 팝업에서 질문 → LLM이 변환
+  결과·콜그래프 기준으로 답변). 읽기 전용이라 결정성을 해치지 않고, `@st.dialog` 패턴
+  (`_show_maven_dialog`)과 콜그래프 데이터가 이미 있어 얹기 쉽다 - 다만 조회할 데이터가 쌓여야
+  의미가 있어서(지금은 실질적으로 화면 1종) Phase 3에 실제 다양한 화면이 들어온 뒤가 적기다.
+
+- **화면별 인수인계 문서 자동 생성(2026-09-04, 멘토 §A "실패분 리포트")** — 멘토 §A의 *"변환 실패를
+  예외가 아닌 정상 산출물로 취급. '미변환 사유 + 수동 처리 가이드'를 화면별로 자동 생성"* 항목.
+  그동안 이슈는 CONV_ISSUE(DB)와 Streamlit UI에만 있어서, 실제로 뒷일을 하는 사람이 "이 화면에서
+  자동으로 안 된 게 뭐고 내가 뭘 해야 하나"를 보려면 UI를 클릭해 돌아다녀야 했다 - 이 팀이 산출물을
+  zip으로 주고받는 워크플로라 화면당 문서 하나가 실제로 더 쓸모 있다.
+  `agents/handoff_report.py`(신규): `build_handoff_report(entry)`가 계획서·생성 이슈·정적 검증·
+  품질 스캔·LLM 호출 실패를 사람이 읽을 순서로 재구성한 마크다운을 만들고, `write_reports()`가
+  `tracking/conversion-reports/{화면}-handoff.md`로 쓴다(계획서와 같은 이유로 `pilot/`이 아님).
+  **새로 계산하는 값이 없다** - 판정을 다시 하지 않고 이미 나온 결과를 모아 배치만 바꾼다.
+  구성: ①자동 변환을 신뢰하면 안 되는 이유(미지원 verb) ②AS-IS 원본이 컴파일 안 되는 상태 경고
+  ③LLM 포팅 실패로 스텁이 남은 메서드 ④BLOCKER ⑤WARNING ⑥(접힘)INFO ⑦자동 변환 산출물 표
+  ⑧LLM이 포팅해서 반드시 사람 리뷰가 필요한 메서드. 각 이슈에는 **그 타입에 대해 확인된 조치**를
+  붙인다 - `issue_type`을 `grep`으로 전수 확인해 실제 존재하는 타입에만 가이드를 달았고, 표에 없는
+  타입은 없는 처리법을 지어내지 않고 원본 메시지만 보여준다.
+  UI에는 화면별 상세보기에 "📝 인수인계" 탭으로 붙였다(복사 버튼 포함).
+  **검증**: 문제를 일부러 심은 화면(D 메서드를 dbInsert로 바꾸고 LLM 포팅 실패를 주입)으로 실행해
+  미지원 verb 경고·원본 손상 경고·포팅 실패·BLOCKER/WARNING·산출물 표가 모두 정확히 나오는 것 확인,
+  정상 2화면(PLA047/PLA001) 파이프라인 실 실행에서 문서 자동 생성 확인. **부수 발견**: 중첩 함수에서
+  `out += [...]`(증강 대입)를 써서 `UnboundLocalError`가 났다 - `extend()`로 고쳤다.
 
 ## Phase 3 — 파일럿 20~30화면 (자체 벤치마크 구축 겸함)
 - [ ] 전체 화면을 컴포넌트 구성 + transaction 개수 + 그리드 유무 기준으로 구조적 클러스터링

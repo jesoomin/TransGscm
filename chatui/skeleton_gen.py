@@ -141,6 +141,42 @@ def extract_d_stmt_ids(d_java_text: str) -> dict[str, str]:
     return dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
 
 
+# `dbSelect("S001", ...)` / `dbInsert("S010", ...)` 같은 호출에서 verb와 statement id를 같이 뽑는다.
+# verb를 화이트리스트로 정해두지 않는 게 핵심이다 - 우리가 실제로 본 건 dbSelect뿐이라(PLA047:
+# dbSelect 6개, 그 외 0개) 다른 verb가 어떤 이름으로 존재하는지 확인된 바가 없다. 있는 그대로
+# 잡아서 "dbSelect가 아닌 게 나왔다"는 사실만 보고한다(CLAUDE.md: 확인 안 된 규칙은 추측 금지).
+_DB_CALL_RE = re.compile(r'\bdb([A-Z]\w*)\s*\(\s*"(\w+)"')
+
+SUPPORTED_DB_VERBS = frozenset({"Select"})
+
+
+def extract_d_db_calls(d_java_text: str) -> dict[str, list[tuple[str, str]]]:
+    """D BizUnit 메서드별로 본문에서 실제로 쓴 db*(...) 호출을 {메서드: [(verb, statement_id), ...]}로 뽑는다.
+
+    `extract_d_stmt_ids()`는 dbSelect만 보지만, 이 함수는 verb를 가리지 않는다 - 이 변환기가 아직
+    다루지 못하는 verb(dbInsert/dbUpdate/dbDelete 등)를 **변환 전에 이름을 붙여 드러내기** 위한
+    용도다. 지원을 추측으로 만들어 넣지 않고, 미지원이라는 사실만 정확히 알린다.
+    """
+    calls: dict[str, list[tuple[str, str]]] = {}
+    for method, body in extract_method_bodies(d_java_text).items():
+        found = [(m.group(1), m.group(2)) for m in _DB_CALL_RE.finditer(body)]
+        if found:
+            calls[method] = found
+    return calls
+
+
+def unsupported_db_verbs(d_java_text: str | None) -> dict[str, list[str]]:
+    """{D 메서드: 이 변환기가 못 다루는 verb 목록}. 전부 dbSelect면 빈 dict."""
+    if not d_java_text:
+        return {}
+    result: dict[str, list[str]] = {}
+    for method, calls in extract_d_db_calls(d_java_text).items():
+        bad = sorted({verb for verb, _ in calls if verb not in SUPPORTED_DB_VERBS})
+        if bad:
+            result[method] = bad
+    return result
+
+
 # F BizUnit 메서드가 "D 메서드 하나 호출하고 recordset 하나를 그대로 응답에 담아 돌려주는" 순수
 # 위임(delegation) 모양인지 판별한다. 예(실제 FPLA047 소스에서 확인):
 #
@@ -212,6 +248,12 @@ def splice_ported_method(service_java: str, method: str, ported_body_code: str) 
 
     마커를 못 찾으면(수동 편집 등으로 지워진 경우) 원본을 그대로 돌려주고 아무 것도 하지 않는다 -
     엉뚱한 위치에 잘못 끼워 넣는 것보다 안전하다.
+
+    **교체 후에도 PORT_START/PORT_END 마커는 남긴다**(2026-09-04) - 마커를 지워버리면 이 함수가
+    한 메서드에 대해 딱 한 번만 동작해서, 정적 검증 실패 후 다시 포팅시키는 수리 루프
+    (agents/workflow_graph.repair_gate_node)의 결과가 조용히 버려진다(실측으로 확인). 마커는 Java
+    주석이라 컴파일에 영향이 없고, "아직 포팅 안 된 스텁"인지 여부는 마커가 아니라 스텁 본문
+    (UnsupportedOperationException)으로 판별한다(validators._check_unspliced_markers 참고).
     """
     pattern = re.compile(
         rf"    // PORT_START:{re.escape(method)}\n.*?    // PORT_END:{re.escape(method)}\n",
@@ -220,8 +262,10 @@ def splice_ported_method(service_java: str, method: str, ported_body_code: str) 
     if not pattern.search(service_java):
         return service_java
     replacement = (
+        f"    // PORT_START:{method}\n"
         f"    // LLM 포팅됨 - 사람 리뷰 필요(CLAUDE.md: 리뷰 없는 커밋 금지)\n"
         f"{ported_body_code.rstrip()}\n"
+        f"    // PORT_END:{method}\n"
     )
     return pattern.sub(lambda _m: replacement, service_java, count=1)
 
@@ -631,9 +675,31 @@ def generate_skeletons(
             f"    private SqlSessionTemplate sqlSession;",
             "",
         ]
+        # 이 변환기가 못 다루는 verb(dbInsert/dbUpdate/dbDelete 등)를 쓰는 D 메서드를 먼저 잡아둔다.
+        # 지금까지 확보한 원본(PLA047)이 전부 조회 전용이라 이 경로는 **한 번도 검증된 적이 없다** -
+        # 그래서 지원을 추측으로 만들지 않고, 생성물에 주석 + BLOCKER 이슈로 이름 붙여 드러낸다
+        # (멘토 코멘트 §6의 insert/update/delete 리스크와 같은 자리).
+        bad_verbs = unsupported_db_verbs(d_java_text)
         for method in d_methods:
             stmt_id = method if method in stmt_ids else ""
             mapper_ref = f"NS + \"{stmt_id}\"" if stmt_id else f'NS + "TODO_확인필요_{method}"'
+            if method in bad_verbs:
+                verbs = ", ".join(f"db{v}" for v in bad_verbs[method])
+                lines.append(
+                    f"    // TODO(미지원 verb: {verbs}): 이 변환기는 dbSelect만 다룬다 - 아래 selectOne 호출은"
+                )
+                lines.append(
+                    f"    // 맞지 않으니 사람이 insert/update/delete에 맞는 MyBatis 호출로 직접 고쳐야 한다."
+                )
+                result.issues.append(ConversionIssue(
+                    issue_type="UNSUPPORTED_DB_VERB", severity="BLOCKER",
+                    message=(
+                        f"{method}가 {verbs}를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 "
+                        "selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, "
+                        "Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다."
+                    ),
+                    method_name=method,
+                ))
             lines += [
                 f"    public Map<String, Object> {method}(Map<String, Object> params) {{",
                 f"        return sqlSession.selectOne({mapper_ref}, params);",

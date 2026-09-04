@@ -39,6 +39,108 @@ class ValidationResult:
     issues: list[ValidationIssue] = field(default_factory=list)
 
 
+def _brace_delta(java_text: str) -> int:
+    """문자열/주석을 건너뛰고 (여는 중괄호 수 - 닫는 중괄호 수)를 센다.
+
+    메서드 본문 조각 하나만 떼어 검사하는 용도다 - 조각의 delta가 양수면 그 조각 안에서 '{'가
+    안 닫혔다는 뜻이라 "이 메서드가 범인"이라고 귀속시킬 수 있다. 파일 전체 스택 검사
+    (_check_brace_balance)는 어느 메서드가 깨졌는지 구조적으로 알 수 없다 - 중괄호 하나가 빠지면
+    그 뒤의 '}'들이 역할을 한 칸씩 당겨쓰게 돼서, 결국 미닫힘으로 남는 건 거의 항상 맨 바깥
+    클래스 '{'가 되기 때문이다(2026-09-04 실측 확인).
+    """
+    delta = 0
+    i = 0
+    n = len(java_text)
+    in_string = in_char = in_line_comment = in_block_comment = False
+    while i < n:
+        c = java_text[i]
+        nxt = java_text[i + 1] if i + 1 < n else ""
+        if c == "\n":
+            in_line_comment = False
+        if in_line_comment:
+            i += 1
+            continue
+        if in_block_comment:
+            if c == "*" and nxt == "/":
+                in_block_comment = False
+                i += 2
+                continue
+            i += 1
+            continue
+        if in_string:
+            if c == "\\":
+                i += 2
+                continue
+            if c == '"':
+                in_string = False
+            i += 1
+            continue
+        if in_char:
+            if c == "\\":
+                i += 2
+                continue
+            if c == "'":
+                in_char = False
+            i += 1
+            continue
+        if c == "/" and nxt == "/":
+            in_line_comment = True
+            i += 2
+            continue
+        if c == "/" and nxt == "*":
+            in_block_comment = True
+            i += 2
+            continue
+        if c == '"':
+            in_string = True
+        elif c == "'":
+            in_char = True
+        elif c == "{":
+            delta += 1
+        elif c == "}":
+            delta -= 1
+        i += 1
+    return delta
+
+
+def count_unbalanced_braces(java_text: str) -> int:
+    """파일 전체에서 (여는 중괄호 - 닫는 중괄호) 개수. 0이면 균형이 맞는다.
+
+    AS-IS 원본이 애초에 컴파일 안 되는 상태인지 싸게 판별하는 용도로 공개했다
+    (agents/conversion_plan.py가 Refactor/Reimagine 트랙 판단 신호로 쓴다 - CLAUDE.md가
+    "원본 자체가 이미 망가진 화면"을 Reimagine 후보로 명시한 그 기준).
+    """
+    return _brace_delta(java_text)
+
+
+def _check_method_brace_balance(java_text: str) -> list[ValidationIssue]:
+    """메서드별로 중괄호 균형을 따로 봐서 "어느 메서드가 깨졌는지"까지 짚어준다.
+
+    delta > 0(그 메서드 조각 안에서 '{'가 안 닫힘)인 메서드만 범인으로 본다. delta < 0은
+    무시한다 - 마지막 메서드 조각에는 클래스를 닫는 '}'가 딸려 들어와서 정상인데도 -1이 나오기
+    때문이다(_method_line_ranges가 "다음 메서드 시그니처 직전까지"를 범위로 잡는 근사치라서).
+
+    이 귀속이 있어야 CONV_ISSUE.METHOD_ID가 채워지고, 그래야
+    agents/impact_analysis.find_error_methods()의 오류 함수 집계와
+    agents/workflow_graph.repair_gate_node()의 수리 루프가 이 이슈를 대상으로 잡을 수 있다.
+    """
+    lines = java_text.split("\n")
+    issues: list[ValidationIssue] = []
+    for name, start, end in _method_line_ranges(java_text):
+        chunk = "\n".join(lines[start - 1:end - 1])
+        delta = _brace_delta(chunk)
+        if delta > 0:
+            issues.append(ValidationIssue(
+                issue_type="BRACE_MISMATCH", severity="BLOCKER",
+                message=(
+                    f"{name} 메서드({start}행부터) 안에서 중괄호 '{{' {delta}개가 닫히지 않았습니다 - "
+                    "이 파일은 컴파일되지 않습니다."
+                ),
+                line_no=start, method_name=name,
+            ))
+    return issues
+
+
 def _check_brace_balance(java_text: str) -> list[ValidationIssue]:
     """문자열/문자 리터럴, 라인/블록 주석 안의 중괄호는 건너뛰고 짝을 맞춘다.
 
@@ -115,20 +217,30 @@ def _check_brace_balance(java_text: str) -> list[ValidationIssue]:
         shown = open_line_stack[:5]
         more = f" 외 {len(open_line_stack) - 5}개" if len(open_line_stack) > 5 else ""
         lines_str = ", ".join(f"{ln}행" for ln in shown)
+        # line_no는 가장 **안쪽**(마지막에 열린) 중괄호를 가리킨다. 예전엔 가장 바깥쪽
+        # (open_line_stack[0])을 썼는데, 그건 거의 항상 `public class X {`(파일 1행)이라
+        # _attribute_methods()가 어느 메서드에도 못 붙였다 - 그래서 CONV_ISSUE.METHOD_ID가 비고,
+        # agents/impact_analysis.find_error_methods()와 수리 루프(workflow_graph.repair_gate_node)가
+        # 정작 가장 흔한 BLOCKER인 이 이슈를 통째로 놓쳤다(2026-09-04 실측 확인). 메서드 본문에서
+        # 중괄호가 빠지면 가장 안쪽 미닫힘이 그 메서드 안(또는 시그니처 줄)에 있으므로 훨씬
+        # 정확하게 귀속된다. 전체 목록은 메시지에 그대로 남겨 정보는 잃지 않는다.
         issues.append(ValidationIssue(
             issue_type="BRACE_MISMATCH", severity="BLOCKER",
             message=(
                 f"닫히지 않은 중괄호 '{{' {len(open_line_stack)}개가 있습니다(시작 위치: {lines_str}{more}) - "
                 "이 파일은 컴파일되지 않습니다."
             ),
-            line_no=open_line_stack[0],
+            line_no=open_line_stack[-1],
         ))
     return issues
 
 
 def _check_unspliced_markers(java_text: str) -> list[ValidationIssue]:
     issues = []
-    for m in re.finditer(r"// PORT_START:(\w+)", java_text):
+    # 마커(PORT_START)가 아니라 **스텁 본문**으로 판별한다(2026-09-04) - 마커는 포팅 후에도
+    # 남기도록 바뀌었기 때문(skeleton_gen.splice_ported_method 참고). 스텁일 때만 있는
+    # `throw new UnsupportedOperationException("TODO: {메서드} 포팅 필요")`가 정확한 신호다.
+    for m in re.finditer(r'UnsupportedOperationException\("TODO: (\w+) 포팅 필요"\)', java_text):
         line_no = java_text.count("\n", 0, m.start()) + 1
         issues.append(ValidationIssue(
             issue_type="PORTING_INCOMPLETE", severity="WARNING",
@@ -306,7 +418,12 @@ def check_mapper_xml(mapper_xml: str) -> list[ValidationIssue]:
 
 
 def validate_java_file(file_name: str, java_text: str) -> ValidationResult:
-    issues = _check_brace_balance(java_text) + _check_unspliced_markers(java_text)
+    # 메서드 단위로 범인을 짚을 수 있으면 그걸 쓰고(귀속 O), 못 짚으면 파일 전체 스택 검사
+    # 결과를 쓴다(귀속 X). 둘 다 내보내면 같은 결함 하나가 BLOCKER 2건으로 세어져서 영향도
+    # 대시보드의 위험도 점수가 부풀려진다 - 실제 결함 1개당 이슈 1건을 유지한다.
+    method_level = _check_method_brace_balance(java_text)
+    brace_issues = method_level if method_level else _check_brace_balance(java_text)
+    issues = brace_issues + _check_unspliced_markers(java_text)
     _attribute_methods(issues, java_text)
     passed = not any(i.severity == "BLOCKER" for i in issues)
     return ValidationResult(file_name=file_name, check="JAVA_STATIC", passed=passed, issues=issues)
