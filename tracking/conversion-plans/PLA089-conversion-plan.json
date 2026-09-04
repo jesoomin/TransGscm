@@ -1,8 +1,8 @@
 {
   "plan_version": 1,
   "generated_at": "2026-09-05T08:06:02",
-  "screen_id": "PLA093",
-  "ui_id": "U-PPLA093",
+  "screen_id": "PLA089",
+  "ui_id": "U-PPLA089",
   "package": {
     "p1": "TODO",
     "p2": "TODO"
@@ -10,9 +10,9 @@
   "fragments": {
     "P.java": {
       "present": true,
-      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\PPLA093.java",
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\PPLA089.java",
       "lines": 124,
-      "sha256": "b9bc4a4210a8aad091d0b38aba1ade3324d01f91a49e7bcff3418776f9b7626a"
+      "sha256": "e9edfd377f76d4094223e7ce0394693639aaa367976b916c5c6197b7d27333c8"
     },
     "P.bizunit": {
       "present": false,
@@ -20,60 +20,60 @@
     },
     "F.java": {
       "present": true,
-      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\FPLA093.java",
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\FPLA089.java",
       "lines": 171,
-      "sha256": "d8e32b8fd6a12d808e1b23adcee1418a53cf82d58619c908cfd90a3113b2ff5d"
+      "sha256": "2b13b537fe2f6c86f23b54c520496c865f188bac0890d536b8199d43dea16073"
     },
     "D.java": {
       "present": true,
-      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\DPLA093.java",
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\DPLA089.java",
       "lines": 104,
-      "sha256": "2d5cb9e6294192938cd5b367dbbac3d4d5ab62931d9dfd800d0198df5e706e7e"
+      "sha256": "f9d378dba15ee331ad3a8e9baf36a3a43a83bb8163f3d4b424556206303fa361"
     },
     "D.xsql": {
       "present": true,
-      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\DPLA093.xsql",
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\DPLA089.xsql",
       "lines": 97,
-      "sha256": "5ff3eed86ae569a1b98644f9cf3f1a259c1941389fa7f9f1c775592a44640e6b"
+      "sha256": "9e6b9d5d9736247d777bf246d9980ac3b290b69cd18083573ceda94809f46c5a"
     }
   },
   "nctrids": [],
   "expected_outputs": [
     {
-      "file": "Pla093Api.java",
-      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/Controller/Pla093Api.java",
+      "file": "Pla089Api.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/Controller/Pla089Api.java",
       "conversion_method": "RULE_BASED",
       "note": "P BizUnit 메서드 시그니처 -> REST 엔드포인트"
     },
     {
-      "file": "Pla093Dto.java",
-      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/dto/Pla093Dto.java",
+      "file": "Pla089Dto.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/dto/Pla089Dto.java",
       "conversion_method": "RULE_BASED",
       "note": ".BIZUNIT/실사용 getField·putRecordset에서 역추출"
     },
     {
-      "file": "Pla093Service.java",
-      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/service/Pla093Service.java",
+      "file": "Pla089Service.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/service/Pla089Service.java",
       "conversion_method": "RULE_BASED_SKELETON + LLM_PORTING",
       "note": "골격은 규칙 기반, 단순 위임이 아닌 메서드 본문만 LLM이 포팅"
     },
     {
-      "file": "Pla093Store.java",
-      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/store/Pla093Store.java",
+      "file": "Pla089Store.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/store/Pla089Store.java",
       "conversion_method": "RULE_BASED",
       "note": "D 메서드 -> MyBatis statement 참조"
     },
     {
-      "file": "Pla093Mapper.xml",
-      "tobe_path": "gscm/src/main/resources/mapper/r/TODO/TODO/Pla093Mapper.xml",
+      "file": "Pla089Mapper.xml",
+      "tobe_path": "gscm/src/main/resources/mapper/r/TODO/TODO/Pla089Mapper.xml",
       "conversion_method": "RULE_BASED",
       "note": "iBatis -> MyBatis 문법 변환만"
     }
   ],
   "llm_porting_targets": [
     "fAuthCheck",
-    "fPLA093QrySelectMainList",
-    "fPLA093QrySelectDetail"
+    "fPLA089QrySelectMainList",
+    "fPLA089QrySelectDetail"
   ],
   "rule_based_delegations": {
     "fCommonCodeQry": "dCommonCodeQry",
@@ -89,11 +89,11 @@
   "unsupported_db_verbs": {},
   "track_signals": {
     "as_is_unbalanced_braces": {
-      "P.java": 0,
+      "P.java": 1,
       "F.java": 0,
       "D.java": 0
     },
-    "as_is_source_broken": false,
+    "as_is_source_broken": true,
     "f_method_count": 6,
     "nctrid_count": 0,
     "has_xsql": true,

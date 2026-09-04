@@ -1,0 +1,224 @@
+[  0.0s]    OBSERVE  패키지 좌표 미확인 5건 → TODO로 둠
+                     ↳ AS-IS 경로에 r/{p1}/{p2} 패턴이 없다 — 추측해서 채우지 않는다
+
+==============================================================================
+  G-SCM 차세대 전환 Agent — 추론 로그
+  대상 화면 5건 · 수리 라운드 상한 2 · AI 추천 제외
+==============================================================================
+
+[  0.0s] ┌─ STAGE 1/7  PLAN  변환 계획 수립 — 대상 화면 5건 (LLM 미사용, 정적 분석)
+[  0.1s] │  OBSERVE  PLA087: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+         │           ↳ nctRid 0건 · 예상 산출물 5종
+[  0.1s] │  DECIDE   PLA087.fAuthCheck → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA087.fPLA087QrySelectMainList → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA087.fPLA087QrySelectDetail → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA087.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA087.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  OBSERVE  PLA087: 트랙 = UNDECIDED
+         │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
+[  0.1s] │  OBSERVE  PLA089: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+         │           ↳ nctRid 0건 · 예상 산출물 5종
+[  0.1s] │  DECIDE   PLA089.fAuthCheck → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA089.fPLA089QrySelectMainList → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA089.fPLA089QrySelectDetail → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA089.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA089.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA089.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  BLOCK    PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
+         │           ↳ 중괄호 불일치 {'P.java': 1, 'F.java': 0, 'D.java': 0} — 원본을 고치지 않고 보존, Reimagine 트랙 후보로 신호만 남김(트랙 결정은 사람 몫)
+[  0.1s] │  OBSERVE  PLA089: 트랙 = UNDECIDED
+         │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
+[  0.1s] │  OBSERVE  PLA093: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+         │           ↳ nctRid 0건 · 예상 산출물 5종
+[  0.1s] │  DECIDE   PLA093.fAuthCheck → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA093.fPLA093QrySelectMainList → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA093.fPLA093QrySelectDetail → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA093.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA093.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA093.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  OBSERVE  PLA093: 트랙 = UNDECIDED
+         │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
+[  0.1s] │  OBSERVE  PLA096: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+         │           ↳ nctRid 0건 · 예상 산출물 5종
+[  0.1s] │  DECIDE   PLA096.fAuthCheck → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA096.fPLA096QrySelectMainList → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA096.fPLA096QrySelectDetail → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA096.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA096.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  OBSERVE  PLA096: 트랙 = UNDECIDED
+         │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
+[  0.1s] │  OBSERVE  PLA100: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+         │           ↳ nctRid 0건 · 예상 산출물 5종
+[  0.1s] │  DECIDE   PLA100.fAuthCheck → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA100.fPLA100QrySelectMainList → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA100.fPLA100QrySelectDetail → LLM 포팅
+         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+[  0.1s] │  DECIDE   PLA100.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA100.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+         │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  OBSERVE  PLA100: 트랙 = UNDECIDED
+         │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
+[  0.1s] │  PLAN     LLM 호출 예산 확정: 15건
+         │           ↳ 13/28건(46%)을 규칙으로 처리 → LLM 호출 회피
+[  0.1s] └─ 계획 고정 완료 — tracking/conversion-plans/ 에 5건 기록
+[  0.1s] ┌─ STAGE 2/7  TOOL  규칙 기반 변환 — 화면 5건 (LLM 미사용)
+[  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA087)
+         │           ↳ 산출 5종 · 콜그래프 간선 10개 · 이슈 6건 · LLM 대기 3건
+[  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA089)
+         │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 6건 · LLM 대기 3건
+[  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA093)
+         │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 6건 · LLM 대기 3건
+[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA096)
+         │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 6건 · LLM 대기 3건
+[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA100)
+         │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 6건 · LLM 대기 3건
+[  0.2s] └─ 규칙 기반 변환 완료 — 화면 5건, LLM 포팅 대상 15건만 남음
+[  0.2s] ┌─ STAGE 3/7  TOOL  LLM 포팅 — 15건 병렬 디스패치 (fan-out)
+[  0.2s] │  CONTEXT  PLA087.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA087.fPLA087QrySelectMainList ← 피호출자 없음
+         │           ↳ 이 메서드는 하위 계층을 호출하지 않는다
+[  0.2s] │  CONTEXT  PLA087.fPLA087QrySelectDetail ← 피호출자 계약 1건 주입: dPLA08702
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.fPLA089QrySelectMainList ← 피호출자 계약 1건 주입: dPLA08901
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.fPLA089QrySelectDetail ← 피호출자 계약 1건 주입: dPLA08902
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.fPLA093QrySelectMainList ← 피호출자 계약 1건 주입: dPLA09301
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.fPLA093QrySelectDetail ← 피호출자 계약 1건 주입: dPLA09302
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA096.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA096.fPLA096QrySelectMainList ← 피호출자 계약 1건 주입: dPLA09601
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA096.fPLA096QrySelectDetail ← 피호출자 계약 1건 주입: dPLA09602
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA100.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA100.fPLA100QrySelectMainList ← 피호출자 계약 1건 주입: dPLA10001
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA100.fPLA100QrySelectDetail ← 피호출자 계약 1건 주입: dPLA10002
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  TOOL     LLM Gateway(PLA087.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,799자
+[  0.2s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+         │           ↳ 최초 포팅 · 프롬프트 1,997자
+[  0.2s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectDetail)
+         │           ↳ 최초 포팅 · 프롬프트 1,969자
+[  0.2s] │  TOOL     LLM Gateway(PLA089.fPLA089QrySelectMainList)
+         │           ↳ 최초 포팅 · 프롬프트 2,172자
+[  0.2s] │  TOOL     LLM Gateway(PLA089.fPLA089QrySelectDetail)
+         │           ↳ 최초 포팅 · 프롬프트 1,970자
+[  0.2s] │  TOOL     LLM Gateway(PLA089.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,799자
+[  0.2s] │  TOOL     LLM Gateway(PLA093.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,799자
+[  0.2s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectMainList)
+         │           ↳ 최초 포팅 · 프롬프트 2,172자
+[  4.3s] │  PASS     PLA087.fPLA087QrySelectDetail 응답 수신 (1,003자)
+[  4.3s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectDetail)
+         │           ↳ 최초 포팅 · 프롬프트 2,146자
+[  4.4s] │  PASS     PLA089.fPLA089QrySelectDetail 응답 수신 (1,061자)
+[  4.4s] │  TOOL     LLM Gateway(PLA096.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,799자
+[  4.5s] │  PASS     PLA093.fPLA093QrySelectMainList 응답 수신 (1,266자)
+[  4.5s] │  TOOL     LLM Gateway(PLA096.fPLA096QrySelectMainList)
+         │           ↳ 최초 포팅 · 프롬프트 2,172자
+[  4.9s] │  PASS     PLA089.fPLA089QrySelectMainList 응답 수신 (1,245자)
+[  4.9s] │  TOOL     LLM Gateway(PLA096.fPLA096QrySelectDetail)
+         │           ↳ 최초 포팅 · 프롬프트 1,969자
+[  5.1s] │  PASS     PLA089.fAuthCheck 응답 수신 (1,652자)
+[  5.1s] │  TOOL     LLM Gateway(PLA100.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,799자
+[  5.2s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,246자)
+[  5.2s] │  TOOL     LLM Gateway(PLA100.fPLA100QrySelectMainList)
+         │           ↳ 최초 포팅 · 프롬프트 2,172자
+[  5.2s] │  PASS     PLA087.fAuthCheck 응답 수신 (1,354자)
+[  5.2s] │  TOOL     LLM Gateway(PLA100.fPLA100QrySelectDetail)
+         │           ↳ 최초 포팅 · 프롬프트 1,969자
+[  6.4s] │  PASS     PLA093.fAuthCheck 응답 수신 (2,310자)
+[  7.9s] │  PASS     PLA096.fPLA096QrySelectDetail 응답 수신 (895자)
+[  8.0s] │  PASS     PLA093.fPLA093QrySelectDetail 응답 수신 (937자)
+[  8.3s] │  PASS     PLA100.fPLA100QrySelectMainList 응답 수신 (1,284자)
+[  8.7s] │  PASS     PLA096.fAuthCheck 응답 수신 (1,580자)
+[  9.9s] │  PASS     PLA096.fPLA096QrySelectMainList 응답 수신 (1,254자)
+[ 10.2s] │  PASS     PLA100.fAuthCheck 응답 수신 (1,928자)
+[ 13.0s] │  PASS     PLA100.fPLA100QrySelectDetail 응답 수신 (893자)
+[ 13.0s] │  PASS     결합(fan-in) 완료 — 15건을 Service에 반영
+         │           ↳ PLA087.fAuthCheck, PLA087.fPLA087QrySelectMainList, PLA087.fPLA087QrySelectDetail, PLA089.fAuthCheck, PLA089.fPLA089QrySelectMainList, PLA089.fPLA089QrySelectDetail, PLA093.fAuthCheck, PLA093.fPLA093QrySelectMainList, PLA093.fPLA093QrySelectDetail, PLA096.fAuthCheck, PLA096.fPLA096QrySelectMainList, PLA096.fPLA096QrySelectDetail, PLA100.fAuthCheck, PLA100.fPLA100QrySelectMainList, PLA100.fPLA100QrySelectDetail
+        └─
+[ 13.0s] ┌─ STAGE 4/7  VALIDATE  정적 검증 — 변환기와 분리된 검증기
+[ 13.0s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:82
+         │           ↳ 82행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[ 13.0s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:80
+         │           ↳ 유효한 XML이 아닙니다: mismatched tag: line 80, column 2
+[ 13.0s] │  BLOCK    검증 결과 — BLOCKER 2건 · WARNING 0건
+[ 13.0s] └─ 정적 검증 완료 — 화면 5건
+[ 13.0s] ┌─ STAGE 5/7  REFLECT  자기 수정 게이트 — 라운드 0/2 사용
+[ 13.0s] │  REFLECT  수리 대상 1건 확정 → 라운드 1 진입
+         │           ↳ 검증 실패 메시지를 프롬프트에 피드백해 해당 메서드만 재생성한다 (MatchFixAgent/ACToR 패턴: 검증·수리를 변환기와 분리)
+[ 13.0s] │  REPAIR   PLA087.fPLA087QrySelectMainList 재생성 요청
+         │           ↳ 82행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[ 13.0s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+         │           ↳ 수리 재생성 · 프롬프트 2,165자 · 오류 피드백 주입: 82행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[ 16.3s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,178자)
+[ 16.3s] │  PASS     결합(fan-in) 완료 — 1건을 Service에 반영
+         │           ↳ PLA087.fPLA087QrySelectMainList
+        └─
+[ 16.3s] ┌─ STAGE 4/7  VALIDATE  정적 검증 (수리 1라운드 후 재검증) — 변환기와 분리된 검증기
+[ 16.3s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:80
+         │           ↳ 유효한 XML이 아닙니다: mismatched tag: line 80, column 2
+[ 16.3s] │  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건
+[ 16.3s] └─ 정적 검증 완료 — 화면 5건
+[ 16.3s] ┌─ STAGE 5/7  REFLECT  자기 수정 게이트 — 라운드 1/2 사용
+[ 16.3s] │  REFLECT  수리 불필요 → 다음 단계로 진행
+         │           ↳ LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 (규칙 기반 생성물의 BLOCKER는 대상에서 제외 — LLM이 고칠 문제가 아님)
+[ 16.3s] └─ 수리 0라운드
+[ 16.3s] ┌─ STAGE 6/7  TOOL  품질·취약점 스캔 — 검증기와 분리된 스캐너
+[ 16.4s] └─ 품질 스캔 완료 — 화면 5건, 지적 6건
+[ 16.4s] ┌─ STAGE 7/7  DECIDE  AI 추천 건너뜀 (opt-in 미선택)
+[ 16.4s] └─ 파이프라인 완료 — 사람 승인 대기
+
+==============================================================================
+  실행 요약
+==============================================================================
+  처리 화면       5건
+  생성 파일       25종
+  LLM 포팅 호출   15건 (규칙 기반으로 회피 13건, 결정론 처리 비중 46%)
+  자기 수정 라운드   1회
+  잔여 BLOCKER  1건
+  반영 여부       미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨
+==============================================================================
+

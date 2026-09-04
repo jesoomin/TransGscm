@@ -1,0 +1,101 @@
+{
+  "plan_version": 1,
+  "generated_at": "2026-09-05T08:06:02",
+  "screen_id": "PLA096",
+  "ui_id": "U-PPLA096",
+  "package": {
+    "p1": "TODO",
+    "p2": "TODO"
+  },
+  "fragments": {
+    "P.java": {
+      "present": true,
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\PPLA096.java",
+      "lines": 102,
+      "sha256": "423cfad2372e04c01e44228e12a83669a32ab00394929639e8d0508af42afc92"
+    },
+    "P.bizunit": {
+      "present": false,
+      "as_is_path": null
+    },
+    "F.java": {
+      "present": true,
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\FPLA096.java",
+      "lines": 150,
+      "sha256": "3943a9e9a64256b893d9cea56116b221201944163fe9fd72e5ae75cad718a063"
+    },
+    "D.java": {
+      "present": true,
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\DPLA096.java",
+      "lines": 90,
+      "sha256": "84135ca6f903d9aef7eee49317cea9a8caf43abc93fc66725eb6686e48a4e925"
+    },
+    "D.xsql": {
+      "present": true,
+      "as_is_path": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample\\DPLA096.xsql",
+      "lines": 81,
+      "sha256": "46b29af4af91f53564725c0166500efb9c20c1376fb8ac1866f60e4a0be37275"
+    }
+  },
+  "nctrids": [],
+  "expected_outputs": [
+    {
+      "file": "Pla096Api.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/Controller/Pla096Api.java",
+      "conversion_method": "RULE_BASED",
+      "note": "P BizUnit 메서드 시그니처 -> REST 엔드포인트"
+    },
+    {
+      "file": "Pla096Dto.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/dto/Pla096Dto.java",
+      "conversion_method": "RULE_BASED",
+      "note": ".BIZUNIT/실사용 getField·putRecordset에서 역추출"
+    },
+    {
+      "file": "Pla096Service.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/service/Pla096Service.java",
+      "conversion_method": "RULE_BASED_SKELETON + LLM_PORTING",
+      "note": "골격은 규칙 기반, 단순 위임이 아닌 메서드 본문만 LLM이 포팅"
+    },
+    {
+      "file": "Pla096Store.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/TODO/TODO/store/Pla096Store.java",
+      "conversion_method": "RULE_BASED",
+      "note": "D 메서드 -> MyBatis statement 참조"
+    },
+    {
+      "file": "Pla096Mapper.xml",
+      "tobe_path": "gscm/src/main/resources/mapper/r/TODO/TODO/Pla096Mapper.xml",
+      "conversion_method": "RULE_BASED",
+      "note": "iBatis -> MyBatis 문법 변환만"
+    }
+  ],
+  "llm_porting_targets": [
+    "fAuthCheck",
+    "fPLA096QrySelectMainList",
+    "fPLA096QrySelectDetail"
+  ],
+  "rule_based_delegations": {
+    "fCommonCodeQry": "dCommonCodeQry",
+    "fHistoryQry": "dHistoryQry"
+  },
+  "estimated_llm_calls": {
+    "porting": 3,
+    "porting_skipped_rule_based": 2,
+    "ai_recommend": 0
+  },
+  "track": "UNDECIDED",
+  "unsupported_db_verbs": {},
+  "track_signals": {
+    "as_is_unbalanced_braces": {
+      "P.java": 0,
+      "F.java": 0,
+      "D.java": 0
+    },
+    "as_is_source_broken": false,
+    "f_method_count": 5,
+    "nctrid_count": 0,
+    "has_xsql": true,
+    "has_unsupported_db_verbs": false
+  }
+}

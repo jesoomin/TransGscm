@@ -54,6 +54,7 @@ for _p in (str(_PROJECT_ROOT), str(_CHATUI_DIR)):
         sys.path.insert(0, _p)
 
 from converters import convert_xsql_fragment, finalize_mapper_document  # noqa: E402
+from java_ast import extract_tobe_method_bodies  # noqa: E402
 from skeleton_gen import (  # noqa: E402
     extract_method_bodies,
     generate_dto,
@@ -161,7 +162,8 @@ def _port_prompt(method: str, body: str, callees: list[str] | None = None) -> st
     )
 
 
-def _repair_prompt(method: str, current_code: str, error_message: str) -> str:
+def _repair_prompt(method: str, current_code: str, error_message: str,
+                   available_callees: list[str] | None = None) -> str:
     """정적 검증에서 BLOCKER가 난 방금 포팅한 메서드를 다시 LLM에게 보여주고 그 오류만 고치게
     한다(MatchFixAgent/ACToR 패턴, docs/06-mentor-feedback.md §D) - `repair_gate_node`가 호출
     대상을 정하고, 이 함수는 그 대상 1건에 대한 프롬프트만 만든다. 업무 로직 재설계를 막기 위해
@@ -178,7 +180,18 @@ def _repair_prompt(method: str, current_code: str, error_message: str) -> str:
         f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 완성된 "
         "메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라. "
         "메서드 본문 첫 줄에 `// AI 수정: <무엇을 왜 고쳤는지 한 줄>` 주석을 추가해라.\n\n"
-        f"현재 코드:\n```\n{current_code}\n```"
+        # 최초 포팅에는 콜리 계약(_callee_note)을 주는데 수리에는 안 줬다 - 그래서 "없는 Store
+        # 메서드를 부른다"는 오류를 받아도 LLM이 **실재하는 이름을 알 방법이 없어** 고칠 수가
+        # 없었다(실측: PLA087의 주입 결함 dPLA08710을 2라운드 다 쓰고도 못 고침). 실재하는
+        # 메서드 목록은 이미 생성된 Store에서 그대로 읽은 사실이라 추측을 주는 게 아니다.
+        + (
+            f"참고 - `store`에 실제로 정의된 메서드는 이것뿐이다: {', '.join(available_callees)}. "
+            "이 목록에 없는 이름을 호출하고 있었다면 목록 안에서 의미가 맞는 것으로 바꿔라. "
+            "맞는 것이 없다고 판단되면 지어내지 말고 호출부에 "
+            "`// FIXME(사람 확인 필요): 대응되는 Store 메서드를 찾지 못함` 주석을 남겨라.\n\n"
+            if available_callees else ""
+        )
+        + f"현재 코드:\n```\n{current_code}\n```"
     )
 
 
@@ -638,7 +651,7 @@ def port_one_screen_method_node(state: dict) -> dict:
     body = state["_method_body"]
     repair_error = state.get("_repair_error")
     prompt = (
-        _repair_prompt(method, body, repair_error)
+        _repair_prompt(method, body, repair_error, state.get("_callees"))
         if repair_error else _port_prompt(method, body, state.get("_callees"))
     )
     kind = "수리 재생성" if repair_error else "최초 포팅"
@@ -664,12 +677,17 @@ def splice_all_node(state: PipelineState) -> dict:
         screen_files = files.get(screen_id)
         if not screen_files or service_fname not in screen_files:
             continue
-        spliced = splice_ported_method(screen_files[service_fname], method, code)
-        if spliced != screen_files[service_fname]:
+        current = screen_files[service_fname]
+        spliced = splice_ported_method(current, method, code)
+        if spliced != current:
             newly_ported.append((screen_id, method))
-        else:
+        elif f'UnsupportedOperationException("TODO: {method} 포팅 필요")' in current:
+            # 스텁이 그대로 남아 있는데 결합이 아무것도 안 바꿨다 = 진짜 실패(마커를 못 찾음).
+            # 스텁이 이미 없는 경우는 앞선 라운드에서 같은 코드로 이미 반영된 것이다 -
+            # port_results가 누적 리스트(operator.add)라 수리 라운드마다 이전 결과까지 다시
+            # 결합되는데, splice가 멱등이라 "변화 없음"이 된다. 그걸 실패로 찍으면 안 된다.
             log.block(f"{screen_id}.{method} 결합 실패 — 결과를 반영하지 못했다",
-                      "포팅 마커를 찾지 못함(스텁이 없거나 이미 대체됨)")
+                      "스텁이 남아 있는데 포팅 마커를 찾지 못했다")
         screen_files[service_fname] = spliced
     if newly_ported:
         log.ok(f"결합(fan-in) 완료 — {len(newly_ported)}건을 Service에 반영",
@@ -703,7 +721,7 @@ def validate_all_node(state: PipelineState) -> dict:
             n_block += len(blocks)
             n_warn += len(warns)
             for i in blocks:
-                log.block(f"{screen_id} [{r.check}] {i.issue_type} @ {i.method_name or r.filename}:{i.line_no or '-'}",
+                log.block(f"{screen_id} [{r.check}] {i.issue_type} @ {i.method_name or r.file_name}:{i.line_no or '-'}",
                           i.message[:160])
     (log.ok if n_block == 0 else log.block)(f"검증 결과 — BLOCKER {n_block}건 · WARNING {n_warn}건")
     log.end_stage(f"정적 검증 완료 — 화면 {len(results)}건")
@@ -751,11 +769,18 @@ def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState)
     for screen_id, method, error_message in targets:
         prefix = to_prefix(screen_id)
         service_fname = f"{prefix}Service.java"
-        service_java = files_by_screen.get(screen_id, {}).get(service_fname, "")
-        bodies = extract_method_bodies(service_java)
+        screen_files = files_by_screen.get(screen_id, {})
+        service_java = screen_files.get(service_fname, "")
+        # TO-BE 산출물이므로 AS-IS용 extract_method_bodies를 쓰면 안 된다 - 그 함수는
+        # `public IDataSet`만 인식해서 빈 dict를 돌려주고, 그러면 수리 프롬프트에 "현재 코드"가
+        # 안 실려 LLM이 코드를 못 본 채 이름을 지어낸다(실측으로 확인, 2026-09-05).
+        bodies = extract_tobe_method_bodies(service_java)
+        # 이미 생성된 Store에 실제로 정의된 메서드 이름을 읽어 수리 프롬프트에 넘긴다 - 최초
+        # 포팅에만 있던 의존 계약 주입을 수리에도 일관되게 적용하는 것이다(_repair_prompt 참고).
+        available = sorted(extract_tobe_method_bodies(screen_files.get(f"{prefix}Store.java", "")))
         sends.append(Send("port_one_screen_method", {
             "_screen_id": screen_id, "_method": method, "_method_body": bodies.get(method, ""),
-            "_repair_error": error_message,
+            "_repair_error": error_message, "_callees": available,
         }))
     return sends
 

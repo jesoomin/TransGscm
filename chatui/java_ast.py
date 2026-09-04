@@ -115,6 +115,34 @@ def extract_methods(java_text: str) -> list[str]:
     return list(dict.fromkeys(ts_names + regex_names))
 
 
+_TOBE_METHOD_SIG_RE = re.compile(r"public\s+[\w<>\[\],\s]+?\s(\w+)\s*\(")
+
+
+def extract_tobe_method_bodies(java_text: str) -> dict[str, str]:
+    """**생성된 TO-BE** Java(Api/Service/Store)의 메서드 본문을 뽑는다.
+
+    이 모듈의 다른 함수들은 전부 AS-IS 전용이다 - 정규식도 tree-sitter 조건도 `public IDataSet`
+    으로 고정돼 있어서, TO-BE 산출물(`public Map<String, Object> fXxx(Map<String, Object> req)`)에
+    쓰면 **아무것도 못 찾고 조용히 빈 dict를 돌려준다.**
+
+    이걸 모르고 `extract_method_bodies`(AS-IS용)를 수리 루프에서 TO-BE Service에 썼었다. 그래서
+    수리 프롬프트의 "현재 코드"가 계속 빈 문자열로 나갔고, LLM은 고칠 코드를 보지도 못한 채 오류
+    메시지만 받아 메서드 이름을 지어냈다(실측: `dPLA08710` → `fPLA087QrySelectMainList` →
+    `fPLA087QrySelectMain`으로 라운드마다 악화). 목(mock) 테스트는 프롬프트와 무관하게 고정 코드를
+    돌려줘서 이 결함을 못 잡았고, 실 LLM 실행에서는 수리 루프가 발동한 적이 없어 드러나지 않았다.
+
+    AS-IS 파서를 넓히지 않고 함수를 따로 둔다 - AS-IS 쪽 동작(문자열/주석 안 가짜 시그니처 회피
+    등 실측으로 맞춰둔 것)을 건드리지 않기 위해서다.
+    """
+    matches = list(_TOBE_METHOD_SIG_RE.finditer(java_text))
+    bodies: dict[str, str] = {}
+    for i, m in enumerate(matches):
+        start = m.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(java_text)
+        bodies[m.group(1)] = java_text[start:end].rstrip()
+    return bodies
+
+
 def extract_method_bodies(java_text: str) -> dict[str, str]:
     """각 메서드의 본문을 뽑는다.
 
