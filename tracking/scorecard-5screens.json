@@ -1,0 +1,113 @@
+{
+  "rows": [
+    {
+      "axis": "A. 전환 성공률",
+      "item": "산출물 생성률",
+      "weight": 15,
+      "value": 1.0,
+      "score": 15.0,
+      "status": "측정"
+    },
+    {
+      "axis": "A. 전환 성공률",
+      "item": "정적 검증 통과율",
+      "weight": 25,
+      "value": 0.9667,
+      "score": 24.17,
+      "status": "측정"
+    },
+    {
+      "axis": "B. 사용자 체감",
+      "item": "리뷰 대상 축소율",
+      "weight": 18,
+      "value": 0.7358,
+      "score": 13.24,
+      "status": "측정"
+    },
+    {
+      "axis": "B. 사용자 체감",
+      "item": "결정론 처리 비중",
+      "weight": 12,
+      "value": 0.4643,
+      "score": 5.57,
+      "status": "측정"
+    },
+    {
+      "axis": "C. 탐지 정확성",
+      "item": "원본 결함 재현율",
+      "weight": 15,
+      "value": 0.5,
+      "score": 7.5,
+      "status": "측정"
+    },
+    {
+      "axis": "C. 탐지 정확성",
+      "item": "중복 탐지 F1",
+      "weight": 15,
+      "value": 0.6802,
+      "score": 10.2,
+      "status": "측정"
+    }
+  ],
+  "by_axis": {
+    "A. 전환 성공률": {
+      "earned": 39.17,
+      "available": 40.0,
+      "unmeasured": 0
+    },
+    "B. 사용자 체감": {
+      "earned": 18.810000000000002,
+      "available": 30.0,
+      "unmeasured": 0
+    },
+    "C. 탐지 정확성": {
+      "earned": 17.7,
+      "available": 30.0,
+      "unmeasured": 0
+    }
+  },
+  "earned": 75.68,
+  "available": 100.0,
+  "normalized_100": 75.7,
+  "unmeasured_weight": 0.0,
+  "detail": {
+    "conversion": {
+      "outputs_expected": 25,
+      "outputs_produced": 25,
+      "outputs_rate": 1.0,
+      "outputs_missing": [],
+      "checks_total": 30,
+      "checks_passed": 29,
+      "static_pass_rate": 0.9667,
+      "blocker_files": [
+        "PLA096/Pla096Mapper.xml"
+      ]
+    },
+    "developer_experience": {
+      "generated_lines": 1783,
+      "llm_ported_lines": 468,
+      "flagged_lines": 3,
+      "review_target_lines": 471,
+      "review_ratio": 0.2642,
+      "review_reduction": 0.7358,
+      "llm_calls": 15,
+      "rule_handled": 13,
+      "deterministic_ratio": 0.4643,
+      "asis_files_per_screen": 4.0
+    },
+    "detection": {
+      "measured": true,
+      "defect_recall": 0.5,
+      "defect_detected": 5,
+      "defect_total": 10,
+      "defect_false_positives": 0,
+      "dup_recall": 0.9952,
+      "dup_precision_proxy": 0.5167,
+      "dup_f1_proxy": 0.6802
+    }
+  },
+  "not_covered": [
+    "L3 기능 동등성 — 포팅 코드를 실행할 환경이 없어 미측정",
+    "L4 사람 수정 라인 비율 — 사람이 리뷰한 화면 0건, 측정 시점 미도래"
+  ]
+}
