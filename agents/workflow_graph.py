@@ -162,8 +162,23 @@ def _port_prompt(method: str, body: str, callees: list[str] | None = None) -> st
     )
 
 
+# 수리 후보를 여러 갈래로 만들 때 쓰는 전략. Tree-of-Thoughts의 "가지를 여러 개 펼친 뒤
+# 평가해서 고른다"를 이 문제에 맞게 적용한 것인데, **평가자가 LLM이 아니라 결정론적 검증기**라는
+# 점이 일반적인 ToT와 다르다(보통은 모델이 자기 가지를 자기가 채점해서 신뢰도가 낮다). 우리는
+# 후보마다 실제로 splice해서 validate_screen을 돌리고, 그 메서드에 귀속된 BLOCKER 수로 채점한다.
+# 가지가 서로 달라야 의미가 있으므로 지시 자체를 다르게 준다.
+_REPAIR_STRATEGIES: list[tuple[str, str]] = [
+    ("최소수정",
+     "오류의 직접 원인이 되는 **한 줄 수준의 최소 변경**만 해라. 구조를 재배치하지 마라."),
+    ("계약우선",
+     "오류가 호출 대상 불일치라면, 아래 실재 목록에서 의미가 맞는 이름으로 **호출부를 교체**하는 "
+     "것을 우선 검토해라. 목록에 맞는 것이 없다고 판단되면 지어내지 말고 FIXME 주석을 남겨라."),
+]
+
+
 def _repair_prompt(method: str, current_code: str, error_message: str,
-                   available_callees: list[str] | None = None) -> str:
+                   available_callees: list[str] | None = None,
+                   strategy: str = "") -> str:
     """정적 검증에서 BLOCKER가 난 방금 포팅한 메서드를 다시 LLM에게 보여주고 그 오류만 고치게
     한다(MatchFixAgent/ACToR 패턴, docs/06-mentor-feedback.md §D) - `repair_gate_node`가 호출
     대상을 정하고, 이 함수는 그 대상 1건에 대한 프롬프트만 만든다. 업무 로직 재설계를 막기 위해
@@ -191,6 +206,7 @@ def _repair_prompt(method: str, current_code: str, error_message: str,
             "`// FIXME(사람 확인 필요): 대응되는 Store 메서드를 찾지 못함` 주석을 남겨라.\n\n"
             if available_callees else ""
         )
+        + (f"**이번 시도의 접근 방침**: {strategy}\n\n" if strategy else "")
         + f"현재 코드:\n```\n{current_code}\n```"
     )
 
@@ -440,6 +456,14 @@ def run_screen_conversion(
 # =====================================================================================
 
 
+def _replace_list(a: list, b: list) -> list:
+    """수리 후보용 리듀서. 빈 리스트가 오면 초기화로 해석해 라운드 간 누적을 끊고, 그 외에는
+    누적한다(병렬 브랜치가 각자 1건씩 더하는 경우)."""
+    if not b:
+        return []
+    return (a or []) + b
+
+
 def _merge_dicts(a: dict, b: dict) -> dict:
     """화면ID를 키로 쓰는 dict 필드용 리듀서. convert_all/validate_all/scan_all은 각각 단일
     노드라 실제로 동시 쓰기 충돌은 없지만, 재실행/체크포인트 재생 시에도 안전하게 합쳐지도록
@@ -485,6 +509,10 @@ class PipelineState(TypedDict, total=False):
     max_repair_retries: int
     repair_round: int
     repair_targets: list[tuple[str, str, str]]  # [(screen_id, method, error_message), ...]
+    # ToT 수리 후보: (screen_id, method, 전략라벨, 코드). 병렬 브랜치가 동시에 쓰므로 리듀서 필요.
+    # select_repair_node가 채점 후 빈 리스트로 덮어써서 라운드 간 누적을 끊는다.
+    repair_candidates: Annotated[list[tuple[str, str, str, str]], _replace_list]
+    repair_candidates_n: int
 
     # Stage 5 (ai_recommend_one: Send 병렬 (화면, nctRid) 단위)
     ai_recommend_results: Annotated[list[tuple[str, str, object]], operator.add]  # (screen_id, p_method, ReactVariantResult)
@@ -778,11 +806,86 @@ def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState)
         # 이미 생성된 Store에 실제로 정의된 메서드 이름을 읽어 수리 프롬프트에 넘긴다 - 최초
         # 포팅에만 있던 의존 계약 주입을 수리에도 일관되게 적용하는 것이다(_repair_prompt 참고).
         available = sorted(extract_tobe_method_bodies(screen_files.get(f"{prefix}Store.java", "")))
-        sends.append(Send("port_one_screen_method", {
-            "_screen_id": screen_id, "_method": method, "_method_body": bodies.get(method, ""),
-            "_repair_error": error_message, "_callees": available,
-        }))
+        # 후보를 여러 갈래로 펼친다(ToT). 각 가지는 서로 다른 접근 방침을 받고, 나중에
+        # select_repair_node가 **검증기로 채점해서** 하나만 고른다.
+        n = max(1, min(len(_REPAIR_STRATEGIES), state.get("repair_candidates_n", 2)))
+        for idx in range(n):
+            label, strategy = _REPAIR_STRATEGIES[idx]
+            sends.append(Send("repair_candidate", {
+                "_screen_id": screen_id, "_method": method, "_method_body": bodies.get(method, ""),
+                "_repair_error": error_message, "_callees": available,
+                "_strategy": strategy, "_strategy_label": label,
+            }))
     return sends
+
+
+def repair_candidate_node(state: dict) -> dict:
+    """수리 후보 1개를 생성한다(ToT의 가지 하나). 채점은 하지 않는다 - select_repair_node가 한다."""
+    screen_id, method = state["_screen_id"], state["_method"]
+    label = state.get("_strategy_label", "")
+    prompt = _repair_prompt(method, state["_method_body"], state.get("_repair_error", ""),
+                            state.get("_callees"), state.get("_strategy", ""))
+    log.tool("LLM Gateway", f"{screen_id}.{method}", f"수리 후보 [{label}] · 프롬프트 {len(prompt):,}자")
+    try:
+        raw = chat(messages=[{"role": "user", "content": prompt}])
+        return {"repair_candidates": [(screen_id, method, label, strip_code_fence(raw))]}
+    except Exception as e:
+        log.block(f"{screen_id}.{method} 후보[{label}] 생성 실패", str(e))
+        return {"port_errors": [(screen_id, method, str(e))]}
+
+
+def select_repair_node(state: PipelineState) -> dict:
+    """생성된 수리 후보들을 **결정론적 검증기로 채점해** 메서드마다 하나만 고른다.
+
+    일반적인 Tree-of-Thoughts는 모델이 자기 가지를 자기가 평가해서 신뢰도가 낮다. 여기서는
+    후보마다 실제로 Service에 splice한 **사본**을 만들어 `validate_screen()`을 돌리고, 그
+    메서드에 귀속된 BLOCKER 수로 채점한다 - 평가자가 LLM이 아니라 이미 있는 검증기다.
+    동점이면 원본에서 덜 벗어난 쪽(라인 수 차이가 작은 쪽)을 고른다.
+    """
+    candidates = state.get("repair_candidates", [])
+    if not candidates:
+        return {"repair_candidates": []}
+
+    files = {sid: dict(f) for sid, f in state.get("files", {}).items()}
+    grouped: dict[tuple[str, str], list[tuple[str, str]]] = {}
+    for screen_id, method, label, code in candidates:
+        grouped.setdefault((screen_id, method), []).append((label, code))
+
+    newly: list[tuple[str, str]] = []
+    for (screen_id, method), cands in grouped.items():
+        prefix = to_prefix(screen_id)
+        service_fname = f"{prefix}Service.java"
+        screen_files = files.get(screen_id)
+        if not screen_files or service_fname not in screen_files:
+            continue
+        base = screen_files[service_fname]
+        scored = []
+        for label, code in cands:
+            trial_files = dict(screen_files)
+            trial_files[service_fname] = splice_ported_method(base, method, code)
+            blockers = 0
+            for r in validate_screen(trial_files, prefix):
+                blockers += sum(
+                    1 for i in r.issues
+                    if i.severity == "BLOCKER" and i.method_name == method
+                )
+            delta = abs(code.count("\n") - base.count("\n"))
+            scored.append((blockers, delta, label, code, trial_files[service_fname]))
+            log.reflect(f"후보 [{label}] 채점 — 잔여 BLOCKER {blockers}건",
+                        "검증기로 실제 splice 후 측정(LLM 자기평가 아님)")
+        scored.sort(key=lambda x: (x[0], x[1]))
+        best = scored[0]
+        if len(scored) > 1:
+            log.decide(f"{screen_id}.{method} 수리 후보 {len(scored)}개",
+                       f"[{best[2]}] 채택",
+                       f"잔여 BLOCKER {best[0]}건으로 최소 "
+                       f"(탈락: {', '.join(f'[{s[2]}]={s[0]}건' for s in scored[1:])})")
+        if best[4] != base:
+            screen_files[service_fname] = best[4]
+            newly.append((screen_id, method))
+
+    # 다음 라운드에 이전 후보가 다시 섞이지 않도록 비운다(리듀서가 누적 리스트라 명시적 초기화).
+    return {"files": files, "ported_methods": newly, "repair_candidates": []}
 
 
 def repair_gate_node(state: PipelineState) -> dict:
@@ -898,6 +1001,8 @@ def build_pipeline_graph():
     builder.add_node("splice_all", splice_all_node)
     builder.add_node("validate_all", validate_all_node)
     builder.add_node("repair_gate", repair_gate_node)
+    builder.add_node("repair_candidate", repair_candidate_node)
+    builder.add_node("select_repair", select_repair_node)
     builder.add_node("scan_all", scan_all_node)
     builder.add_node("ai_recommend_one", ai_recommend_one_node)
 
@@ -911,7 +1016,11 @@ def build_pipeline_graph():
     # 되돌아가 오류만 고치게 하고, 그 결과는 splice_all -> validate_all로 다시 흘러 재검증된다
     # (2026-09-04 추가, MatchFixAgent/ACToR식 검증-수리 루프 - docs/06-mentor-feedback.md §D).
     builder.add_edge("validate_all", "repair_gate")
-    builder.add_conditional_edges("repair_gate", route_after_repair_gate, ["port_one_screen_method", "scan_all"])
+    builder.add_conditional_edges("repair_gate", route_after_repair_gate, ["repair_candidate", "scan_all"])
+    # 수리 후보는 splice_all이 아니라 select_repair로 모인다 - 여러 후보를 그대로 겹쳐 쓰면
+    # 서로를 덮어쓰기 때문에, 채점해서 하나만 고른 뒤 반영해야 한다.
+    builder.add_edge("repair_candidate", "select_repair")
+    builder.add_edge("select_repair", "validate_all")
     builder.add_conditional_edges("scan_all", route_after_scan_all, ["ai_recommend_one", END])
     builder.add_edge("ai_recommend_one", END)
     return builder.compile()
@@ -948,6 +1057,7 @@ def run_pipeline_part_a(
     include_ai_recommend: bool = True,
     max_retries: int = 2,
     max_repair_retries: int = 2,
+    repair_candidates_n: int = 2,
     all_paths: dict[str, dict] | None = None,
     progress_cb=None,
 ) -> PipelineState:
@@ -969,6 +1079,7 @@ def run_pipeline_part_a(
         "include_ai_recommend": include_ai_recommend, "max_retries": max_retries,
         "max_repair_retries": max_repair_retries,
         "port_results": [], "port_errors": [], "ported_methods": [], "ai_recommend_results": [],
+        "repair_candidates": [], "repair_candidates_n": repair_candidates_n,
     }
     log.banner(
         "G-SCM 차세대 전환 Agent — 추론 로그",
