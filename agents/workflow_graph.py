@@ -69,6 +69,7 @@ from langgraph.graph import END, START, StateGraph  # noqa: E402
 from langgraph.types import Send  # noqa: E402
 
 from .llm_gateway import chat  # noqa: E402
+from .reasoning_log import log  # noqa: E402
 
 
 class ScreenState(TypedDict, total=False):
@@ -477,7 +478,7 @@ class PipelineState(TypedDict, total=False):
 
 
 def plan_all_node(state: PipelineState) -> dict:
-    """Stage 0: 코드를 만들기 **전에** 화면별 변환 계획을 세우고 파일로 고정한다.
+    """Stage 1: 코드를 만들기 **전에** 화면별 변환 계획을 세우고 파일로 고정한다.
 
     CLAUDE.md 핵심 원칙("계획 없이 바로 코드를 생성하지 않는다")을 구조적으로 보장하려고 그래프
     맨 앞(convert_all 이전)에 둔다 - app.py가 나중에 따로 쓰는 방식이면 계획 파일이 변환 *후에*
@@ -488,13 +489,51 @@ def plan_all_node(state: PipelineState) -> dict:
     """
     from agents.conversion_plan import build_plans, write_plans
 
-    plans = build_plans(
-        state.get("screens", {}), state.get("package_map", {}), state.get("all_paths", {}),
-    )
+    screens = state.get("screens", {})
+    log.stage(1, 7, "PLAN", f"변환 계획 수립 — 대상 화면 {len(screens)}건 (LLM 미사용, 정적 분석)")
+
+    plans = build_plans(screens, state.get("package_map", {}), state.get("all_paths", {}))
+
+    # 계획서가 이미 계산해 둔 값을 그대로 읽어서 "무엇을 왜 그렇게 정했는지"를 드러낸다.
+    # 여기서 새로 판단하지 않는다 - build_plans()가 내린 결정을 옮겨 적을 뿐이다.
+    total_llm = total_rule = 0
+    for screen_id, plan in plans.items():
+        frags = plan.get("fragments", {})
+        present = sorted(k for k, v in frags.items() if v.get("present"))
+        log.observe(
+            f"{screen_id}: fragment {len(present)}/{len(frags)} 존재 ({', '.join(present) or '없음'})",
+            f"nctRid {len(plan.get('nctrids', []))}건 · 예상 산출물 {len(plan.get('expected_outputs', []))}종",
+        )
+        est = plan.get("estimated_llm_calls", {})
+        llm_n, rule_n = est.get("porting", 0), est.get("porting_skipped_rule_based", 0)
+        total_llm += llm_n
+        total_rule += rule_n
+        for m in plan.get("llm_porting_targets", []):
+            log.decide(f"{screen_id}.{m}", "LLM 포팅",
+                       "계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦")
+        for m in plan.get("rule_based_delegations", []):
+            log.decide(f"{screen_id}.{m}", "규칙 기반 생성 (LLM 호출 안 함)",
+                       "단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능")
+        sig = plan.get("track_signals", {})
+        if sig.get("as_is_source_broken"):
+            log.block(f"{screen_id}: AS-IS 원본이 그대로는 컴파일 안 됨",
+                      f"중괄호 불일치 {sig.get('as_is_unbalanced_braces')} — 원본을 고치지 않고 보존, "
+                      f"Reimagine 트랙 후보로 신호만 남김(트랙 결정은 사람 몫)")
+        if sig.get("has_unsupported_db_verbs"):
+            log.block(f"{screen_id}: 미지원 DB 동사 {plan.get('unsupported_db_verbs')}",
+                      "조회(SELECT) 외 패턴은 샘플이 없어 규칙을 만들지 않았다 — 추측 생성 대신 조기 차단")
+        log.observe(f"{screen_id}: 트랙 = {plan.get('track')}", "자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정")
+
+    denom = total_llm + total_rule
+    saved = f"{total_rule}/{denom}건({total_rule * 100 // denom}%)을 규칙으로 처리 → LLM 호출 회피" if denom else "포팅 대상 없음"
+    log.plan(f"LLM 호출 예산 확정: {total_llm}건", saved)
+
     try:
         plan_paths = write_plans(plans)
     except OSError as e:  # 계획 파일을 못 써도 변환 자체는 계속한다 - 다만 조용히 넘기진 않는다
         plan_paths = {"_error": f"계획 파일 기록 실패: {e}"}
+        log.block("계획 파일 기록 실패", str(e))
+    log.end_stage(f"계획 고정 완료 — tracking/conversion-plans/ 에 {len(plans)}건 기록")
     return {"plans": plans, "plan_paths": plan_paths}
 
 
@@ -511,6 +550,7 @@ def convert_all_node(state: PipelineState) -> dict:
     skel_methods: dict[str, list] = {}
     skel_method_calls: dict[str, list] = {}
 
+    log.stage(2, 7, "TOOL", f"규칙 기반 변환 — 화면 {len(screens)}건 (LLM 미사용)")
     for screen_id, buckets in screens.items():
         package_p1, package_p2 = package_map.get(screen_id, ("TODO", "TODO"))
         result = _convert_screen(
@@ -526,7 +566,15 @@ def convert_all_node(state: PipelineState) -> dict:
         pending[screen_id] = result["pending_methods"]
         skel_methods[screen_id] = result["skel_methods"]
         skel_method_calls[screen_id] = result["skel_method_calls"]
+        n_issue = len(result["skel_issues"]) + len(result["mapper_issues"]) + len(result["dto_issues"])
+        log.tool(
+            "iBatis→MyBatis + 골격/DTO 생성", screen_id,
+            f"산출 {len(result['files'])}종 · 콜그래프 간선 {len(result['skel_method_calls'])}개 · "
+            f"이슈 {n_issue}건 · LLM 대기 {len(result['pending_methods'])}건",
+        )
 
+    total_pending = sum(len(v) for v in pending.values())
+    log.end_stage(f"규칙 기반 변환 완료 — 화면 {len(screens)}건, LLM 포팅 대상 {total_pending}건만 남음")
     return {
         "files": files, "skel_issues": skel_issues, "mapper_issues": mapper_issues, "dto_issues": dto_issues,
         "pending_methods": pending, "skel_methods": skel_methods, "skel_method_calls": skel_method_calls,
@@ -552,6 +600,14 @@ def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: Pipel
             c["callee_method"] for c in skel_calls.get(screen_id, [])
             if c.get("caller_layer") == "F" and c.get("caller_method") == method and c.get("callee_layer") == "D"
         ]
+        if callees:
+            log.context(
+                f"{screen_id}.{method} ← 피호출자 계약 {len(callees)}건 주입: {', '.join(callees)}",
+                "콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 "
+                "(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)",
+            )
+        else:
+            log.context(f"{screen_id}.{method} ← 피호출자 없음", "이 메서드는 하위 계층을 호출하지 않는다")
         sends.append(Send("port_one_screen_method", {
             "_screen_id": screen_id, "_method": method, "_method_body": body_cache[screen_id].get(method, ""),
             "_callees": callees,
@@ -562,7 +618,10 @@ def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: Pipel
 def route_after_convert_all(state: PipelineState):
     pairs = [(sid, m) for sid, methods in state.get("pending_methods", {}).items() for m in methods]
     if not pairs:
+        log.stage(3, 7, "DECIDE", "LLM 포팅 건너뜀 — 규칙 기반으로 전부 처리됨")
+        log.end_stage("LLM 호출 0건")
         return "validate_all"
+    log.stage(3, 7, "TOOL", f"LLM 포팅 — {len(pairs)}건 병렬 디스패치 (fan-out)")
     return _dispatch_ports_all(pairs, state)
 
 
@@ -582,10 +641,15 @@ def port_one_screen_method_node(state: dict) -> dict:
         _repair_prompt(method, body, repair_error)
         if repair_error else _port_prompt(method, body, state.get("_callees"))
     )
+    kind = "수리 재생성" if repair_error else "최초 포팅"
+    log.tool("LLM Gateway", f"{screen_id}.{method}",
+             f"{kind} · 프롬프트 {len(prompt):,}자" + (f" · 오류 피드백 주입: {repair_error[:80]}" if repair_error else ""))
     try:
         raw = chat(messages=[{"role": "user", "content": prompt}])
+        log.ok(f"{screen_id}.{method} 응답 수신 ({len(raw):,}자)")
         return {"port_results": [(screen_id, method, strip_code_fence(raw))]}
     except Exception as e:  # LLM Gateway 타임아웃/네트워크 오류 등 - 코드 자체의 버그가 아니다
+        log.block(f"{screen_id}.{method} LLM 호출 실패", str(e))
         return {"port_errors": [(screen_id, method, str(e))]}
 
 
@@ -603,7 +667,13 @@ def splice_all_node(state: PipelineState) -> dict:
         spliced = splice_ported_method(screen_files[service_fname], method, code)
         if spliced != screen_files[service_fname]:
             newly_ported.append((screen_id, method))
+        else:
+            log.block(f"{screen_id}.{method} 결합 실패 — 결과를 반영하지 못했다",
+                      "포팅 마커를 찾지 못함(스텁이 없거나 이미 대체됨)")
         screen_files[service_fname] = spliced
+    if newly_ported:
+        log.ok(f"결합(fan-in) 완료 — {len(newly_ported)}건을 Service에 반영",
+               ", ".join(f"{s}.{m}" for s, m in newly_ported))
     return {"files": files, "ported_methods": newly_ported, "attempt_count": state.get("attempt_count", 0) + 1}
 
 
@@ -620,9 +690,23 @@ def route_after_splice_all(state: PipelineState):
 
 def validate_all_node(state: PipelineState) -> dict:
     """Stage 3: 화면마다 validate_screen()을 그대로 호출한다(로직 변경 없음)."""
+    round_no = state.get("repair_round", 0)
+    suffix = f" (수리 {round_no}라운드 후 재검증)" if round_no else ""
+    log.stage(4, 7, "VALIDATE", f"정적 검증{suffix} — 변환기와 분리된 검증기")
     results = {}
+    n_block = n_warn = 0
     for screen_id, screen_files in state.get("files", {}).items():
         results[screen_id] = validate_screen(screen_files, to_prefix(screen_id))
+        for r in results[screen_id]:
+            blocks = [i for i in r.issues if i.severity == "BLOCKER"]
+            warns = [i for i in r.issues if i.severity == "WARNING"]
+            n_block += len(blocks)
+            n_warn += len(warns)
+            for i in blocks:
+                log.block(f"{screen_id} [{r.check}] {i.issue_type} @ {i.method_name or r.filename}:{i.line_no or '-'}",
+                          i.message[:160])
+    (log.ok if n_block == 0 else log.block)(f"검증 결과 — BLOCKER {n_block}건 · WARNING {n_warn}건")
+    log.end_stage(f"정적 검증 완료 — 화면 {len(results)}건")
     return {"validation_results": results}
 
 
@@ -648,6 +732,11 @@ def _find_repairable_targets(state: PipelineState) -> list[tuple[str, str, str]]
                 continue
             for issue in r.issues:
                 if issue.severity != "BLOCKER" or issue.method_name not in llm_ported:
+                    continue
+                # 포팅 자체가 안 된 스텁은 수리 대상이 아니다(2026-09-05). "포팅된 코드의 오류를
+                # 고쳐라"라는 수리 프롬프트에 스텁 본문을 넣으면 고칠 대상이 없어 무의미한 호출이
+                # 된다 - 포팅 실패는 route_after_splice_all의 max_retries 재시도가 담당한다.
+                if issue.issue_type == "PORTING_INCOMPLETE":
                     continue
                 grouped.setdefault((screen_id, issue.method_name), []).append(issue.message)
     return [(sid, m, " / ".join(msgs)) for (sid, m), msgs in grouped.items()]
@@ -680,8 +769,27 @@ def repair_gate_node(state: PipelineState) -> dict:
     targets = _find_repairable_targets(state)
     round_used = state.get("repair_round", 0)
     max_repair = state.get("max_repair_retries", 2)
-    if not targets or round_used >= max_repair:
+
+    log.stage(5, 7, "REFLECT", f"자기 수정 게이트 — 라운드 {round_used}/{max_repair} 사용")
+    if not targets:
+        log.reflect("수리 불필요 → 다음 단계로 진행",
+                    "LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 "
+                    "(규칙 기반 생성물의 BLOCKER는 대상에서 제외 — LLM이 고칠 문제가 아님)")
+        log.end_stage("수리 0라운드")
         return {"repair_targets": []}
+    if round_used >= max_repair:
+        log.reflect(f"수리 대상 {len(targets)}건이 남았으나 **예산 소진 → 포기**",
+                    "무한 재분석은 자율 탐색이 되어버린다 — 상한을 넘기지 않고 미해소로 보고한다")
+        for sid, m, err in targets:
+            log.block(f"미해소: {sid}.{m}", err[:160])
+        log.end_stage(f"수리 {round_used}라운드 종료 — 미해소 {len(targets)}건")
+        return {"repair_targets": []}
+
+    log.reflect(f"수리 대상 {len(targets)}건 확정 → 라운드 {round_used + 1} 진입",
+                "검증 실패 메시지를 프롬프트에 피드백해 해당 메서드만 재생성한다 "
+                "(MatchFixAgent/ACToR 패턴: 검증·수리를 변환기와 분리)")
+    for sid, m, err in targets:
+        log.repair(f"{sid}.{m} 재생성 요청", err[:160])
     return {"repair_round": round_used + 1, "repair_targets": targets}
 
 
@@ -694,9 +802,13 @@ def route_after_repair_gate(state: PipelineState):
 
 def scan_all_node(state: PipelineState) -> dict:
     """Stage 4: 화면마다 run_review()를 그대로 호출한다(로직 변경 없음)."""
+    log.stage(6, 7, "TOOL", "품질·취약점 스캔 — 검증기와 분리된 스캐너")
     results = {}
+    n = 0
     for screen_id, screen_files in state.get("files", {}).items():
         results[screen_id] = run_review(screen_files, to_prefix(screen_id))
+        n += sum(len(v) for v in results[screen_id].values())
+    log.end_stage(f"품질 스캔 완료 — 화면 {len(results)}건, 지적 {n}건")
     return {"review_findings": results}
 
 
@@ -728,9 +840,16 @@ def _dispatch_ai_recommend_all(state: PipelineState) -> list[Send]:
 
 def route_after_scan_all(state: PipelineState):
     if not state.get("include_ai_recommend", True):
+        log.stage(7, 7, "DECIDE", "AI 추천 건너뜀 (opt-in 미선택)")
+        log.end_stage("파이프라인 완료 — 사람 승인 대기")
         return END
     sends = _dispatch_ai_recommend_all(state)
-    return sends if sends else END
+    if not sends:
+        log.stage(7, 7, "DECIDE", "AI 추천 대상 없음")
+        log.end_stage("파이프라인 완료 — 사람 승인 대기")
+        return END
+    log.stage(7, 7, "TOOL", f"AI 추천 — {len(sends)}건 병렬 디스패치 (nctRid 단위, opt-in)")
+    return sends
 
 
 def ai_recommend_one_node(state: dict) -> dict:
@@ -826,6 +945,11 @@ def run_pipeline_part_a(
         "max_repair_retries": max_repair_retries,
         "port_results": [], "port_errors": [], "ported_methods": [], "ai_recommend_results": [],
     }
+    log.banner(
+        "G-SCM 차세대 전환 Agent — 추론 로그",
+        f"대상 화면 {len(screens)}건 · 수리 라운드 상한 {max_repair_retries} · "
+        f"AI 추천 {'포함' if include_ai_recommend else '제외'}",
+    )
     graph = get_pipeline_graph()
     final_state: PipelineState = dict(initial)  # type: ignore[assignment]
     for mode, chunk in graph.stream(initial, stream_mode=["updates", "values"]):
@@ -834,4 +958,23 @@ def run_pipeline_part_a(
         elif progress_cb:
             for node_name, partial in chunk.items():
                 progress_cb(node_name, partial)
+
+    if log.enabled:
+        n_block = sum(
+            len([i for r in results for i in r.issues if i.severity == "BLOCKER"])
+            for results in final_state.get("validation_results", {}).values()
+        )
+        est = [p.get("estimated_llm_calls", {}) for p in final_state.get("plans", {}).values()]
+        rule_skipped = sum(e.get("porting_skipped_rule_based", 0) for e in est)
+        llm_planned = sum(e.get("porting", 0) for e in est)
+        denom = llm_planned + rule_skipped
+        log.summary([
+            ("처리 화면", f"{len(final_state.get('files', {}))}건"),
+            ("생성 파일", f"{sum(len(f) for f in final_state.get('files', {}).values())}종"),
+            ("LLM 포팅 호출", f"{llm_planned}건 (규칙 기반으로 회피 {rule_skipped}건"
+                            + (f", 결정론 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
+            ("자기 수정 라운드", f"{final_state.get('repair_round', 0)}회"),
+            ("잔여 BLOCKER", f"{n_block}건"),
+            ("반영 여부", "미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨"),
+        ])
     return final_state

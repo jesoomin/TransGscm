@@ -1,6 +1,6 @@
-# 아키텍처 분석: NEXCORE(AS-IS) → Spring/MyBatis(TO-BE) (v2)
+# 아키텍처 분석: NEXCORE(AS-IS) → Spring/MyBatis(TO-BE)
 
-> v2 범위 재정의: UI(Nexacro xfdl)는 전환하지 않는다. 이 문서는 **서버(Java/XSQL) 전환**만 다룬다. v1(React/AG-Grid 포함) 아키텍처는 이 문서의 이전 버전(git 이력) 참고. 근거는 @docs/05-proposal-v2.md, 멘토 코멘트는 @docs/06-mentor-feedback.md.
+> 이 문서는 전환 프로그램 **1단계 = 서버(Java/XSQL) 전환** 아키텍처만 다룬다. 화면(xfdl → React)은 2단계 별도 트랙이며, nctRid 계약을 통해 1단계 산출물을 그대로 소비한다. 근거는 @docs/05-proposal.md, 멘토 코멘트는 @docs/06-mentor-feedback.md.
 
 ## AS-IS: NEXCORE 구조
 NEXCORE는 SK그룹 표준 Java Spring 기반 애플리케이션 프레임워크로, 업무 로직을 BizUnit 단위로 개발한다. G-SCM에서는 화면 하나당 P(Presentation)/F(Function)/D(Data) 3개 BizUnit과 XSQL(iBatis SQL 매핑) 세트로 구성되어 있다.
@@ -12,7 +12,7 @@ NEXCORE는 SK그룹 표준 Java Spring 기반 애플리케이션 프레임워크
 - D BizUnit이 `dbSelect("S00N", paramMap, ctx)` 형태로 XSQL(iBatis) SQL을 실행한다
 - 응답은 다시 IDataSet으로 감싸져 UIAdapter를 통해 Nexacro Dataset으로 돌아간다
 
-## TO-BE: Spring/MyBatis 구조 (UI 제외)
+## TO-BE: Spring/MyBatis 구조 (1단계 범위)
 Nexacro 화면은 그대로 두고, 그 화면이 호출하던 nctRid 트랜잭션과 **동일한 계약**을 갖는 REST API를 새로 만든다. 나중에 확정된 디자인으로 React 화면이 만들어지면, 지금 만든 API를 그대로 호출한다 (Strangler Fig — 레거시와 신규 API가 당분간 공존).
 
 `docs/07-tobe-structure.xlsx`로 확정된 매핑 (추측 아님, PLA047 기준 확인):
@@ -58,12 +58,12 @@ NEXCORE가 단일 진입점(nctRid)에 고정된 Dataset 포맷을 쓰기 때문
 
 ## 선결 확인 필요 사항 (Phase 0)
 - UIAdapter의 실제 서블릿/URL 패턴 및 nctRid 라우팅 코드 — nctRid 매핑 그래프 구축의 전제
-- `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 (동적 조합인 경우 부분 평가 필요) — **UI를 전환하진 않지만, 어떤 화면이 어떤 nctRid를 쓰는지 알아야 TO-BE API와 대응시킬 수 있어 이 분석 자체는 여전히 필요**
+- `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 (동적 조합인 경우 부분 평가 필요) — **화면 자체는 2단계 몫이지만, 어떤 화면이 어떤 nctRid를 쓰는지 알아야 TO-BE API와 대응시킬 수 있어 이 분석은 1단계에 필요**
 - `.BIZUNIT` XML의 실제 스키마 (필드/타입 정의 포맷) — 비어있는 경우가 많아 대체 추출 규칙 필요
 - P BizUnit이 순수 진입점 역할만 하는지, 화면별 검증 로직이 섞여있는지 (PLA047 1건은 순수 위임 확인됨, 표본 확대 필요)
 - 소스코드 외부 LLM 전송에 대한 사내 보안 정책
 - 로컬 Oracle DB 접속 가능 여부 및 스키마(`RPLS_ADM`) 접근 권한 확인
 
-## 리스크 (멘토 코멘트 §6, UI 미전환 범위에서 재해석)
-- **Dataset 상태 모델**: Nexacro의 `rowState`(insert/update/delete 플래그)는 프론트 개념이라 이번 백엔드 전용 범위에선 직접 영향은 적지만, API가 트랜잭션 단위(nctRid 1:1)를 유지하는 한 D BizUnit의 개별 insert/update/delete 메서드 단위 그대로 Store 메서드로 옮기면 된다. 이후 React 트랙에서 그리드 dirty tracking을 어떻게 표현할지는 **API 설계 시점에 미리 고려**해야 나중에 API를 다시 바꾸지 않는다.
-- **동기 호출 유지**: 지금은 REST도 기존과 동일하게 동기 요청/응답으로 유지한다. Nexacro `transaction()` 콜백 → `async/await` 재작성은 React 트랙(범위 밖)의 문제이므로 여기서 미리 비동기로 설계하지 않는다.
+## 리스크 (멘토 코멘트 §6, 1단계 범위에서 재해석)
+- **Dataset 상태 모델**: Nexacro의 `rowState`(insert/update/delete 플래그)는 프론트 개념이라 1단계(서버 전환) 범위에선 직접 영향은 적지만, API가 트랜잭션 단위(nctRid 1:1)를 유지하는 한 D BizUnit의 개별 insert/update/delete 메서드 단위 그대로 Store 메서드로 옮기면 된다. 이후 2단계 React 트랙에서 그리드 dirty tracking을 어떻게 표현할지는 **API 설계 시점에 미리 고려**해야 나중에 API를 다시 바꾸지 않는다.
+- **동기 호출 유지**: 지금은 REST도 기존과 동일하게 동기 요청/응답으로 유지한다. Nexacro `transaction()` 콜백 → `async/await` 재작성은 2단계 React 트랙의 문제이므로 여기서 미리 비동기로 설계하지 않는다.

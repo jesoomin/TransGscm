@@ -243,7 +243,14 @@ def _check_unspliced_markers(java_text: str) -> list[ValidationIssue]:
     for m in re.finditer(r'UnsupportedOperationException\("TODO: (\w+) 포팅 필요"\)', java_text):
         line_no = java_text.count("\n", 0, m.start()) + 1
         issues.append(ValidationIssue(
-            issue_type="PORTING_INCOMPLETE", severity="WARNING",
+            # BLOCKER인 이유(2026-09-05 WARNING에서 승격): 스텁이 남아 있으면 컴파일은 되지만
+            # 런타임에 UnsupportedOperationException을 던진다 - "이 상태로는 정상 동작을 보장할 수
+            # 없음"이라는 BLOCKER 정의에 정확히 해당한다. WARNING이던 동안에는 LLM 포팅이 전부
+            # 실패해도 파이프라인 요약이 "잔여 BLOCKER 0건"으로 나와 성공처럼 읽혔다(추론 로그를
+            # 붙이고 dry-run으로 돌려보다가 발견). 다만 이 이슈는 수리 루프 대상이 아니다 -
+            # "포팅된 코드의 오류를 고치는 것"과 "포팅 자체가 안 된 것"은 다른 문제이고, 후자는
+            # route_after_splice_all의 max_retries 재시도가 담당한다(_find_repairable_targets 참고).
+            issue_type="PORTING_INCOMPLETE", severity="BLOCKER",
             message=f"{m.group(1)}가 아직 LLM 포팅되지 않고 스텁(UnsupportedOperationException) 상태입니다.",
             line_no=line_no, method_name=m.group(1),
         ))

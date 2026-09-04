@@ -1,12 +1,12 @@
-# G-SCM 차세대 전환 Agent (v2)
+# G-SCM 차세대 전환 Agent
 
-> 이 문서는 2026-08-14 범위 재정의 이후 버전이다. v1(화면까지 React로 전환)은 @docs/01-project-plan.md, @docs/02-architecture.md 이력에 남아있으나 **현재 유효한 범위는 이 문서 기준**이다. 제안서 원문은 @docs/05-proposal-v2.md, 멘토 코멘트 원문은 @docs/06-mentor-feedback.md 참고.
+> **이 Agent의 범위는 전환 프로그램 1단계 = 서버(Java/XSQL → Spring/MyBatis) 전환이다.** 화면(Nexacro xfdl → React)은 2단계 별도 트랙이며 이번 산출물이 아니다 — UI는 추가 디자인 변경 가능성이 있어 확정 시점이 서버보다 늦기 때문이다. 두 단계는 nctRid 계약으로 이어진다. 제안서는 @docs/05-proposal.md, 멘토 코멘트 원문은 @docs/06-mentor-feedback.md 참고.
 
 ## 프로젝트 개요
-Nexacro14(프론트) + NEXCORE(백엔드, Spring 기반 BizUnit 프레임워크) 조합으로 만들어진 레거시 화면 1,416개 중 **서버(Java/XSQL)만** React가 호출할 수 있는 구조로 자동 전환하는 AI Agent를 개발한다. **Nexacro 화면(xfdl) 자체는 이번 범위에서 전환하지 않는다** — UI는 추가 디자인 변경 가능성이 있어 별도 트랙으로 분리한다. 기존 트랜잭션(nctRid) 계약은 그대로 유지해서, 나중에 만들어질 React 화면이 지금 변환하는 API를 그대로 호출할 수 있게 한다.
+Nexacro14(프론트) + NEXCORE(백엔드, Spring 기반 BizUnit 프레임워크) 조합으로 만들어진 레거시 화면 1,416개에 대응하는 **서버(Java/XSQL)** 를 Spring/MyBatis 구조로 자동 전환하는 AI Agent를 개발한다. 이건 전환 프로그램의 **1단계**이고, 화면(xfdl → React)은 2단계 별도 트랙이다. 기존 트랜잭션(nctRid) 계약을 그대로 유지해서, 2단계에서 만들어질 React 화면이 1단계가 만든 API를 그대로 호출할 수 있게 한다.
 
 ## 핵심 원칙 (가장 중요)
-- **UI(xfdl/Nexacro)는 전환하지 않는다.** 이번 Agent의 산출물은 서버(Controller/Service/Store/Mapper)까지다. React 화면은 별도 트랙에서, 확정된 디자인으로 나중에 만들어지며 여기서 만든 API를 그대로 호출한다.
+- **범위는 1단계(서버)까지다.** 이번 Agent의 산출물은 Controller/Service/Store/Mapper까지다. 화면(xfdl/Nexacro)은 2단계 별도 트랙에서 확정된 디자인으로 만들어지며, 1단계가 만든 API를 그대로 호출한다.
 - **F/D BizUnit의 업무 로직(계산·분기·SQL)은 새로 작성하지 않고 그대로 옮긴다(포팅).** 단, NEXCORE 프레임워크 의존 코드(`IDataSet`/`IOnlineContext`/`lookupFunctionUnit` 등)는 Spring/MyBatis 방식으로 치환해야 한다 — 이 치환 자체가 이번 프로젝트에서 새로 개발하는 부분이지, 로직을 다시 설계하는 게 아니다.
 - SQL은 iBatis(XSQL) 문법을 MyBatis 문법으로 **변환만** 한다. 쿼리 로직 자체를 새로 짜지 않는다.
 - **결정론적으로 가능한 변환은 LLM에 맡기지 않는다.** iBatis→MyBatis, BizUnit 메서드 시그니처→Controller/Service/Store 골격, `.BIZUNIT` 필드→DTO는 규칙 기반 변환기로 처리한다. LLM은 표로 명시된 영역에만 쓴다 (@docs/02-architecture.md의 "결정론적/LLM 경계" 표 참고).
@@ -55,7 +55,7 @@ gscm/src/main/resources/
 ## 기술 스택
 - 오케스트레이션: 사내 GaiA LLM 프레임워크 우선 (한계 확인되면 LangGraph 검토)
 - **LLM 호출: 사내 LLM Gateway(AI Talent Lab, Azure OpenAI 호환, `https://skax.ai-talentlab.com`)를 통해 접근.** 허용 모델은 `gpt-4.1`/`gpt-4.1-mini`/`gpt-4o`/`gpt-4o-mini`/`gpt-5`/`gpt-5-mini`/`gpt-5.4`/`text-embedding-3-large`/`text-embedding-3-small`/`text-embedding-ada-002` — 이 목록 밖 모델명은 쓰지 않는다. 클라이언트 구현은 `agents/llm_gateway.py`. 결정론적 변환 영역에는 쓰지 않는다(위 핵심 원칙 참고)
-- 파싱: `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang 또는 tree-sitter. **xfdl 파서는 불필요**(UI 미전환)하지만, **`.xjs`의 `transaction()` 호출부에서 nctRid 문자열을 추출하기 위한 경량 JS AST 파서(babel 또는 tree-sitter)는 여전히 필요**하다 — 화면을 변환하진 않지만 화면↔nctRid 매핑을 알아야 하기 때문. 무거운 정적분석기(CodeQL류) 대신 언어별 경량 파서 조합으로 충분하다
+- 파싱: `.BIZUNIT` XML은 lxml, Java(BizUnit)는 javalang 또는 tree-sitter. **xfdl 파서는 1단계 범위가 아니지만**, **`.xjs`의 `transaction()` 호출부에서 nctRid 문자열을 추출하기 위한 경량 JS AST 파서(babel 또는 tree-sitter)는 여전히 필요**하다 — 화면을 변환하진 않지만 화면↔nctRid 매핑을 알아야 하기 때문. 무거운 정적분석기(CodeQL류) 대신 언어별 경량 파서 조합으로 충분하다
 - 검색/예시 저장: FAISS 또는 Chroma (파일럿 20~30건이 RAG 코퍼스가 됨)
 - 서비스화: FastAPI
 - **업로드→변환 챗팅 UI**: `docs/07-tobe-structure.xlsx`의 AS_IS 시트 기준 폴더6(`gscm`, 즉 `dev-rp-online/src/java/gscm/` 이하)부터 업로드하면 TO-BE 구조 파일로 변환해주는 대화형 도구. 상세는 @docs/03-kickoff-plan.md
@@ -67,7 +67,7 @@ gscm/src/main/resources/
 ```
 /agents        Parsing / Conversion / Validation Agent 구현, LLM Gateway 클라이언트(llm_gateway.py)
 /chatui        업로드→변환 챗팅 UI (Streamlit, 로컬 전용) - converters.py(iBatis→MyBatis), skeleton_gen.py(Api/Service/Store/Dto 골격 + TO-BE 폴더경로), validators.py(변환기와 분리된 정적 검증기), app.py
-/parsers       .BIZUNIT XML, Java, XSQL 파서 (xfdl 파서는 범위 아님)
+/parsers       .BIZUNIT XML, Java, XSQL 파서 (xfdl 파서는 2단계 트랙 몫)
 /templates     Controller/Service/Store/Mapper 코드 생성 템플릿
 /pilot         파일럿 화면 20~30건 변환 결과물 (유형별 4~5개씩)
 /tracking      화면·파일별 변환 검증 테이블 (@docs/08-conversion-verification.md 참고)
@@ -85,7 +85,7 @@ gscm/src/main/resources/
   /dev-rp-online/src/java/gscm/r/{p1}/{p2}/{p2}b/db/{D}{화면}.XSQL
     예) r/pm/pla/plab/biz/PPLA047.JAVA, r/pm/pla/plab/db/DPLA047.XSQL
 ```
-- xfdl(`dev-ui`)은 이번 범위가 아니므로 신규로 `/legacy`에 정리하지 않는다. 기존에 들어온 xfdl 샘플(`docs/메뉴구조.xlsx` v1)은 이력 참고용으로만 남긴다.
+- xfdl(`dev-ui`)은 1단계 범위가 아니므로 `/legacy`에 정리하지 않는다. `docs/메뉴구조.xlsx`의 xfdl 정보는 2단계 트랙 참고용으로만 남긴다.
 - 화면에 안 묶인 `DCOT998`류 공통·배치 BizUnit도 동일 구조로 들어오되, 변환 범위에서는 제외.
 
 ## 로컬 개발 환경 (DB·API 키 등 민감정보)
@@ -108,6 +108,6 @@ nctRid, BizUnit, PU/FU/DU, UIAdapter 등은 @docs/04-glossary.md 참고. Control
 - 결정론적으로 풀리는 변환(문법 치환, 시그니처 매핑)에 LLM을 쓰지 않는다 — 비용만 쓰고 품질은 안 나온다
 - 학습 기반 변환 모델을 새로 훈련하지 않는다 — 병렬 데이터도 없고 규칙성이 높아 불필요
 - 완전 자율 탐색형 에이전트(SWE-agent류)를 만들지 않는다 — 1,416회 반복 작업엔 고정된 파이프라인이 자율 탐색보다 낫다
-- Nexacro→React 전용 문제에 범용 다국어/프레임워크 전환기를 설계하지 않는다
+- NEXCORE→Spring 전용 문제에 범용 다국어/프레임워크 전환기를 설계하지 않는다
 - DB 접속정보·비밀번호·LLM Gateway API 키 등을 CLAUDE.md/docs/코드에 직접 적거나 커밋하지 않는다 — 채팅에 붙여넣는 것도 피하고 `.env`에 직접 입력하도록 안내한다
 - 90% 이상의 공수 절감을 제안서에 약속하지 않는다 — 화면 유형별 실측(@docs/06-mentor-feedback.md 4번) 없이 낙관적 수치를 확정하지 않는다

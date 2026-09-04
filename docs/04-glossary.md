@@ -10,10 +10,10 @@
 - **IDataSet / IOnlineContext**: NEXCORE BizUnit 메서드의 표준 파라미터. IDataSet은 요청/응답 데이터, IOnlineContext는 사용자·거래 컨텍스트 정보를 담는다.
 - **.BIZUNIT XML**: 각 BizUnit의 입출력 필드/타입을 정의하는 메타데이터 파일로 추정. 실제 스키마는 Phase 0에서 확인 필요.
 - **DCOT998류**: 특정 화면에 묶이지 않은 공통/배치성 BizUnit을 가리키는 예시. 이번 변환 범위에서 제외.
-- **AG-Grid**: React용 데이터 그리드 라이브러리. v1(UI 전환 포함) 범위에서 Nexacro Grid를 대체할 컴포넌트로 검토했으나, v2(백엔드 전용 범위)에서는 이번 Agent 산출물이 아니다 — 향후 별도 React 트랙에서 다룸.
+- **AG-Grid**: React용 데이터 그리드 라이브러리. 2단계 UI 트랙에서 Nexacro Grid를 대체할 후보 컴포넌트다 — 1단계(서버 전환) 산출물은 아니다.
 - **GaiA**: 사내 SKHy LLM 프레임워크. Orchestrator/Multi-Agent 구성을 지원하며, P-MIX Simulation Agent에서 이미 사용 중.
 
-### v2(백엔드 전용 범위) 신규 용어
+### 1단계(서버 전환) TO-BE 용어
 - **`{화면}Api`**: TO-BE의 P BizUnit 대체. `Controller/` 폴더 아래 위치하는 REST 엔드포인트 클래스. nctRid 1개 = 엔드포인트 1개 매핑을 유지한다(범용 CRUD API로 재설계하지 않음). 예: `Pla047Api`.
 - **`{화면}Service`**: TO-BE의 F BizUnit 대체. `service/` 폴더. 업무 로직(계산·분기)을 NEXCORE 프레임워크 의존 없이 포팅한 클래스. 예: `Pla047Service`.
 - **`{화면}Store`**: TO-BE의 D BizUnit 대체. `store/` 폴더. MyBatis Mapper를 호출하는 데이터 접근 클래스. 예: `Pla047Store`.

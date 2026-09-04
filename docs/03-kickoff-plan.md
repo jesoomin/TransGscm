@@ -1,17 +1,17 @@
-# 착수 세부 실행 계획 (v2 — 백엔드 전용 범위)
+# 착수 세부 실행 계획 (1단계 — 서버 전환)
 
 이 문서는 실제 코드 작업을 시작하기 전에 무엇부터, 어떤 순서로 할지를 정리한다. **순서는 @docs/06-mentor-feedback.md §J "적용 우선순위"를 그대로 따른다: 1~4번이 프로젝트 성패의 80%이고 LLM은 6번에서야 등장한다.** 이 순서를 바꾸지 않는다.
 
-> v2 변경사항: UI(xfdl→React) 전환이 범위에서 빠지고 서버(Java/XSQL) 전환만 남았다. 이전 Phase 0~3(v1)에서 확보한 사실은 대부분 유효해 아래로 이관했다.
+> 범위는 전환 프로그램 1단계(서버 Java/XSQL → Spring/MyBatis)다. 화면(xfdl → React)은 2단계 별도 트랙이므로 이 계획에 포함하지 않는다.
 
 ## Phase 0 — 사전 확보 (착수 즉시, 코드 작성 전)
 - [ ] UIAdapter의 서블릿/URL 패턴 및 nctRid 라우팅 코드 확보
-- [ ] `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 확인 (UI는 전환 안 하지만 화면↔nctRid 대응은 여전히 필요)
+- [ ] `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 확인 (화면 자체는 2단계 몫이지만 화면↔nctRid 대응은 1단계에 필요)
 - [ ] `.BIZUNIT` XML 샘플 1세트 확보 및 스키마(필드/타입 정의 포맷) 파악 — 지금까지 본 3개(PLA047)는 전부 `<fields/>` 비어있음, 실제로 항상 비는지 다른 화면으로 확인 필요
 - [x] PPLA047.JAVA / FPLA047.JAVA / DPLA047.JAVA / DPLA047.XSQL 실제 소스 1세트 확보 — `/legacy`에 확보됨. **소스 자체에 무결성 문제 있음** (아래 참고), 재확보 또는 원본 대조 필요
 - [x] P BizUnit이 순수 진입점인지, 화면별 검증 로직이 섞여 있는지 코드로 확인 — PPLA047.java 확인 결과 **순수 위임(delegation)만 수행**, 검증 로직 없음. `PLA047` 1건 기준, 나머지 화면은 표본 확대 필요
 - [ ] 소스코드 외부 LLM 전송 관련 사내 보안 정책 확인 (폐쇄망/사내 LLM 게이트웨이 필요 여부)
-- [ ] 1,416개 전체 화면 목록·메뉴구조 전체본 확보 — 현재 `docs/메뉴구조.xlsx`(v1, xfdl 포함)와 `docs/07-tobe-structure.xlsx`(v2, PLA047 AS-IS/TO-BE 1건)만 있음, 전체본 아님
+- [ ] 1,416개 전체 화면 목록·메뉴구조 전체본 확보 — 현재 `docs/메뉴구조.xlsx`(xfdl 포함, 2단계 참고용)와 `docs/07-tobe-structure.xlsx`(PLA047 AS-IS/TO-BE 1건)만 있음, 전체본 아님
 - [x] AS-IS 원본 소스를 `/legacy` 폴더에 정리 — PLA047 세트(P/F/D BizUnit + XSQL) 확보됨
 - [ ] **`/legacy`의 PLA047 소스 무결성 문제 해결** — `.bizunit` XML 3종은 아직 XML 선언 손상(따옴표 불일치, `<description>`/`</dedication>` 태그 불일치)으로 파싱 불가. `FPLA047.java`/`PPLA047.java`는 아직 컴파일 에러 다수(중괄호 누락, 미선언 변수 `du`, `ArrayList<object>` 등). **`DPLA047.xsql`은 2026-08-14 중 갱신되어 `S001~S006`이 전부 정의되고 `</sqlMap>`으로 닫히는 등 대폭 개선됨** — `chatui/converters.py`에 넣은 스택 기반 태그 검사로 확인한 결과 태그 불일치 2건 확정: ① 4718행 `<isNotEqual property="CHKDASHBOARDYN">`가 4840행에서 `</isEqual>`로 잘못 닫힘 ② 5179행 `</isNotEqual>`가 매칭되는 여는 태그 없이 단독 존재. 이 2곳만 고치면 XSQL은 유효한 XML이 될 가능성이 높다(EOF까지 태그 총량은 우연히 맞음)
 - [x] `.bizunit` 3종 + `FPLA047.java`/`PPLA047.java`도 변환 대상에서 제외하지 않는다 — 확인됨(아래 참고). 원본이 깨져 있어도 스킵하지 않고 `.BIZUNIT`은 코드 실사용값(getField/putField) 역추출로, Java는 원본 정정 후 포팅으로 진행
@@ -129,7 +129,7 @@
 - [ ] 공통 응답/예외 처리 규약 확정 (사람이 먼저 설계 — 화면마다 에이전트가 제각각 만들지 않도록) — **초안 작성함(2026-08-28), 아직 미확정.** `docs/09-common-response-convention.md`에 초안 + 열린 질문(HTTP status 정책 등) 정리. 코드는 `pilot/gscm/.../common/controller/CommonApiResponse.java`(createError 추가)/`common/exception/BizRuntimeException.java`(신규)/`common/exception/GlobalExceptionHandler.java`(신규) + `resources/message/errors*.properties`(E0052만, 원문 미확인이라 잠정 문구로 표시) + `resources/application.properties`(MessageSource 연결). 실제 `mvn compile`로 검증: 새 클래스들은 문제없이 컴파일되고, 기존에 알려진 `Pla047Service.java` 실패만 그대로 남음. **아직 skeleton_gen.py 생성 템플릿에는 반영 안 함** - 사람 확정 후 반영할 것.
 - [ ] 메시지 코드 표준화: AS-IS 하드코딩 코드(`E0052`, `W0024`, `I0016` 등) → `errors.properties`/`errors_en.properties` 추출 규칙
 - [x] **AI 추천 (2026-08-29, 멘토 논의 반영 — UI 명칭은 "AI 추천"으로 확정)** — **범위(사용자 확인)**: 실제
-      React/TypeScript 코드나 xfdl 전환은 하지 않는다(v2 "UI 미전환" 원칙 그대로 유지). 백엔드
+      React/TypeScript 코드나 xfdl 전환은 하지 않는다(1단계 범위 원칙 그대로 유지). 백엔드
       DTO의 "모양"(JSON 타입·페이지네이션 래핑)만 React가 쓰기 편하게 LLM이 대안 제안하는
       opt-in 비교 기능. `chatui/react_variant.py`(신규) `recommend_react_variant()` — 기존
       `extract_dto_fields()`가 뽑은 요청/응답 필드 목록을 LLM에 보내 JSON 스펙(필드별 타입/
@@ -515,13 +515,51 @@ LangGraph StateGraph가 있었지만 `run_screen_conversion()`이 `.invoke()`(�
   고아 코드** 상태다. 규약 자체가 미확정(HTTP status 정책 등)이라 생성기에 주입하는 건 여전히
   사람 확정 이후지만, "이미 반영돼 있다"는 오해는 없어야 해서 사실을 여기 남긴다.
 
+- **추론 로그 가시화 + CLI 진입점(2026-09-05)** — 계기는 AI Master 심사의 시연 영상 제출 가이드다.
+  가이드가 *"UI에서 처리 결과만 보여주는 경우 → 기술 구현 확인이 어려워 평가에 불리"*, *"핵심 로그가
+  담긴 터미널/콘솔 화면은 반드시 포함"*, *"Agent의 추론 과정이 보여지는 로그로 증명해야 기술 깊이를
+  평가받을 수 있다"*고 못 박고 있고, 5분 구성 중 1:30~3:30(40%)이 "Planning / Self-Correction 단계
+  확대"다. 그런데 확인해보니 **`agents/workflow_graph.py`의 logging/print 호출이 0건**이었다 -
+  파이프라인이 판단은 하는데(어떤 메서드를 LLM에 보낼지, 검증 실패를 수리로 되돌릴지, 예산을
+  소진했으니 포기할지) 그게 `progress_cb`로 Streamlit UI에만 흘러가서 **터미널에는 아무것도 안 남는
+  상태**였다. 추론이 없는 게 아니라 안 보이는 것이었다.
+
+  `agents/reasoning_log.py`(신규) - 단계/이벤트 종류(PLAN/OBSERVE/DECIDE/CONTEXT/TOOL/VALIDATE/
+  REFLECT/REPAIR/PASS/BLOCK)별로 정렬된 구조화 로그를 콘솔에 출력한다. **원칙: 없는 추론을 지어내지
+  않는다** - 로그 문구를 만들어내는 게 아니라 이미 코드가 내린 결정을 그대로 받아 적는다(호출부가
+  전부 실제 분기 지점에 있고, 인자는 그 시점의 실제 값이다). 기본은 꺼져 있어 Streamlit 경로는
+  영향받지 않는다(`GSCM_REASONING_LOG=1` 또는 `log.enable()`).
+  `agents/run_pipeline.py`(신규) - `python -m agents.run_pipeline <폴더> [--screens ...] [--dry-run]`.
+  UI와 **동일한** `run_pipeline_part_a()`를 부르고 저장은 하지 않는다(승인 게이트 앞에서 멈춤).
+  `--dry-run`은 LLM을 호출하지 않아 키·네트워크 없이 계획→규칙기반변환→검증→게이트 경로를 그대로
+  재현한다(시연 리허설용).
+
+  **이 로그를 붙이자마자 드러난 실제 결함 2건(둘 다 수정함)**:
+  1. **포팅 전량 실패가 "성공"으로 보고됐다.** `PORTING_INCOMPLETE`(스텁 잔존)가 `WARNING`이라,
+     `--dry-run`으로 LLM 호출 6건이 전부 실패했는데도 실행 요약이 **"잔여 BLOCKER 0건"**으로 나왔다.
+     스텁이 남으면 컴파일은 되지만 런타임에 `UnsupportedOperationException`을 던지므로 "이 상태로는
+     정상 동작을 보장할 수 없음"이라는 BLOCKER 정의에 정확히 해당한다(주차별 산출물에 정리한 판정
+     체계에도 "포팅 스텁 잔존"을 BLOCKER 예시로 적어놨는데 코드와 어긋나 있었다). BLOCKER로 승격하고,
+     대신 `_find_repairable_targets()`에서는 이 타입을 **제외**했다 - "포팅된 코드의 오류를 고쳐라"는
+     수리 프롬프트에 스텁 본문을 넣으면 고칠 대상이 없어 무의미한 호출이 된다. 포팅 실패 재시도는
+     `route_after_splice_all`의 `max_retries`가 담당하는 별개 메커니즘이다. 수정 후 같은 실행에서
+     정직하게 **"잔여 BLOCKER 6건"**으로 바뀌는 것 확인.
+  2. **병렬 브랜치가 서로의 로그를 깨뜨렸다.** `Send` 병렬 포팅 중 한 이벤트의 본문과 근거 줄 사이에
+     다른 브랜치 출력이 끼어들어 로그가 뒤섞였다(영상에서 그대로 깨져 보인다). 이벤트 하나를
+     원자적으로 내보내도록 락을 걸어 해소.
+
+  **부수 확인 - 벤치마크 세트의 한계**: `PLA081-110_migration_sample`(30화면, 5도메인)로 돌려보니
+  **nctRid가 0건**으로 잡힌다. 이 세트에 `.bizunit` 파일이 없기 때문이다(P/F/D `.java` + `.xsql`만
+  있음). 즉 **"nctRid 자동 확정률 100%"는 `sample_data/legacy-u-pla001-050/` 기준 수치이지 이
+  세트에는 성립하지 않는다** - 지표를 보고할 때 어느 세트 기준인지 반드시 함께 적어야 한다.
+
 ## Phase 3 — 파일럿 20~30화면 (자체 벤치마크 구축 겸함)
 - [ ] 전체 화면을 컴포넌트 구성 + transaction 개수 + 그리드 유무 기준으로 구조적 클러스터링
 - [ ] 유형별 대표 화면 4~5개씩, 총 20~30개 선정 (단순조회/그리드, 조회+상세+CRUD, 복합화면·리포트·특수로직)
 - [ ] 화면별로 **Refactor(1:1 구조보존) / Reimagine(업무규칙만 추출해 재설계) 트랙**을 사람이 결정 — 단순조회·CRUD는 대부분 Refactor, 복합화면·원본 자체가 망가진 화면(예: PLA047의 FPLA047처럼 컴파일도 안 되는 경우)은 Reimagine 후보로 분류
 - [ ] Phase 1~2 결과로 실제 변환 실행, `/tracking` 검증 테이블(@docs/08-conversion-verification.md)에 화면별 결과 기록 — 특히 **사람 수정 라인 비율**(자동 생성 대비 리뷰 중 수정한 라인 비율)을 반드시 기록. 이게 실제 공수 절감률의 대리 지표(@docs/06-mentor-feedback.md §H)
 - [ ] 변환 규칙·프롬프트·공통 컴포넌트를 자산화 (이후 RAG 코퍼스로 사용)
-- [ ] 유형별 실측 공수로 전체 계획 재산정 — 목표는 "화면이 돌아간다"가 아니라 "유형별 변환 레시피와 실측 공수 확보". @docs/01-project-plan.md의 v2 KPI 조정치(평균 3일, 65~70% 절감)와 실측을 비교
+- [ ] 유형별 실측 공수로 전체 계획 재산정 — 목표는 "화면이 돌아간다"가 아니라 "유형별 변환 레시피와 실측 공수 확보". @docs/01-project-plan.md의 KPI 기준값(평균 3일, 65~70% 절감)과 실측을 비교
 
 ## Phase 4 — LLM 에이전트 파이프라인
 - [ ] Analyzer / Planner / Translator / Validator 역할 분리 (ReCodeAgent 구조 차용, @docs/06-mentor-feedback.md §B)
@@ -541,5 +579,5 @@ LangGraph StateGraph가 있었지만 `run_screen_conversion()`이 `.invoke()`(�
 - Phase 0~1에서 확인한 사실이 @docs/02-architecture.md의 가정과 다르면, 코드를 먼저 짜지 말고 문서부터 갱신한다
 - 화면 20~30건 파일럿 전까지는 전체 1,416개 화면에 대한 일괄 처리 스크립트를 만들지 않는다. **예외(2026-08-28, 2026-09-02 갱신)**: 사용자가 명시적으로 요청해 폴더 안 화면 전체를 1~5단계(규칙기반→LLM포팅→검증→스캔→AI추천)까지 LangGraph로 자동 진행시킨다(`agents/workflow_graph.run_pipeline_part_a`, `chatui/app.py` 폴더 모드). 대상 화면은 멀티셀렉트로 사람이 직접 고르고(기본값 전체지만 좁혀서 돌릴 수 있음), 저장(6~7단계로 넘어가는 지점)은 여전히 "승인하고 저장" 버튼을 사람이 눌러야만 진행된다. git 커밋은 여전히 사람이 함. CLAUDE.md "하지 말아야 할 것"에도 같은 예외를 기록해뒀다.
 - 결정론적으로 풀리는 변환에 LLM을 쓰지 않는다 (CLAUDE.md "하지 말아야 할 것" 참고)
-- RAG(FAISS/Chroma)·프롬프트 엔지니어링·FastAPI 서비스화(Phase 4~6)는 파일럿 20~30화면이 끝나기 전까지 착수하지 않는다(2026-08-28 사용자 확인 - Maven 빌드 검증만 우선 강화하기로 함). ESLint/tsc는 v2 범위(UI 미전환)에 해당 사항 없음 - v1 문서 이력에만 남아있는 항목이니 착수 목록에서 빼고 봐야 한다
+- RAG(FAISS/Chroma)·프롬프트 엔지니어링·FastAPI 서비스화(Phase 4~6)는 파일럿 20~30화면이 끝나기 전까지 착수하지 않는다(2026-08-28 사용자 확인 - Maven 빌드 검증만 우선 강화하기로 함). ESLint/tsc는 1단계 범위(서버 전환)에 해당 사항 없음 - 2단계 UI 트랙의 검증 수단이다
 - 매 Phase 종료 시 이 문서의 체크박스를 갱신해 진행 상황을 추적한다

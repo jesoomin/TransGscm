@@ -1,3 +1,32 @@
+# 멘토 코멘트 (원문)
+
+> **읽는 법**: 이 코멘트는 G-SCM 차세대 전환 **프로그램 전체**(1단계 서버 + 2단계 UI)를 대상으로 받은 조언이다.
+> 이번 Agent의 범위는 1단계(서버 Java/XSQL → Spring/MyBatis)이므로, 아래 항목 중 UI 전환에 해당하는 부분
+> (§2의 xfdl→React/AG-Grid 매핑, §3의 프론트 Playwright, §6의 Dataset rowState·async 전환, §A의 Universal
+> Type Mapping 중 displaytype↔cellRenderer)은 **2단계 트랙에서 적용할 조언**으로 분류해 이번 범위에서는
+> 다루지 않는다. 1단계에 직접 적용되는 항목은 아래와 같다.
+
+| 절 | 내용 | 1단계 적용 |
+|---|---|---|
+| §1 | nctRid 매핑 인덱스 선행 구축 | **O — 최우선** |
+| §2 | 결정론적/LLM 경계선 (iBatis→MyBatis, BizUnit→Controller 골격) | **O** (xfdl→React 항목은 2단계) |
+| §3 | 차등 테스트로 검증, 문법 정확도 ≠ 기능 정확성 | **O — 검증 전략의 핵심** (프론트 렌더 테스트는 2단계) |
+| §4 | 공수 추정 현실화 (65~70%, 90% 약속 금지) | **O — KPI 기준값의 근거** |
+| §5 | 파일럿 설계 (클러스터링 → 유형별 대표 20~30개) | **O** |
+| §6 | rowState 의미 손실 / 동기→비동기 전환 | 2단계 (단, API 설계 시점에 미리 고려) |
+| §A | AlphaTrans — fragment 분해, 콜그래프 역순, 스켈레톤 우선, 실패분 리포트 | **O** |
+| §B | ReCodeAgent — Analyzer/Planner/Translator/Validator 분업, 계획 파일 고정 | **O** |
+| §C | RepoTransAgent — RAG + Reflection 루프, 재시도 상한 | **O** (RAG는 파일럿 이후) |
+| §D | MatchFixAgent/ACToR — 검증·수리를 변환기와 분리 | **O — 가장 중요한 차용 포인트** |
+| §E | Copilot Modernization — 계획 영속화, 작업 단위 커밋, 룰 엔진 결합 | **O** |
+| §F | AWS Transform — Refactor / Reimagine 이원화 | **O** |
+| §G | 하이브리드 원칙 — 트랜스파일러 먼저, 정적 분석 기반 교정, Strangler Fig | **O** |
+| §H | 자체 벤치마크 + 사람 수정 라인 비율 | **O — 핵심 대리지표** |
+| §I | 안 맞는 것 (학습 기반 변환, 완전 자율 에이전트, 범용 다국어 설계) | **O — 의도적으로 버림** |
+| §J | 적용 우선순위 1~7 | **O — 착수 순서 그대로 채택** |
+
+---
+
 NEXCORE/Nexacro 조합은 사실 AlphaTrans/ReCodeAgent가 가정하는 것보다 자동화에 유리한 편입니다. 계층과 네이밍이 강제되어 있고, 화면 정의가 XML(.xfdl)이라 파싱이 되니까요. 다만 성패를 가르는 지점이 몇 군데 명확히 있습니다.
 
 1. 가장 먼저 풀어야 할 것: nctRid 매핑 인덱스

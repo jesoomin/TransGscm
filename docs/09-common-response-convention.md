@@ -43,7 +43,7 @@ AS-IS의 `new BizRuntimeException("E0052", e)` 호출 형태를 그대로 받을
 - `BizRuntimeException` → `code`로 메시지 리소스(`errors.properties`) 조회해서 `CommonApiResponse.createError(code, message)` 반환
 - 그 외 처리 안 된 `Exception` → `E0052`(제네릭 코드)로 동일하게 감싸서 반환
 - **미정(확인 필요): HTTP status를 뭘로 할지.** 두 가지 안이 있다:
-  - **안 A (권장): 정상적인 REST 관례대로 4xx/5xx 사용.** 새 REST API는 Nexacro가 호출하지 않고(UI는 이번 범위 아님) 나중에 React가 호출할 새 소비자라, NEXCORE 시절 "항상 200, 바디 안에서 성공/실패 구분" 관행을 유지할 이유가 없다. `E`(시스템 오류)=500, 그 외(업무 규칙 위반으로 추정)=400 정도로 단순하게 시작.
+  - **안 A (권장): 정상적인 REST 관례대로 4xx/5xx 사용.** 새 REST API는 Nexacro가 호출하지 않고(UI는 2단계 트랙) 2단계 React 화면이 호출할 새 소비자라, NEXCORE 시절 "항상 200, 바디 안에서 성공/실패 구분" 관행을 유지할 이유가 없다. `E`(시스템 오류)=500, 그 외(업무 규칙 위반으로 추정)=400 정도로 단순하게 시작.
   - **안 B: 항상 200 반환, 바디의 `success` 필드로만 구분.** 예전 NEXCORE Dataset 응답 관행과 그대로 맞춰서, 클라이언트 쪽 분기 로직을 더 단순하게 유지하고 싶을 때.
   - 이 초안은 **안 A**로 작성했다 — 다른 결정이면 `GlobalExceptionHandler` 한 곳만 고치면 된다.
 
