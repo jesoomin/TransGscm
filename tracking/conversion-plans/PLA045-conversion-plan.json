@@ -1,0 +1,104 @@
+{
+  "plan_version": 1,
+  "generated_at": "2026-09-05T08:10:55",
+  "screen_id": "PLA045",
+  "ui_id": "U-PPLA045",
+  "package": {
+    "p1": "pm",
+    "p2": "pla"
+  },
+  "fragments": {
+    "P.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\PPLA045.java",
+      "lines": 107,
+      "sha256": "e7a156bd0cdf8b5249e41d2132f928e1fa115a95cabef75f294dbf365c1dabf8"
+    },
+    "P.bizunit": {
+      "present": false,
+      "as_is_path": null
+    },
+    "F.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\FPLA045.java",
+      "lines": 120,
+      "sha256": "8614fd0aa6ba686d9359685192e934ad14eda74359478e6898f62487be1af4c6"
+    },
+    "D.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\DPLA045.java",
+      "lines": 109,
+      "sha256": "6f6bfce920c8e31bbb9a4953e8b7fd9a1766b14995063e4219884a1c17cf4759"
+    },
+    "D.xsql": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\db\\DPLA045.xsql",
+      "lines": 190,
+      "sha256": "c5da7783818ef2375c2357ef9e0d1444bb844f0eb4a6397805410d5521f288b5"
+    }
+  },
+  "nctrids": [],
+  "expected_outputs": [
+    {
+      "file": "Pla045Api.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/Controller/Pla045Api.java",
+      "conversion_method": "RULE_BASED",
+      "note": "P BizUnit 메서드 시그니처 -> REST 엔드포인트"
+    },
+    {
+      "file": "Pla045Dto.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/dto/Pla045Dto.java",
+      "conversion_method": "RULE_BASED",
+      "note": ".BIZUNIT/실사용 getField·putRecordset에서 역추출"
+    },
+    {
+      "file": "Pla045Service.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/service/Pla045Service.java",
+      "conversion_method": "RULE_BASED_SKELETON + LLM_PORTING",
+      "note": "골격은 규칙 기반, 단순 위임이 아닌 메서드 본문만 LLM이 포팅"
+    },
+    {
+      "file": "Pla045Store.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/store/Pla045Store.java",
+      "conversion_method": "RULE_BASED",
+      "note": "D 메서드 -> MyBatis statement 참조"
+    },
+    {
+      "file": "Pla045Mapper.xml",
+      "tobe_path": "gscm/src/main/resources/mapper/r/pm/pla/Pla045Mapper.xml",
+      "conversion_method": "RULE_BASED",
+      "note": "iBatis -> MyBatis 문법 변환만"
+    }
+  ],
+  "llm_porting_targets": [
+    "fPLA045QrySelectRevisionList",
+    "fPLA045QrySelectMainList",
+    "fPLA045QrySelectValidationResult"
+  ],
+  "rule_based_delegations": {
+    "fPLA045QryRunProcedure": "dPLA04505"
+  },
+  "estimated_llm_calls": {
+    "porting": 3,
+    "porting_skipped_rule_based": 1,
+    "ai_recommend": 0
+  },
+  "track": "UNDECIDED",
+  "unsupported_db_verbs": {
+    "dPLA04505": [
+      "ExecuteProcedure"
+    ]
+  },
+  "track_signals": {
+    "as_is_unbalanced_braces": {
+      "P.java": 0,
+      "F.java": 0,
+      "D.java": 0
+    },
+    "as_is_source_broken": false,
+    "f_method_count": 4,
+    "nctrid_count": 0,
+    "has_xsql": true,
+    "has_unsupported_db_verbs": true
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "plan_version": 1,
+  "generated_at": "2026-09-05T08:10:55",
+  "screen_id": "PLA050",
+  "ui_id": "U-PPLA050",
+  "package": {
+    "p1": "pm",
+    "p2": "pla"
+  },
+  "fragments": {
+    "P.java": {
+      "present": false,
+      "as_is_path": null
+    },
+    "P.bizunit": {
+      "present": false,
+      "as_is_path": null
+    },
+    "F.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\FPLA050.java",
+      "lines": 150,
+      "sha256": "21fad51ddb4df39b9ceb2f75f0f2f02be6286923b7d2d4547abb041ad591dfa6"
+    },
+    "D.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\DPLA050.java",
+      "lines": 90,
+      "sha256": "4899b4961b87be20e96a4b148e7f7958f904deb18dc7eab113346bc0f5e3036a"
+    },
+    "D.xsql": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\db\\DPLA050.xsql",
+      "lines": 84,
+      "sha256": "8eb3bdffbfa99a6eb7ab104e73550f856e3bd17f577ce781641e8f06550c122c"
+    }
+  },
+  "nctrids": [],
+  "expected_outputs": [
+    {
+      "file": "Pla050Service.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/service/Pla050Service.java",
+      "conversion_method": "RULE_BASED_SKELETON + LLM_PORTING",
+      "note": "골격은 규칙 기반, 단순 위임이 아닌 메서드 본문만 LLM이 포팅"
+    },
+    {
+      "file": "Pla050Store.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/store/Pla050Store.java",
+      "conversion_method": "RULE_BASED",
+      "note": "D 메서드 -> MyBatis statement 참조"
+    },
+    {
+      "file": "Pla050Mapper.xml",
+      "tobe_path": "gscm/src/main/resources/mapper/r/pm/pla/Pla050Mapper.xml",
+      "conversion_method": "RULE_BASED",
+      "note": "iBatis -> MyBatis 문법 변환만"
+    }
+  ],
+  "llm_porting_targets": [
+    "fAuthCheck",
+    "fPLA050QrySelectMainList",
+    "fPLA050QrySelectDetail"
+  ],
+  "rule_based_delegations": {
+    "fCommonCodeQry": "dCommonCodeQry",
+    "fHistoryQry": "dHistoryQry"
+  },
+  "estimated_llm_calls": {
+    "porting": 3,
+    "porting_skipped_rule_based": 2,
+    "ai_recommend": 0
+  },
+  "track": "UNDECIDED",
+  "unsupported_db_verbs": {},
+  "track_signals": {
+    "as_is_unbalanced_braces": {
+      "F.java": 0,
+      "D.java": 0
+    },
+    "as_is_source_broken": false,
+    "f_method_count": 5,
+    "nctrid_count": 0,
+    "has_xsql": true,
+    "has_unsupported_db_verbs": false
+  }
+}

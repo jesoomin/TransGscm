@@ -1,0 +1,159 @@
+{
+  "plan_version": 1,
+  "generated_at": "2026-09-05T08:10:55",
+  "screen_id": "PLA046",
+  "ui_id": "U-PPLA046",
+  "package": {
+    "p1": "pm",
+    "p2": "pla"
+  },
+  "fragments": {
+    "P.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\PPLA046.java",
+      "lines": 439,
+      "sha256": "92af14c377a27d461537a1febdf979f174869b4f805a7995ba128742ee0e2090"
+    },
+    "P.bizunit": {
+      "present": false,
+      "as_is_path": null
+    },
+    "F.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\FPLA046.java",
+      "lines": 406,
+      "sha256": "8aeb5f8841f8826b681f0f975e9c4102b39e3737952ea8270c7ca4588daaa27f"
+    },
+    "D.java": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\DPLA046.java",
+      "lines": 400,
+      "sha256": "19bab3d1799d46bab3e5938a962a7dee1243f3b0b1c775789515a0c902b75896"
+    },
+    "D.xsql": {
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\db\\DPLA046.xsql",
+      "lines": 84,
+      "sha256": "f28714598c8c933e2666eb10dd3011c1ca7f116344d23c44496cb26769a90aa0"
+    }
+  },
+  "nctrids": [],
+  "expected_outputs": [
+    {
+      "file": "Pla046Api.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/Controller/Pla046Api.java",
+      "conversion_method": "RULE_BASED",
+      "note": "P BizUnit 메서드 시그니처 -> REST 엔드포인트"
+    },
+    {
+      "file": "Pla046Dto.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/dto/Pla046Dto.java",
+      "conversion_method": "RULE_BASED",
+      "note": ".BIZUNIT/실사용 getField·putRecordset에서 역추출"
+    },
+    {
+      "file": "Pla046Service.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/service/Pla046Service.java",
+      "conversion_method": "RULE_BASED_SKELETON + LLM_PORTING",
+      "note": "골격은 규칙 기반, 단순 위임이 아닌 메서드 본문만 LLM이 포팅"
+    },
+    {
+      "file": "Pla046Store.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/store/Pla046Store.java",
+      "conversion_method": "RULE_BASED",
+      "note": "D 메서드 -> MyBatis statement 참조"
+    },
+    {
+      "file": "Pla046Mapper.xml",
+      "tobe_path": "gscm/src/main/resources/mapper/r/pm/pla/Pla046Mapper.xml",
+      "conversion_method": "RULE_BASED",
+      "note": "iBatis -> MyBatis 문법 변환만"
+    }
+  ],
+  "llm_porting_targets": [
+    "fPLA046QrySelectMainList",
+    "fPLA046QrySelectExrList",
+    "fPLA046QrySelectCopyPlanRevision",
+    "fPLA046erpMbcRpVerRevisionList",
+    "fPLA046QrySelectYieldRevisionList",
+    "fPLA046QryInsertMainList",
+    "fPLA046QrySelectMemo",
+    "fPLA046QryUpdateMemo",
+    "fPLA046QryBatchRun",
+    "fPLA046QrySelectDetailCreateInfo",
+    "fPLA046QryUpdateInfo",
+    "fPLA046QrySelectSomVersion",
+    "fPLA046QryCallProc",
+    "fPLA046QryUpdateRlsYn",
+    "fPLA046QryPlnRevReleasedCheck",
+    "fPLA046QryUpdateFinalConfirm",
+    "fPLA046QrySelectrecentlyWeek",
+    "fPLA046QryCreateReportBatchRun"
+  ],
+  "rule_based_delegations": {},
+  "estimated_llm_calls": {
+    "porting": 18,
+    "porting_skipped_rule_based": 0,
+    "ai_recommend": 0
+  },
+  "track": "UNDECIDED",
+  "unsupported_db_verbs": {
+    "dPLA04607": [
+      "Insert"
+    ],
+    "dPLA04609": [
+      "Insert"
+    ],
+    "dPLA04610": [
+      "Insert"
+    ],
+    "dPLA04611": [
+      "Insert"
+    ],
+    "dPLA04613": [
+      "Insert"
+    ],
+    "dPLA04614": [
+      "Insert"
+    ],
+    "dPLA04616": [
+      "ExecuteProcedure"
+    ],
+    "dPLA04617": [
+      "Insert"
+    ],
+    "dPLA04618": [
+      "Insert"
+    ],
+    "dPLA04619": [
+      "Insert"
+    ],
+    "dPLA04626": [
+      "Insert"
+    ],
+    "dPLA04620": [
+      "Insert"
+    ],
+    "dPLA04622": [
+      "Insert"
+    ],
+    "dPLA04624": [
+      "ExecuteProcedure"
+    ],
+    "dPLA04625": [
+      "ExecuteProcedure"
+    ]
+  },
+  "track_signals": {
+    "as_is_unbalanced_braces": {
+      "P.java": 0,
+      "F.java": 0,
+      "D.java": 0
+    },
+    "as_is_source_broken": false,
+    "f_method_count": 18,
+    "nctrid_count": 0,
+    "has_xsql": true,
+    "has_unsupported_db_verbs": true
+  }
+}
