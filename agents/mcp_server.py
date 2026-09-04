@@ -122,41 +122,45 @@ def call_tool(name: str, args: dict) -> dict:
 
 
 def main() -> int:
+    """stdio 트랜스포트로 서버를 띄운다.
+
+    설치된 SDK가 mcp 2.x라 `MCPServer`(구 FastMCP)를 쓴다 - 1.x의 `Server` + 수동 데코레이터
+    방식은 이 버전에 `list_tools` 속성이 없어 그대로는 뜨지 않는다(실제로 겪어서 고쳤다).
+    도구 본체는 `call_tool()` 하나로 모아 두고 여기서는 얇게 감싸기만 한다 - 조회 로직을
+    트랜스포트에 섞지 않기 위해서다.
+    """
     try:
-        import mcp.server.stdio  # noqa: F401
-        from mcp.server import Server
-        from mcp.types import TextContent, Tool
+        from mcp.server.mcpserver import MCPServer
     except ImportError:
         print(
-            "MCP 패키지가 없습니다. `pip install mcp` 후 다시 실행하세요.\n"
+            "MCP 패키지가 없거나 버전이 맞지 않습니다. `pip install mcp` 후 다시 실행하세요.\n"
             "설치 없이 도구 동작만 확인하려면 agents.mcp_server.call_tool()을 직접 호출하면 됩니다.",
             file=sys.stderr,
         )
         return 2
 
-    import asyncio
-    import json
+    server = MCPServer(name="gscm-conversion-analysis")
+    specs = {t["name"]: t for t in _tools()}
 
-    server = Server("gscm-conversion-analysis")
+    @server.tool(name="impact_of_method", description=specs["impact_of_method"]["description"])
+    def impact_of_method(method_name: str, screen_id: str | None = None,
+                         max_depth: int = 5) -> dict:
+        return call_tool("impact_of_method", {
+            "method_name": method_name, "screen_id": screen_id, "max_depth": max_depth})
 
-    @server.list_tools()
-    async def list_tools():
-        return [Tool(**t) for t in _tools()]
+    @server.tool(name="unused_methods", description=specs["unused_methods"]["description"])
+    def unused_methods(screen_id: str | None = None) -> dict:
+        return call_tool("unused_methods", {"screen_id": screen_id})
 
-    @server.call_tool()
-    async def handle(name: str, arguments: dict):
-        try:
-            payload = call_tool(name, arguments or {})
-        except Exception as e:  # 조회 실패를 조용히 빈 결과로 만들지 않는다
-            payload = {"error": str(e)}
-        return [TextContent(type="text", text=json.dumps(payload, ensure_ascii=False, default=str))]
+    @server.tool(name="duplicate_methods", description=specs["duplicate_methods"]["description"])
+    def duplicate_methods(min_group_size: int = 2) -> dict:
+        return call_tool("duplicate_methods", {"min_group_size": min_group_size})
 
-    async def run() -> None:
-        from mcp.server.stdio import stdio_server
-        async with stdio_server() as (r, w):
-            await server.run(r, w, server.create_initialization_options())
+    @server.tool(name="nctrid_map", description=specs["nctrid_map"]["description"])
+    def nctrid_map(screen_id: str | None = None) -> dict:
+        return call_tool("nctrid_map", {"screen_id": screen_id})
 
-    asyncio.run(run())
+    server.run(transport="stdio")
     return 0
 
 
