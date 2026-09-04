@@ -213,26 +213,25 @@ def _normalize_body(body: str, screen: str | None = None) -> str:
 
 
 def score_duplicate_detection(sample_dir: Path, answer_csv: Path) -> dict:
-    """본문 해시 기반 중복 탐지를 정답키와 대조한다.
+    """티어별 중복 탐지를 정답키와 대조한다(agents/dup_detect.py).
 
-    **범위를 정직하게 좁힌다**: 우리 탐지기는 본문 해시가 같은 것만 찾는 완전 중복(Type-2) 탐지기다.
-    따라서 채점 대상은 F/D 메서드 행 중 ①완전중복(Type-2)과 ②완전 고유 두 부류다.
-      - 완전중복(Type-2) → 찾아야 한다 (재현율)
-      - 완전 고유         → 찾으면 안 된다 (오탐)
-      - 구조적 유사(Near-dup) → **설계상 못 찾는다.** 해시가 다르기 때문이며, 이건 한계로 보고한다
-        (놓쳤다고 세지도, 맞혔다고 세지도 않고 별도 집계).
-      - SQL(Type-1) 행 → 이 탐지기의 대상이 아니다(메서드 본문이 아니라 SQL 텍스트). 별도 집계.
+    **채점 대상은 소스에 실제로 존재하는 메서드뿐이다.** 이전 버전은 정답키의 `QrySelectDetail`
+    같은 항목을 `f{화면}QrySelectDetail` / `d{화면}QrySelectDetail`로 펼쳤는데, D 계층의 실제
+    이름은 `dPLA08102` 형태라 **존재하지 않는 이름 30건이 분모에 섞여** 오탐률이 절반으로
+    희석돼 있었다(48%로 보였지만 실재 메서드 기준으로는 훨씬 높다). 실측 채점기가 실재하지
+    않는 대상을 세면 안 된다.
+
+    티어 정의와 정답키의 정의가 다른 지점은 `definitional_disagreement`로 **따로 집계**한다 -
+    탐지기 오류로도, 정답키 오류로도 몰지 않는다(agents/dup_detect.py 상단 참고).
     """
     from java_ast import extract_method_bodies
+
+    from agents.dup_detect import TIER_EXACT, TIER_NORMALIZED, detect, members_by_tier, summarize
 
     with io.open(answer_csv, encoding="utf-8-sig") as f:
         expected = list(csv.DictReader(f))
 
-    # 1) 실제 소스에서 메서드 본문 해시 → 같은 해시끼리 묶는다.
-    #    Type-1(원문 그대로)과 Type-2(화면 ID 정규화) 두 가지로 각각 묶어 전후를 함께 낸다 -
-    #    개선 효과를 주장이 아니라 같은 실행 안의 두 수치로 보여주기 위함이다.
-    t1_groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    t2_groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    bodies: dict[str, dict[str, str]] = {}
     for path in sorted(sample_dir.glob("*.java")):
         layer, screen = path.stem[0], path.stem[1:]
         if layer not in ("F", "D"):
@@ -241,39 +240,30 @@ def score_duplicate_detection(sample_dir: Path, answer_csv: Path) -> dict:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        for method, body in extract_method_bodies(text).items():
-            for norm, bucket in ((_normalize_body(body), t1_groups),
-                                 (_normalize_body(body, screen), t2_groups)):
-                if not norm:
-                    continue
-                bucket[hashlib.sha256(norm.encode("utf-8")).hexdigest()].append((screen, method))
+        bodies.setdefault(screen, {}).update(extract_method_bodies(text))
 
-    def _dups(groups: dict[str, list[tuple[str, str]]]) -> set[tuple[str, str]]:
-        out: set[tuple[str, str]] = set()
-        for members in groups.values():
-            if len(members) >= 2:
-                out.update(members)
-        return out
+    existing = {(s, m) for s, ms in bodies.items() for m in ms}
+    groups = detect(bodies)
+    tiers = members_by_tier(groups)
+    detected_any = tiers[TIER_EXACT] | tiers[TIER_NORMALIZED]
 
-    t1_dup, detected_dup = _dups(t1_groups), _dups(t2_groups)
-
-    # 2) 정답키의 F/D 행을 (화면, 메서드)로 펼친다
     stats = {
-        "exact_dup": {"total": 0, "detected": 0, "detected_type1_only": 0, "missed": []},
-        "unique": {"total": 0, "false_positive": 0, "fp_list": []},
+        "exact_dup": {"total": 0, "detected": 0, "detected_exact_tier": 0, "missed": []},
+        "unique": {"total": 0, "flagged_exact": 0, "flagged_normalized": 0, "examples": []},
         "near_dup_out_of_scope": 0,
         "sql_rows_out_of_scope": 0,
+        "phantom_names_skipped": 0,
     }
+
     for e in expected:
-        layer, dup_type, member = e["layer"], e["dup_type"], e["member"]
-        screen = e["screen_id"]
+        layer, dup_type, member, screen = e["layer"], e["dup_type"], e["member"], e["screen_id"]
         if layer != "F/D":
             stats["sql_rows_out_of_scope"] += 1
             continue
         m = _MEMBER_METHODS_RE.search(member)
-        methods = [x.strip() for x in m.group(1).split("/")] if m else []
-        if not methods:
-            # 괄호가 없는 형태(예: "QrySelectMainList") → F/D 접두사를 붙여 실제 이름을 만든다
+        if m:
+            methods = [x.strip() for x in m.group(1).split("/")]
+        else:
             base = member.strip()
             methods = [f"f{screen}{base}", f"d{screen}{base}"] if base else []
         if "Near-dup" in dup_type:
@@ -283,27 +273,59 @@ def score_duplicate_detection(sample_dir: Path, answer_csv: Path) -> dict:
         is_unique = "고유" in dup_type
         for meth in methods:
             key = (screen, meth)
+            if key not in existing:      # 소스에 없는 이름은 세지 않는다
+                stats["phantom_names_skipped"] += 1
+                continue
             if is_exact:
                 stats["exact_dup"]["total"] += 1
-                stats["exact_dup"]["detected_type1_only"] += int(key in t1_dup)
-                if key in detected_dup:
+                stats["exact_dup"]["detected_exact_tier"] += int(key in tiers[TIER_EXACT])
+                if key in detected_any:
                     stats["exact_dup"]["detected"] += 1
                 else:
                     stats["exact_dup"]["missed"].append(f"{screen}.{meth}")
             elif is_unique:
                 stats["unique"]["total"] += 1
-                if key in detected_dup:
-                    stats["unique"]["false_positive"] += 1
-                    stats["unique"]["fp_list"].append(f"{screen}.{meth}")
+                if key in tiers[TIER_EXACT]:
+                    stats["unique"]["flagged_exact"] += 1
+                    stats["unique"]["examples"].append(f"{screen}.{meth}(EXACT)")
+                elif key in tiers[TIER_NORMALIZED]:
+                    stats["unique"]["flagged_normalized"] += 1
 
-    ed = stats["exact_dup"]
-    un = stats["unique"]
+    ed, un = stats["exact_dup"], stats["unique"]
     ed["recall"] = round(ed["detected"] / ed["total"], 4) if ed["total"] else 0.0
-    ed["recall_type1_only"] = round(ed["detected_type1_only"] / ed["total"], 4) if ed["total"] else 0.0
-    un["false_positive_rate"] = round(un["false_positive"] / un["total"], 4) if un["total"] else 0.0
+    ed["recall_exact_tier"] = round(ed["detected_exact_tier"] / ed["total"], 4) if ed["total"] else 0.0
     ed["missed"] = ed["missed"][:20]
-    un["fp_list"] = un["fp_list"][:20]
-    stats["detected_group_count"] = sum(1 for v in t2_groups.values() if len(v) >= 2)
+
+    # 보수적 정밀도: NORMALIZED 티어가 «고유»를 건드린 것도 전부 오탐으로 친다.
+    conservative_fp = un["flagged_exact"] + un["flagged_normalized"]
+    un["conservative_precision"] = (
+        round(1 - conservative_fp / un["total"], 4) if un["total"] else None)
+    # 티어 인지 정밀도: EXACT 티어만 «확실»을 주장하므로 그 티어의 오탐만 센다.
+    un["tier_aware_precision"] = (
+        round(1 - un["flagged_exact"] / un["total"], 4) if un["total"] else None)
+
+    def _f1(p, r):
+        return round(2 * p * r / (p + r), 4) if p and r and (p + r) else 0.0
+
+    stats["f1_conservative"] = _f1(un["conservative_precision"], ed["recall"])
+    stats["f1_tier_aware"] = _f1(un["tier_aware_precision"], ed["recall"])
+    # **점수에 쓰는 값은 이것이다.** EXACT 티어만으로 정밀도·재현율을 낸다 - 이 티어는 정규화를
+    # 전혀 하지 않아 «중복»의 정의 논쟁이 끼어들 여지가 없고(정답키가 «고유»라 한 것 중 EXACT로
+    # 잡힌 건 0건), 따라서 티어 정의를 바꿔서 점수를 올릴 수 없다. NORMALIZED는 후보 목록으로만
+    # 보고하고 채점에 넣지 않는다.
+    exact_precision = (
+        round(1 - un["flagged_exact"] / un["total"], 4) if un["total"] else None)
+    stats["exact_tier_precision"] = exact_precision
+    stats["f1_exact_tier"] = _f1(exact_precision, ed["recall_exact_tier"])
+    stats["definitional_disagreement"] = {
+        "count": un["flagged_normalized"],
+        "note": (
+            "정답키가 «고유»로 표시했으나 화면 ID를 치환하면 텍스트가 동일해지는 건수. "
+            "탐지기 오류도, 정답키 오류도 아니고 '중복'의 정의가 다른 것이다 — "
+            "NORMALIZED 티어는 «후보»로만 보고한다."
+        ),
+    }
+    stats["tiers"] = summarize(groups)
     return stats
 
 
@@ -349,17 +371,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    - {fp['file']}: {', '.join(fp['findings'])}")
 
     ed, un = dup["exact_dup"], dup["unique"]
-    print(f"\n[2] 중복 함수 탐지 (본문 해시 기반)")
-    print(f"  완전중복 재현율 : {ed['detected']}/{ed['total']} ({ed['recall']:.0%})"
-          f"   [화면ID 정규화 전(Type-1 해시): {ed['detected_type1_only']}/{ed['total']} ({ed['recall_type1_only']:.0%})]")
-    print(f"  고유 오탐       : {un['false_positive']}/{un['total']} ({un['false_positive_rate']:.0%})")
-    print(f"  탐지 그룹 수    : {dup['detected_group_count']}")
-    print(f"  범위 밖(구조적 유사) : {dup['near_dup_out_of_scope']}행 — 해시 기반으로는 설계상 탐지 불가")
-    print(f"  범위 밖(SQL 행)      : {dup['sql_rows_out_of_scope']}행 — 메서드 본문 탐지기의 대상 아님")
+    print("\n[2] 중복 함수 탐지 (신뢰 수준 분리)")
+    print(f"  확실(EXACT)     그룹 {dup['tiers']['exact_groups']}개 · 멤버 {dup['tiers']['exact_members']}건")
+    print(f"  후보(NORMALIZED) 그룹 {dup['tiers']['normalized_groups']}개 · 멤버 {dup['tiers']['normalized_members']}건")
+    print(f"  완전중복 재현율  {ed['detected']}/{ed['total']} ({ed['recall']:.0%})"
+          f"   [EXACT 티어만: {ed['recall_exact_tier']:.0%}]")
+    print(f"  «고유» 오탐      EXACT {un['flagged_exact']}/{un['total']} · "
+          f"NORMALIZED {un['flagged_normalized']}/{un['total']}")
+    print(f"  F1(채점값)      EXACT 티어 기준 {dup['f1_exact_tier']:.0%}"
+          f"   (정밀도 {dup['exact_tier_precision']:.0%} · 재현율 {ed['recall_exact_tier']:.0%})")
+    print(f"  F1(참고)        보수적 {dup['f1_conservative']:.0%} · 티어인지 {dup['f1_tier_aware']:.0%}")
+    dd = dup["definitional_disagreement"]
+    print(f"  정의 불일치      {dd['count']}건 — 정답키는 «고유», 텍스트로는 화면ID만 다른 동일 코드")
+    print(f"  범위 밖          구조적유사 {dup['near_dup_out_of_scope']}행 · SQL {dup['sql_rows_out_of_scope']}행")
+    print(f"  실재하지 않는 이름 {dup['phantom_names_skipped']}건은 분모에서 제외")
     if ed["missed"]:
-        print(f"  놓친 완전중복 예시: {', '.join(ed['missed'][:8])}")
-    if un["fp_list"]:
-        print(f"  오탐 예시: {', '.join(un['fp_list'][:8])}")
+        print(f"  놓친 완전중복: {', '.join(ed['missed'][:6])}")
     print()
 
     if args.json:

@@ -135,42 +135,38 @@
     "exact_dup": {
       "total": 210,
       "detected": 209,
-      "detected_type1_only": 105,
+      "detected_exact_tier": 105,
       "missed": [
         "PLA107.fCommonCodeQry"
       ],
       "recall": 0.9952,
-      "recall_type1_only": 0.5
+      "recall_exact_tier": 0.5
     },
     "unique": {
-      "total": 60,
-      "false_positive": 29,
-      "fp_list": [
-        "PLA081.fPLA081QrySelectDetail",
-        "PLA082.fPLA082QrySelectDetail",
-        "PLA083.fPLA083QrySelectDetail",
-        "PLA084.fPLA084QrySelectDetail",
-        "PLA085.fPLA085QrySelectDetail",
-        "PLA086.fPLA086QrySelectDetail",
-        "PLA087.fPLA087QrySelectDetail",
-        "PLA088.fPLA088QrySelectDetail",
-        "PLA089.fPLA089QrySelectDetail",
-        "PLA090.fPLA090QrySelectDetail",
-        "PLA091.fPLA091QrySelectDetail",
-        "PLA092.fPLA092QrySelectDetail",
-        "PLA094.fPLA094QrySelectDetail",
-        "PLA095.fPLA095QrySelectDetail",
-        "PLA096.fPLA096QrySelectDetail",
-        "PLA097.fPLA097QrySelectDetail",
-        "PLA098.fPLA098QrySelectDetail",
-        "PLA099.fPLA099QrySelectDetail",
-        "PLA100.fPLA100QrySelectDetail",
-        "PLA101.fPLA101QrySelectDetail"
-      ],
-      "false_positive_rate": 0.4833
+      "total": 30,
+      "flagged_exact": 0,
+      "flagged_normalized": 29,
+      "examples": [],
+      "conservative_precision": 0.0333,
+      "tier_aware_precision": 1.0
     },
     "near_dup_out_of_scope": 30,
     "sql_rows_out_of_scope": 165,
-    "detected_group_count": 17
+    "phantom_names_skipped": 30,
+    "f1_conservative": 0.0644,
+    "f1_tier_aware": 0.9976,
+    "exact_tier_precision": 1.0,
+    "f1_exact_tier": 0.6667,
+    "definitional_disagreement": {
+      "count": 29,
+      "note": "정답키가 «고유»로 표시했으나 화면 ID를 치환하면 텍스트가 동일해지는 건수. 탐지기 오류도, 정답키 오류도 아니고 '중복'의 정의가 다른 것이다 — NORMALIZED 티어는 «후보»로만 보고한다."
+    },
+    "tiers": {
+      "exact_groups": 6,
+      "exact_members": 164,
+      "normalized_groups": 11,
+      "normalized_members": 161,
+      "note": "EXACT는 주석·공백만 다른 확실한 복붙이고, NORMALIZED는 화면 ID를 치환하면 같아지는 **검토 후보**다. 자동 삭제하지 않는다."
+    }
   }
 }

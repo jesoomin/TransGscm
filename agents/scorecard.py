@@ -195,22 +195,24 @@ def detection_accuracy(bench: dict | None) -> dict:
     err = bench.get("error_detection", {})
     dup = bench.get("duplicate_detection", {}).get("exact_dup", {})
     uni = bench.get("duplicate_detection", {}).get("unique", {})
-    recall = dup.get("recall")
-    fp_rate = uni.get("false_positive_rate")
-    precision = (1 - fp_rate) if fp_rate is not None else None
-    f1 = (
-        round(2 * recall * precision / (recall + precision), 4)
-        if recall and precision and (recall + precision) else None
-    )
+    # C2는 **EXACT 티어 기준 F1**을 쓴다 - 정규화를 전혀 하지 않는 티어라 «중복»의 정의 논쟁이
+    # 점수에 끼어들지 않는다(agents/dup_detect.py 상단 참고). NORMALIZED 티어는 후보 목록으로만
+    # 보고하고 채점하지 않는다.
+    f1 = bench.get("duplicate_detection", {}).get("f1_exact_tier")
+    recall = dup.get("recall_exact_tier")
+    precision = bench.get("duplicate_detection", {}).get("exact_tier_precision")
     return {
         "measured": True,
         "defect_recall": err.get("recall"),
         "defect_detected": err.get("detected"),
         "defect_total": err.get("total"),
         "defect_false_positives": len(err.get("false_positive_files", [])),
-        "dup_recall": recall,
-        "dup_precision_proxy": round(precision, 4) if precision is not None else None,
+        "dup_recall_exact_tier": recall,
+        "dup_precision_exact_tier": precision,
         "dup_f1_proxy": f1,
+        "dup_recall_any_tier": dup.get("recall"),
+        "dup_definitional_disagreement":
+            bench.get("duplicate_detection", {}).get("definitional_disagreement", {}).get("count"),
     }
 
 

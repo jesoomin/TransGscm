@@ -20,8 +20,8 @@
       "axis": "B. 사용자 체감",
       "item": "리뷰 대상 축소율",
       "weight": 14,
-      "value": 0.8369,
-      "score": 11.72,
+      "value": 0.8488,
+      "score": 11.88,
       "status": "측정"
     },
     {
@@ -52,8 +52,8 @@
       "axis": "C. 탐지 정확성",
       "item": "중복 탐지 F1",
       "weight": 15,
-      "value": 0.6802,
-      "score": 10.2,
+      "value": 0.6667,
+      "score": 10.0,
       "status": "측정"
     }
   ],
@@ -64,17 +64,17 @@
       "unmeasured": 0
     },
     "B. 사용자 체감": {
-      "earned": 17.72,
+      "earned": 17.880000000000003,
       "available": 22.0,
       "unmeasured": 8
     },
     "C. 탐지 정확성": {
-      "earned": 25.2,
+      "earned": 25.0,
       "available": 30.0,
       "unmeasured": 0
     }
   },
-  "earned": 82.09,
+  "earned": 82.05,
   "available": 92.0,
   "normalized_100": 89.2,
   "unmeasured_weight": 8.0,
@@ -96,12 +96,12 @@
       "human_edit_measured_screens": 0,
       "human_edit_unmeasured_screens": 5,
       "review_acceptance": null,
-      "generated_lines": 1662,
-      "llm_ported_lines": 266,
-      "flagged_lines": 5,
-      "review_target_lines": 271,
-      "review_ratio": 0.1631,
-      "review_reduction": 0.8369,
+      "generated_lines": 1640,
+      "llm_ported_lines": 244,
+      "flagged_lines": 4,
+      "review_target_lines": 248,
+      "review_ratio": 0.1512,
+      "review_reduction": 0.8488,
       "llm_calls": 7,
       "rule_handled": 21,
       "deterministic_ratio": 0.75,
@@ -113,13 +113,15 @@
       "defect_detected": 10,
       "defect_total": 10,
       "defect_false_positives": 0,
-      "dup_recall": 0.9952,
-      "dup_precision_proxy": 0.5167,
-      "dup_f1_proxy": 0.6802
+      "dup_recall_exact_tier": 0.5,
+      "dup_precision_exact_tier": 1.0,
+      "dup_f1_proxy": 0.6667,
+      "dup_recall_any_tier": 0.9952,
+      "dup_definitional_disagreement": 29
     }
   },
   "not_covered": [
     "L3 기능 동등성 — 포팅 코드를 실행할 환경이 없어 미측정",
-    "L4 사람 수정 라인 비율 — 사람이 리뷰한 화면 0건, 측정 시점 미도래"
+    "L4 사람 수정 라인 비율 — **측정 수단은 구현됨**(agents/human_edit.py). 생성 시점 스냅샷 대비 diff로 산출되며, 사람 리뷰가 시작되면 자동으로 채워진다"
   ]
 }
