@@ -62,6 +62,152 @@ def find_unused_methods(screen_id: str | None = None) -> list[dict]:
         return [dict(zip([c.lower() for c in cols], row)) for row in cur.fetchall()]
 
 
+def _load_reverse_edges(cur) -> dict[int, list[int]]:
+    """{callee_method_id: [caller_method_id, ...]} 역방향 인접 리스트를 한 번에 읽어온다.
+
+    Oracle 재귀 쿼리(CONNECT BY) 대신 파이썬에서 BFS를 돈다 - 콜그래프가 작고(실측 890엣지)
+    한 번에 메모리에 올려도 부담이 없어서, DB 방언에 얽히지 않고 로직을 눈으로 검증할 수 있는
+    쪽을 택했다.
+    """
+    cur.execute(
+        "SELECT CALLER_METHOD_ID, CALLEE_METHOD_ID FROM CONV_METHOD_CALL "
+        "WHERE CALLEE_METHOD_ID IS NOT NULL"
+    )
+    reverse: dict[int, list[int]] = {}
+    for caller, callee in cur.fetchall():
+        reverse.setdefault(callee, []).append(caller)
+    return reverse
+
+
+def _method_info(cur, method_ids: list[int]) -> dict[int, dict]:
+    """METHOD_ID -> {method_name, screen_id, layer, nctrid, mapper_stmt_id}."""
+    if not method_ids:
+        return {}
+    info: dict[int, dict] = {}
+    ids = list(method_ids)
+    for i in range(0, len(ids), 500):  # Oracle IN 절 1000개 제한 회피
+        chunk = ids[i:i + 500]
+        binds = {f"m{j}": mid for j, mid in enumerate(chunk)}
+        placeholders = ", ".join(f":{k}" for k in binds)
+        cur.execute(
+            f"""
+            SELECT cm.METHOD_ID, cm.METHOD_NAME, cf.SCREEN_ID, cf.AS_IS_LAYER,
+                   cm.NCTRID, cm.MAPPER_STMT_ID
+            FROM CONV_METHOD cm JOIN CONV_FILE cf ON cf.FILE_ID = cm.FILE_ID
+            WHERE cm.METHOD_ID IN ({placeholders})
+            """,
+            binds,
+        )
+        for mid, name, screen, layer, nctrid, stmt in cur.fetchall():
+            info[mid] = {
+                "method_id": mid, "method_name": name, "screen_id": screen,
+                "layer": layer, "nctrid": nctrid, "mapper_stmt_id": stmt,
+            }
+    return info
+
+
+def find_impact_of_method(
+    method_name: str, screen_id: str | None = None, max_depth: int = 10,
+) -> dict:
+    """"이 메서드를 고치면 무엇이 영향받는가" - 콜그래프를 **역방향으로** 타고 올라간다.
+
+    `find_unused_methods()`가 "아무도 안 부르는 것"을 찾는 정방향 도달 가능성 분석이라면, 이건
+    반대 방향이다(변경 파급 범위, blast radius). 멘토 코멘트 §1이 매핑 그래프를 최우선으로 둔
+    이유가 바로 이 질의를 가능하게 하는 것이었다.
+
+    반환: {targets, callers(전이적, depth 포함), affected_screens, affected_nctrids, notes}.
+    조회 전용이며, 판정이 아니라 **검토 범위**를 알려주는 용도다 - notes에 한계를 같이 담는다.
+    """
+    from agents import db
+
+    with db.get_connection() as conn:
+        cur = conn.cursor()
+        if screen_id:
+            cur.execute(
+                """
+                SELECT cm.METHOD_ID FROM CONV_METHOD cm
+                JOIN CONV_FILE cf ON cf.FILE_ID = cm.FILE_ID
+                WHERE cm.METHOD_NAME = :m AND cf.SCREEN_ID = :s
+                """,
+                m=method_name, s=screen_id,
+            )
+        else:
+            cur.execute("SELECT METHOD_ID FROM CONV_METHOD WHERE METHOD_NAME = :m", m=method_name)
+        target_ids = [r[0] for r in cur.fetchall()]
+        if not target_ids:
+            return {
+                "targets": [], "callers": [], "affected_screens": [], "affected_nctrids": [],
+                "notes": [f"'{method_name}' 메서드를 CONV_METHOD에서 찾지 못했습니다 - 화면 분석이 "
+                          "DB에 적재됐는지(저장 또는 nctrid_graph 실행) 확인하세요."],
+            }
+
+        reverse = _load_reverse_edges(cur)
+
+        # 역방향 BFS - 자기 자신을 다시 방문하지 않으므로 순환 호출이 있어도 멈춘다.
+        depth_by_id: dict[int, int] = {}
+        frontier = list(target_ids)
+        seen = set(target_ids)
+        depth = 0
+        while frontier and depth < max_depth:
+            depth += 1
+            nxt = []
+            for mid in frontier:
+                for caller in reverse.get(mid, []):
+                    if caller in seen:
+                        continue
+                    seen.add(caller)
+                    depth_by_id[caller] = depth
+                    nxt.append(caller)
+            frontier = nxt
+
+        info = _method_info(cur, target_ids + list(depth_by_id))
+
+        # CONV_METHOD.NCTRID가 비어 있는 P 메서드는 NCTRID_MAP으로 보완한다. 두 테이블이 서로
+        # 다른 시점/경로로 채워져서(NCTRID_MAP은 .bizunit 완전본 기준 300행, CONV_METHOD.NCTRID는
+        # 화면을 언제 어떤 소스로 분석했는지에 따라 비어 있을 수 있다) 실제로 PLA001에서 P 계층까지
+        # 역추적이 닿았는데도 nctRid가 안 나오는 걸 확인해서 붙였다(2026-09-04).
+        missing_nctrid = [
+            v for v in info.values() if not v.get("nctrid") and (v.get("layer") or "").startswith("P")
+        ]
+        if missing_nctrid:
+            cur.execute("SELECT SCREEN_ID, P_METHOD, NCTRID FROM NCTRID_MAP")
+            by_screen_method = {(s, p): n for s, p, n in cur.fetchall()}
+            for v in missing_nctrid:
+                found = by_screen_method.get((v["screen_id"], v["method_name"]))
+                if found:
+                    v["nctrid"] = found
+                    v["nctrid_source"] = "NCTRID_MAP"
+
+    targets = [info[mid] for mid in target_ids if mid in info]
+    callers = [
+        {**info[mid], "depth": d} for mid, d in sorted(depth_by_id.items(), key=lambda kv: kv[1])
+        if mid in info
+    ]
+    affected_screens = sorted({c["screen_id"] for c in callers} | {t["screen_id"] for t in targets})
+    affected_nctrids = sorted({c["nctrid"] for c in callers if c.get("nctrid")})
+
+    notes = [
+        "콜그래프는 P→F, F→D 계층 간 호출과 같은 계층 내부 호출을 정적 분석(정규식)으로 잡은 "
+        "것입니다 - 이름이 같은 다른 클래스의 메서드를 호출로 오인할 수 있어 **확정이 아니라 검토 "
+        "범위**로 보세요.",
+    ]
+    if not callers:
+        notes.append(
+            "이 메서드를 호출하는 곳을 콜그래프에서 찾지 못했습니다 - 정말 미사용이거나, 아직 "
+            "분석되지 않은 호출 경로(예: 화면 밖 공통/배치 호출)일 수 있습니다."
+        )
+    if not affected_nctrids and callers:
+        notes.append(
+            "영향받는 nctRid를 특정하지 못했습니다 - 호출자 중 P 계층(진입점)까지 연결이 안 "
+            "닿았다는 뜻입니다."
+        )
+    return {
+        "targets": targets, "callers": callers,
+        "affected_screens": affected_screens, "affected_nctrids": affected_nctrids,
+        "notes": notes,
+    }
+
+
 def find_error_methods(screen_id: str | None = None) -> list[dict]:
     """메서드 단위로 귀속된(METHOD_ID가 채워진) BLOCKER 이슈 또는 ORIGINAL_BUG 이슈가 있는
     메서드를 모아 메서드별로 집계해서 돌려준다.

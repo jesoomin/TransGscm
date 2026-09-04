@@ -205,6 +205,79 @@ def _show_maven_dialog(header: str, grouped: dict[str, list[tuple[int, int, str]
     _render_maven_errors(grouped, ungrouped)
 
 
+@st.dialog("🎯 영향도 질의 (콜그래프 역추적)", width="large")
+def _show_impact_dialog() -> None:
+    """"이 메서드를 고치면 뭐가 영향받나"를 팝업에서 바로 조회한다.
+
+    LLM을 쓰지 않는다 - 콜그래프(CONV_METHOD_CALL) 역방향 추적이라 답이 결정론적이고 근거를 그대로
+    보여줄 수 있다(CLAUDE.md "결정론적으로 가능한 건 LLM에 맡기지 않는다"). 조회 전용이라 변환
+    파이프라인의 결정성에도 영향이 없다.
+    """
+    st.caption(
+        "**DB에 적재된(저장했거나 `agents/nctrid_graph.py`를 돌린) 화면 기준**으로, 지정한 메서드를 "
+        "호출하는 쪽을 거슬러 올라가 영향받는 화면·nctRid를 찾습니다."
+    )
+    with st.form("impact_query_form"):
+        c1, c2 = st.columns([2, 1])
+        method_name = c1.text_input("메서드명", placeholder="예: dPLA04702 / fPLA047QrySelectMainList")
+        screen_filter = c2.text_input("화면 ID(선택)", placeholder="예: PLA047")
+        submitted = st.form_submit_button("조회", type="primary")
+
+    if not submitted:
+        return
+    if not method_name.strip():
+        st.warning("메서드명을 입력하세요.")
+        return
+
+    from agents.impact_analysis import find_impact_of_method
+
+    try:
+        result = find_impact_of_method(method_name.strip(), screen_filter.strip() or None)
+    except Exception as e:  # noqa: BLE001 - DB 미접속 등도 그대로 사용자에게 보여준다
+        st.error(f"조회 실패: {e}")
+        return
+
+    if not result["targets"]:
+        for note in result["notes"]:
+            st.warning(note)
+        return
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("찾은 대상 메서드", len(result["targets"]))
+    m2.metric("영향받는 화면", len(result["affected_screens"]))
+    m3.metric("영향받는 nctRid", len(result["affected_nctrids"]))
+
+    if result["affected_nctrids"]:
+        st.success("영향받는 nctRid: " + ", ".join(result["affected_nctrids"]))
+
+    st.markdown("**대상 메서드**")
+    st.dataframe(
+        [
+            {"화면": t["screen_id"], "계층": t["layer"], "메서드": t["method_name"],
+             "Mapper statement": t.get("mapper_stmt_id") or ""}
+            for t in result["targets"]
+        ],
+        hide_index=True,
+    )
+
+    st.markdown("**이 메서드를 (간접적으로라도) 호출하는 쪽 — 고치면 같이 확인해야 할 범위**")
+    if result["callers"]:
+        st.dataframe(
+            [
+                {"깊이": c["depth"], "화면": c["screen_id"], "계층": c["layer"],
+                 "메서드": c["method_name"], "nctRid": c.get("nctrid") or "",
+                 "nctRid 출처": c.get("nctrid_source", "CONV_METHOD" if c.get("nctrid") else "")}
+                for c in result["callers"]
+            ],
+            hide_index=True,
+        )
+    else:
+        st.info("호출자를 찾지 못했습니다.")
+
+    for note in result["notes"]:
+        st.caption(f"※ {note}")
+
+
 def _categorize(files) -> tuple[dict[str, dict[str, str]], list[str]]:
     """업로드된 파일들을 계층(P/F/D)별, 종류(java/bizunit/xsql)별로 분류한다."""
     buckets: dict[str, dict[str, str]] = {"P": {}, "F": {}, "D": {}}
@@ -973,6 +1046,11 @@ if input_mode == "폴더 경로 지정":
         if screens:
             screen_ids = sorted(screens.keys())
             st.info(f"폴더에서 화면 {len(screen_ids)}개 발견: {', '.join(screen_ids)}")
+
+            # 영향도 질의는 이번 실행 결과가 아니라 **DB에 이미 적재된 콜그래프**를 보므로
+            # 파이프라인을 돌리지 않아도 쓸 수 있다 - 그래서 실행 버튼보다 앞에 둔다.
+            if st.button("🎯 영향도 질의 (메서드 → 영향받는 화면·nctRid)", key="impact_query_btn"):
+                _show_impact_dialog()
 
             pipeline_target_ids = st.multiselect(
                 "파이프라인 대상 화면", screen_ids, default=screen_ids, key="pipeline_target_ids",
