@@ -1,19 +1,19 @@
 {
   "error_detection": {
     "total": 10,
-    "detected": 5,
-    "recall": 0.5,
+    "detected": 10,
+    "recall": 1.0,
     "by_category": {
       "JAVA_LOGIC": {
-        "hit": 0,
+        "hit": 1,
         "total": 1
       },
       "JAVA_REFERENCE": {
-        "hit": 1,
+        "hit": 2,
         "total": 2
       },
       "JAVA_SYNTAX": {
-        "hit": 1,
+        "hit": 4,
         "total": 4
       },
       "XSQL_LOGIC": {
@@ -31,8 +31,11 @@
         "file": "PPLA082.java",
         "category": "JAVA_SYNTAX",
         "description": "메서드 시그니처에 파라미터명이 없음: 'public IDataSet pPLA08201 (IDataSet){' (원본 업로드 PPLA047.java의 pPLA04701~03과 동일한 실제 버그 패턴 재현)",
-        "detected": false,
-        "detected_by": []
+        "detected": true,
+        "detected_by": [
+          "ASIS_MISSING_PARAM_NAME",
+          "ASIS_SYNTAX_ERROR"
+        ]
       },
       {
         "issue_id": "E2",
@@ -41,6 +44,7 @@
         "description": "파일 내 마지막 메서드의 닫는 중괄호 '}' 1개가 누락됨",
         "detected": true,
         "detected_by": [
+          "ASIS_SYNTAX_ERROR",
           "BRACE_IMBALANCE"
         ]
       },
@@ -49,16 +53,20 @@
         "file": "FPLA093.java",
         "category": "JAVA_SYNTAX",
         "description": "fPLA093QrySelectDetail 메서드 첫 줄 'new DataSet()' 뒤 세미콜론(;) 누락",
-        "detected": false,
-        "detected_by": []
+        "detected": true,
+        "detected_by": [
+          "ASIS_SYNTAX_ERROR"
+        ]
       },
       {
         "issue_id": "E4",
         "file": "DPLA091.java",
         "category": "JAVA_SYNTAX",
         "description": "IRecordSet 타입을 사용하지만 import 구문이 누락됨",
-        "detected": false,
-        "detected_by": []
+        "detected": true,
+        "detected_by": [
+          "ASIS_MISSING_IMPORT"
+        ]
       },
       {
         "issue_id": "E5",
@@ -75,8 +83,10 @@
         "file": "PPLA100.java",
         "category": "JAVA_REFERENCE",
         "description": "F클래스 참조 시 'FPLA100X' 오타 (실제 클래스명은 FPLA100)",
-        "detected": false,
-        "detected_by": []
+        "detected": true,
+        "detected_by": [
+          "ASIS_UNRESOLVED_CLASS"
+        ]
       },
       {
         "issue_id": "E7",
@@ -113,8 +123,10 @@
         "file": "FPLA107.java",
         "category": "JAVA_LOGIC",
         "description": "fCommonCodeQry에서 DPLA107 인스턴스를 얻을 때 lookupDataUnit이 아닌 lookupFunctionUnit을 잘못 호출 (캐스팅 대상 클래스는 DPLA107로 정상이라 컴파일은 통과하지만, ",
-        "detected": false,
-        "detected_by": []
+        "detected": true,
+        "detected_by": [
+          "ASIS_LAYER_LOOKUP_MISMATCH"
+        ]
       }
     ],
     "false_positive_files": []

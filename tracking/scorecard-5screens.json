@@ -20,8 +20,8 @@
       "axis": "B. 사용자 체감",
       "item": "리뷰 대상 축소율",
       "weight": 18,
-      "value": 0.7358,
-      "score": 13.24,
+      "value": 0.7182,
+      "score": 12.93,
       "status": "측정"
     },
     {
@@ -36,8 +36,8 @@
       "axis": "C. 탐지 정확성",
       "item": "원본 결함 재현율",
       "weight": 15,
-      "value": 0.5,
-      "score": 7.5,
+      "value": 1.0,
+      "score": 15.0,
       "status": "측정"
     },
     {
@@ -56,19 +56,19 @@
       "unmeasured": 0
     },
     "B. 사용자 체감": {
-      "earned": 18.810000000000002,
+      "earned": 18.5,
       "available": 30.0,
       "unmeasured": 0
     },
     "C. 탐지 정확성": {
-      "earned": 17.7,
+      "earned": 25.2,
       "available": 30.0,
       "unmeasured": 0
     }
   },
-  "earned": 75.68,
+  "earned": 82.87,
   "available": 100.0,
-  "normalized_100": 75.7,
+  "normalized_100": 82.9,
   "unmeasured_weight": 0.0,
   "detail": {
     "conversion": {
@@ -84,12 +84,12 @@
       ]
     },
     "developer_experience": {
-      "generated_lines": 1783,
-      "llm_ported_lines": 468,
-      "flagged_lines": 3,
-      "review_target_lines": 471,
-      "review_ratio": 0.2642,
-      "review_reduction": 0.7358,
+      "generated_lines": 1824,
+      "llm_ported_lines": 509,
+      "flagged_lines": 5,
+      "review_target_lines": 514,
+      "review_ratio": 0.2818,
+      "review_reduction": 0.7182,
       "llm_calls": 15,
       "rule_handled": 13,
       "deterministic_ratio": 0.4643,
@@ -97,8 +97,8 @@
     },
     "detection": {
       "measured": true,
-      "defect_recall": 0.5,
-      "defect_detected": 5,
+      "defect_recall": 1.0,
+      "defect_detected": 10,
       "defect_total": 10,
       "defect_false_positives": 0,
       "dup_recall": 0.9952,

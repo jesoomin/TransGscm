@@ -55,10 +55,21 @@ def _collect_asis_findings(sample_dir: Path) -> dict[str, list[dict]]:
     from skeleton_gen import extract_d_stmt_ids, unsupported_db_verbs
     from validators import count_unbalanced_braces
 
+    from agents.asis_defects import scan_java_corpus
+
     findings: dict[str, list[dict]] = defaultdict(list)
 
     def add(fname: str, kind: str, detail: str) -> None:
         findings[fname].append({"detector": kind, "detail": detail})
+
+    # AS-IS 원본 결함 탐지기(agents/asis_defects.py) - 코퍼스 단위로 한 번에 돌린다.
+    java_texts = {
+        p.name: p.read_text(encoding="utf-8", errors="replace")
+        for p in sorted(sample_dir.glob("*.java"))
+    }
+    for fname, issues in scan_java_corpus(java_texts).items():
+        for i in issues:
+            add(fname, i["issue_type"], i["message"])
 
     for path in sorted(sample_dir.iterdir()):
         if not path.is_file():
