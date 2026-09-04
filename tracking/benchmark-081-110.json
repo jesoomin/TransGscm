@@ -1,0 +1,164 @@
+{
+  "error_detection": {
+    "total": 10,
+    "detected": 5,
+    "recall": 0.5,
+    "by_category": {
+      "JAVA_LOGIC": {
+        "hit": 0,
+        "total": 1
+      },
+      "JAVA_REFERENCE": {
+        "hit": 1,
+        "total": 2
+      },
+      "JAVA_SYNTAX": {
+        "hit": 1,
+        "total": 4
+      },
+      "XSQL_LOGIC": {
+        "hit": 1,
+        "total": 1
+      },
+      "XSQL_SYNTAX": {
+        "hit": 2,
+        "total": 2
+      }
+    },
+    "rows": [
+      {
+        "issue_id": "E1",
+        "file": "PPLA082.java",
+        "category": "JAVA_SYNTAX",
+        "description": "메서드 시그니처에 파라미터명이 없음: 'public IDataSet pPLA08201 (IDataSet){' (원본 업로드 PPLA047.java의 pPLA04701~03과 동일한 실제 버그 패턴 재현)",
+        "detected": false,
+        "detected_by": []
+      },
+      {
+        "issue_id": "E2",
+        "file": "PPLA089.java",
+        "category": "JAVA_SYNTAX",
+        "description": "파일 내 마지막 메서드의 닫는 중괄호 '}' 1개가 누락됨",
+        "detected": true,
+        "detected_by": [
+          "BRACE_IMBALANCE"
+        ]
+      },
+      {
+        "issue_id": "E3",
+        "file": "FPLA093.java",
+        "category": "JAVA_SYNTAX",
+        "description": "fPLA093QrySelectDetail 메서드 첫 줄 'new DataSet()' 뒤 세미콜론(;) 누락",
+        "detected": false,
+        "detected_by": []
+      },
+      {
+        "issue_id": "E4",
+        "file": "DPLA091.java",
+        "category": "JAVA_SYNTAX",
+        "description": "IRecordSet 타입을 사용하지만 import 구문이 누락됨",
+        "detected": false,
+        "detected_by": []
+      },
+      {
+        "issue_id": "E5",
+        "file": "FPLA087.java",
+        "category": "JAVA_REFERENCE",
+        "description": "DPLA087 클래스에 존재하지 않는 메서드 dPLA08710(...) 호출 (정상 메서드명은 dPLA08701, 자릿수 순서 오타)",
+        "detected": true,
+        "detected_by": [
+          "UNRESOLVED_CALLEE"
+        ]
+      },
+      {
+        "issue_id": "E6",
+        "file": "PPLA100.java",
+        "category": "JAVA_REFERENCE",
+        "description": "F클래스 참조 시 'FPLA100X' 오타 (실제 클래스명은 FPLA100)",
+        "detected": false,
+        "detected_by": []
+      },
+      {
+        "issue_id": "E7",
+        "file": "DPLA100.java",
+        "category": "XSQL_LOGIC",
+        "description": "dPLA10001에서 dbSelect(\"S011\", ...) 호출하나 DPLA100.xsql에는 S011이 정의되어 있지 않음 (정상 SQL ID는 S001)",
+        "detected": true,
+        "detected_by": [
+          "MISSING_STATEMENT"
+        ]
+      },
+      {
+        "issue_id": "E8",
+        "file": "DPLA096.xsql",
+        "category": "XSQL_SYNTAX",
+        "description": "파일 내 마지막 <select> 블록의 닫는 태그 '</select>'가 누락됨",
+        "detected": true,
+        "detected_by": [
+          "XML_PARSE_ERROR"
+        ]
+      },
+      {
+        "issue_id": "E9",
+        "file": "DPLA103.xsql",
+        "category": "XSQL_SYNTAX",
+        "description": "S001 select 태그의 parameterClass 속성 값 따옴표가 닫히지 않음",
+        "detected": true,
+        "detected_by": [
+          "XML_PARSE_ERROR"
+        ]
+      },
+      {
+        "issue_id": "E10",
+        "file": "FPLA107.java",
+        "category": "JAVA_LOGIC",
+        "description": "fCommonCodeQry에서 DPLA107 인스턴스를 얻을 때 lookupDataUnit이 아닌 lookupFunctionUnit을 잘못 호출 (캐스팅 대상 클래스는 DPLA107로 정상이라 컴파일은 통과하지만, ",
+        "detected": false,
+        "detected_by": []
+      }
+    ],
+    "false_positive_files": []
+  },
+  "duplicate_detection": {
+    "exact_dup": {
+      "total": 210,
+      "detected": 209,
+      "detected_type1_only": 105,
+      "missed": [
+        "PLA107.fCommonCodeQry"
+      ],
+      "recall": 0.9952,
+      "recall_type1_only": 0.5
+    },
+    "unique": {
+      "total": 60,
+      "false_positive": 29,
+      "fp_list": [
+        "PLA081.fPLA081QrySelectDetail",
+        "PLA082.fPLA082QrySelectDetail",
+        "PLA083.fPLA083QrySelectDetail",
+        "PLA084.fPLA084QrySelectDetail",
+        "PLA085.fPLA085QrySelectDetail",
+        "PLA086.fPLA086QrySelectDetail",
+        "PLA087.fPLA087QrySelectDetail",
+        "PLA088.fPLA088QrySelectDetail",
+        "PLA089.fPLA089QrySelectDetail",
+        "PLA090.fPLA090QrySelectDetail",
+        "PLA091.fPLA091QrySelectDetail",
+        "PLA092.fPLA092QrySelectDetail",
+        "PLA094.fPLA094QrySelectDetail",
+        "PLA095.fPLA095QrySelectDetail",
+        "PLA096.fPLA096QrySelectDetail",
+        "PLA097.fPLA097QrySelectDetail",
+        "PLA098.fPLA098QrySelectDetail",
+        "PLA099.fPLA099QrySelectDetail",
+        "PLA100.fPLA100QrySelectDetail",
+        "PLA101.fPLA101QrySelectDetail"
+      ],
+      "false_positive_rate": 0.4833
+    },
+    "near_dup_out_of_scope": 30,
+    "sql_rows_out_of_scope": 165,
+    "detected_group_count": 17
+  }
+}

@@ -1,0 +1,363 @@
+"""정답키가 있는 샘플 세트로 탐지 성능을 채점하는 자체 벤치마크.
+
+멘토 코멘트 §H("내부 벤치마크를 먼저 만들어야 개선 여부를 측정할 수 있다")에 대한 응답이다.
+그동안 이 프로젝트의 탐지 기능(원본 결함 탐지, 중복 함수 탐지)은 "돌려보니 N건 나왔다"까지만
+말할 수 있었다 - **정답을 몰라서 그 N건이 맞는지, 놓친 게 몇 건인지 말할 수 없었다.**
+
+`PLA081-110_migration_sample`은 정답키를 함께 제공한다:
+  - `error_injection_answer_key_081-110.csv` : 의도적으로 심은 결함 10건 (파일·분류·증상)
+  - `duplicate_map_answer_key_081-110.csv`   : 화면×멤버별 중복 유형 330행 / 78그룹
+
+이 모듈은 우리 탐지기를 그 정답키와 대조해 **재현율(찾아낸 비율)과 오탐**을 수치로 낸다.
+LLM을 쓰지 않는다 - 전부 결정론적 대조라 매번 같은 값이 나오고, 프롬프트/모델을 바꿔도
+회귀 측정에 그대로 쓸 수 있다.
+
+**정직성 규칙**: 못 찾은 건 못 찾았다고 센다. 정답키를 보고 탐지 규칙을 역으로 맞추지 않는다 -
+그렇게 하면 이 벤치마크가 측정 도구가 아니라 과적합 대상이 된다. 놓친 항목은 "다음에 보강할
+목록"으로 그대로 출력한다.
+
+사용:
+    python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더>
+    python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더> --json out.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import io
+import json
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+for _p in (str(_PROJECT_ROOT), str(_PROJECT_ROOT / "chatui")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+
+# ---------------------------------------------------------------------------
+# 결함 탐지 채점
+# ---------------------------------------------------------------------------
+
+def _collect_asis_findings(sample_dir: Path) -> dict[str, list[dict]]:
+    """AS-IS 원본만 보고(변환 결과가 아니라) 우리 도구가 잡아내는 결함을 파일별로 모은다.
+
+    변환 **전** 단계의 탐지만 센다 - 계획 수립 시 원본 손상 신호, XSQL 문법 검사, 미지원 DB 동사,
+    D가 참조하는 statement id가 XSQL에 실재하는지. TO-BE 산출물의 검증 결과는 여기 섞지 않는다
+    (그건 "원본 결함을 찾았나"가 아니라 "변환 결과가 맞나"라는 다른 질문이다).
+    """
+    from converters import convert_xsql_fragment
+    from java_ast import extract_method_bodies
+    from skeleton_gen import extract_d_stmt_ids, unsupported_db_verbs
+    from validators import count_unbalanced_braces
+
+    findings: dict[str, list[dict]] = defaultdict(list)
+
+    def add(fname: str, kind: str, detail: str) -> None:
+        findings[fname].append({"detector": kind, "detail": detail})
+
+    for path in sorted(sample_dir.iterdir()):
+        if not path.is_file():
+            continue
+        name = path.name
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+
+        if name.lower().endswith(".java"):
+            n = count_unbalanced_braces(text)
+            if n:
+                add(name, "BRACE_IMBALANCE", f"중괄호 불일치 {n}건 — 원본이 그대로는 컴파일되지 않음")
+            if name.upper().startswith("D"):
+                verbs = unsupported_db_verbs(text)  # {메서드: [verb, ...]}
+                if verbs:
+                    add(name, "UNSUPPORTED_DB_VERB",
+                        "조회 외 DB 동사: " + ", ".join(f"{m}={v}" for m, v in sorted(verbs.items())))
+
+        elif name.lower().endswith(".xsql"):
+            result = convert_xsql_fragment(text)
+            for issue in result.issues:
+                sev = getattr(issue, "severity", "")
+                itype = getattr(issue, "issue_type", "")
+                # 원본 결함이 아니라 "변환하면서 이렇게 처리했다"는 정보성 알림은 결함 신호로
+                # 세지 않는다. REMAPRESULTS_DROPPED는 이 세트의 XSQL 30개 **전부**에 균일하게
+                # 떴다(결함을 심은 2개를 뺀 28개가 그대로 오탐으로 집계됐다) - 모든 파일에 똑같이
+                # 뜨는 신호는 정의상 결함을 구분해주지 못한다.
+                if itype in ("CDATA_SIMPLIFIED", "REMAPRESULTS_DROPPED"):
+                    continue
+                if sev == "INFO":
+                    continue
+                add(name, itype or "XSQL_ISSUE", str(getattr(issue, "message", ""))[:200])
+
+    # D 메서드가 부르는 statement id가 실제 XSQL에 있는지 (E7류: 없는 SQL ID 호출)
+    for path in sorted(sample_dir.glob("D*.java")):
+        xsql = path.with_suffix(".xsql")
+        if not xsql.exists():
+            continue
+        try:
+            d_text = path.read_text(encoding="utf-8", errors="replace")
+            x_text = xsql.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        defined = set(re.findall(r'\bid\s*=\s*"([^"]+)"', x_text))
+        for method, stmt_id in (extract_d_stmt_ids(d_text) or {}).items():
+            if stmt_id and stmt_id not in defined:
+                findings[path.name].append({
+                    "detector": "MISSING_STATEMENT",
+                    "detail": f"{method}가 참조하는 statement id '{stmt_id}'가 {xsql.name}에 없음",
+                })
+
+    # F/P가 호출하는 하위 메서드가 그 클래스에 실제로 있는지 (E5류: 오타 메서드명)
+    for path in sorted(sample_dir.glob("F*.java")):
+        screen = path.stem[1:]
+        d_path = sample_dir / f"D{screen}.java"
+        if not d_path.exists():
+            continue
+        try:
+            f_text = path.read_text(encoding="utf-8", errors="replace")
+            d_text = d_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        d_methods = set(extract_method_bodies(d_text))
+        for callee in set(re.findall(r"\bdu\.(\w+)\s*\(", f_text)) | set(re.findall(r"\.\s*(d[A-Za-z0-9_]+)\s*\(", f_text)):
+            if callee.startswith("d") and d_methods and callee not in d_methods:
+                findings[path.name].append({
+                    "detector": "UNRESOLVED_CALLEE",
+                    "detail": f"{callee}(...)를 호출하지만 D{screen}에 그런 메서드가 없음",
+                })
+    return dict(findings)
+
+
+def score_error_detection(sample_dir: Path, answer_csv: Path) -> dict:
+    """심어진 결함 정답키와 우리 탐지 결과를 파일 단위로 대조한다."""
+    with io.open(answer_csv, encoding="utf-8-sig") as f:
+        expected = list(csv.DictReader(f))
+    findings = _collect_asis_findings(sample_dir)
+
+    rows = []
+    for e in expected:
+        fname = e["file"]
+        hits = findings.get(fname, [])
+        rows.append({
+            "issue_id": e["issue_id"],
+            "file": fname,
+            "category": e["category"],
+            "description": e["description"][:120],
+            "detected": bool(hits),
+            "detected_by": sorted({h["detector"] for h in hits}),
+        })
+
+    files_with_injected = {e["file"] for e in expected}
+    false_positive_files = sorted(set(findings) - files_with_injected)
+    hit = sum(1 for r in rows if r["detected"])
+    by_cat: dict[str, dict[str, int]] = defaultdict(lambda: {"hit": 0, "total": 0})
+    for r in rows:
+        by_cat[r["category"]]["total"] += 1
+        by_cat[r["category"]]["hit"] += int(r["detected"])
+
+    return {
+        "total": len(rows),
+        "detected": hit,
+        "recall": round(hit / len(rows), 4) if rows else 0.0,
+        "by_category": {k: v for k, v in sorted(by_cat.items())},
+        "rows": rows,
+        "false_positive_files": [
+            {"file": f, "findings": sorted({x["detector"] for x in findings[f]})}
+            for f in false_positive_files
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# 중복 함수 탐지 채점
+# ---------------------------------------------------------------------------
+
+_MEMBER_METHODS_RE = re.compile(r"\(([^)]*)\)")
+
+
+def _normalize_body(body: str, screen: str | None = None) -> str:
+    """주석·공백을 제거한 본문. `agents/db.py`의 BODY_HASH와 같은 취지의 정규화다.
+
+    `screen`을 주면 **Type-2 정규화**까지 한다 — 본문에 박혀 있는 자기 화면 ID를 자리표시자로
+    치환한다. 이게 없으면 화면마다 복붙된 같은 로직도 자기 D 클래스명(`DPLA081` vs `DPLA082`)
+    때문에 텍스트가 갈려 해시가 달라진다. 벤치마크로 확인한 실제 현상이다: 화면 ID를 본문에
+    담지 않는 D 계층 메서드는 Type-1 해시로도 잡혔지만, D 클래스를 참조하는 F 계층 메서드는
+    전부 놓쳤다(완전중복 재현율이 정확히 절반에서 멈췄고 놓친 목록이 전부 `f*`였다).
+
+    식별자 치환은 클론 탐지에서 Type-2 클론(식별자·리터럴만 다른 복제)을 잡는 표준 방식이다 —
+    정답키를 보고 규칙을 맞춘 게 아니라 "화면 간 복붙된 동일 로직을 찾는다"는 원래 목적에 맞는
+    알고리즘을 뒤늦게 구현한 것이다.
+    """
+    body = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
+    body = re.sub(r"//[^\n]*", "", body)
+    body = re.sub(r"\s+", " ", body).strip()
+    if screen:
+        body = re.sub(re.escape(screen), "{SCREEN}", body, flags=re.I)
+    return body
+
+
+def score_duplicate_detection(sample_dir: Path, answer_csv: Path) -> dict:
+    """본문 해시 기반 중복 탐지를 정답키와 대조한다.
+
+    **범위를 정직하게 좁힌다**: 우리 탐지기는 본문 해시가 같은 것만 찾는 완전 중복(Type-2) 탐지기다.
+    따라서 채점 대상은 F/D 메서드 행 중 ①완전중복(Type-2)과 ②완전 고유 두 부류다.
+      - 완전중복(Type-2) → 찾아야 한다 (재현율)
+      - 완전 고유         → 찾으면 안 된다 (오탐)
+      - 구조적 유사(Near-dup) → **설계상 못 찾는다.** 해시가 다르기 때문이며, 이건 한계로 보고한다
+        (놓쳤다고 세지도, 맞혔다고 세지도 않고 별도 집계).
+      - SQL(Type-1) 행 → 이 탐지기의 대상이 아니다(메서드 본문이 아니라 SQL 텍스트). 별도 집계.
+    """
+    from java_ast import extract_method_bodies
+
+    with io.open(answer_csv, encoding="utf-8-sig") as f:
+        expected = list(csv.DictReader(f))
+
+    # 1) 실제 소스에서 메서드 본문 해시 → 같은 해시끼리 묶는다.
+    #    Type-1(원문 그대로)과 Type-2(화면 ID 정규화) 두 가지로 각각 묶어 전후를 함께 낸다 -
+    #    개선 효과를 주장이 아니라 같은 실행 안의 두 수치로 보여주기 위함이다.
+    t1_groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    t2_groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for path in sorted(sample_dir.glob("*.java")):
+        layer, screen = path.stem[0], path.stem[1:]
+        if layer not in ("F", "D"):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for method, body in extract_method_bodies(text).items():
+            for norm, bucket in ((_normalize_body(body), t1_groups),
+                                 (_normalize_body(body, screen), t2_groups)):
+                if not norm:
+                    continue
+                bucket[hashlib.sha256(norm.encode("utf-8")).hexdigest()].append((screen, method))
+
+    def _dups(groups: dict[str, list[tuple[str, str]]]) -> set[tuple[str, str]]:
+        out: set[tuple[str, str]] = set()
+        for members in groups.values():
+            if len(members) >= 2:
+                out.update(members)
+        return out
+
+    t1_dup, detected_dup = _dups(t1_groups), _dups(t2_groups)
+
+    # 2) 정답키의 F/D 행을 (화면, 메서드)로 펼친다
+    stats = {
+        "exact_dup": {"total": 0, "detected": 0, "detected_type1_only": 0, "missed": []},
+        "unique": {"total": 0, "false_positive": 0, "fp_list": []},
+        "near_dup_out_of_scope": 0,
+        "sql_rows_out_of_scope": 0,
+    }
+    for e in expected:
+        layer, dup_type, member = e["layer"], e["dup_type"], e["member"]
+        screen = e["screen_id"]
+        if layer != "F/D":
+            stats["sql_rows_out_of_scope"] += 1
+            continue
+        m = _MEMBER_METHODS_RE.search(member)
+        methods = [x.strip() for x in m.group(1).split("/")] if m else []
+        if not methods:
+            # 괄호가 없는 형태(예: "QrySelectMainList") → F/D 접두사를 붙여 실제 이름을 만든다
+            base = member.strip()
+            methods = [f"f{screen}{base}", f"d{screen}{base}"] if base else []
+        if "Near-dup" in dup_type:
+            stats["near_dup_out_of_scope"] += 1
+            continue
+        is_exact = "완전중복" in dup_type
+        is_unique = "고유" in dup_type
+        for meth in methods:
+            key = (screen, meth)
+            if is_exact:
+                stats["exact_dup"]["total"] += 1
+                stats["exact_dup"]["detected_type1_only"] += int(key in t1_dup)
+                if key in detected_dup:
+                    stats["exact_dup"]["detected"] += 1
+                else:
+                    stats["exact_dup"]["missed"].append(f"{screen}.{meth}")
+            elif is_unique:
+                stats["unique"]["total"] += 1
+                if key in detected_dup:
+                    stats["unique"]["false_positive"] += 1
+                    stats["unique"]["fp_list"].append(f"{screen}.{meth}")
+
+    ed = stats["exact_dup"]
+    un = stats["unique"]
+    ed["recall"] = round(ed["detected"] / ed["total"], 4) if ed["total"] else 0.0
+    ed["recall_type1_only"] = round(ed["detected_type1_only"] / ed["total"], 4) if ed["total"] else 0.0
+    un["false_positive_rate"] = round(un["false_positive"] / un["total"], 4) if un["total"] else 0.0
+    ed["missed"] = ed["missed"][:20]
+    un["fp_list"] = un["fp_list"][:20]
+    stats["detected_group_count"] = sum(1 for v in t2_groups.values() if len(v) >= 2)
+    return stats
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="python -m agents.benchmark")
+    ap.add_argument("sample_dir", help="AS-IS 샘플 소스 폴더")
+    ap.add_argument("--answer-dir", required=True, help="정답키 CSV가 있는 폴더")
+    ap.add_argument("--json", default="", help="결과를 JSON으로 저장할 경로")
+    args = ap.parse_args(argv)
+
+    sample = Path(args.sample_dir).expanduser().resolve()
+    ans = Path(args.answer_dir).expanduser().resolve()
+    err_key = next(ans.glob("error_injection_answer_key*.csv"), None)
+    dup_key = next(ans.glob("duplicate_map_answer_key*.csv"), None)
+    if not err_key or not dup_key:
+        print(f"정답키 CSV를 찾을 수 없습니다: {ans}", file=sys.stderr)
+        return 2
+
+    err = score_error_detection(sample, err_key)
+    dup = score_duplicate_detection(sample, dup_key)
+
+    print("=" * 78)
+    print("  자체 벤치마크 — 정답키 대조 결과")
+    print(f"  샘플: {sample.name}")
+    print("=" * 78)
+    print(f"\n[1] 원본 결함 탐지 — 재현율 {err['detected']}/{err['total']} ({err['recall']:.0%})\n")
+    for r in err["rows"]:
+        mark = "O" if r["detected"] else "X"
+        by = ", ".join(r["detected_by"]) if r["detected_by"] else "-"
+        print(f"  {mark}  {r['issue_id']:<4} {r['file']:<16} {r['category']:<16} {by}")
+        if not r["detected"]:
+            print(f"       └ 놓침: {r['description']}")
+    print("\n  분류별:")
+    for cat, v in err["by_category"].items():
+        print(f"    {cat:<18} {v['hit']}/{v['total']}")
+    if err["false_positive_files"]:
+        print(f"\n  정답키에 없는 파일에서 나온 탐지 {len(err['false_positive_files'])}건:")
+        for fp in err["false_positive_files"][:15]:
+            print(f"    - {fp['file']}: {', '.join(fp['findings'])}")
+
+    ed, un = dup["exact_dup"], dup["unique"]
+    print(f"\n[2] 중복 함수 탐지 (본문 해시 기반)")
+    print(f"  완전중복 재현율 : {ed['detected']}/{ed['total']} ({ed['recall']:.0%})"
+          f"   [화면ID 정규화 전(Type-1 해시): {ed['detected_type1_only']}/{ed['total']} ({ed['recall_type1_only']:.0%})]")
+    print(f"  고유 오탐       : {un['false_positive']}/{un['total']} ({un['false_positive_rate']:.0%})")
+    print(f"  탐지 그룹 수    : {dup['detected_group_count']}")
+    print(f"  범위 밖(구조적 유사) : {dup['near_dup_out_of_scope']}행 — 해시 기반으로는 설계상 탐지 불가")
+    print(f"  범위 밖(SQL 행)      : {dup['sql_rows_out_of_scope']}행 — 메서드 본문 탐지기의 대상 아님")
+    if ed["missed"]:
+        print(f"  놓친 완전중복 예시: {', '.join(ed['missed'][:8])}")
+    if un["fp_list"]:
+        print(f"  오탐 예시: {', '.join(un['fp_list'][:8])}")
+    print()
+
+    if args.json:
+        Path(args.json).write_text(
+            json.dumps({"error_detection": err, "duplicate_detection": dup},
+                       ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"JSON 저장: {args.json}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
