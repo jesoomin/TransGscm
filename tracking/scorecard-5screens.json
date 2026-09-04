@@ -19,18 +19,26 @@
     {
       "axis": "B. 사용자 체감",
       "item": "리뷰 대상 축소율",
-      "weight": 18,
-      "value": 0.7182,
-      "score": 12.93,
+      "weight": 14,
+      "value": 0.8369,
+      "score": 11.72,
       "status": "측정"
     },
     {
       "axis": "B. 사용자 체감",
       "item": "결정론 처리 비중",
-      "weight": 12,
-      "value": 0.4643,
-      "score": 5.57,
+      "weight": 8,
+      "value": 0.75,
+      "score": 6.0,
       "status": "측정"
+    },
+    {
+      "axis": "B. 사용자 체감",
+      "item": "사람 수정 수용률",
+      "weight": 8,
+      "value": null,
+      "score": null,
+      "status": "미측정"
     },
     {
       "axis": "C. 탐지 정확성",
@@ -56,9 +64,9 @@
       "unmeasured": 0
     },
     "B. 사용자 체감": {
-      "earned": 18.5,
-      "available": 30.0,
-      "unmeasured": 0
+      "earned": 17.72,
+      "available": 22.0,
+      "unmeasured": 8
     },
     "C. 탐지 정확성": {
       "earned": 25.2,
@@ -66,10 +74,10 @@
       "unmeasured": 0
     }
   },
-  "earned": 82.87,
-  "available": 100.0,
-  "normalized_100": 82.9,
-  "unmeasured_weight": 0.0,
+  "earned": 82.09,
+  "available": 92.0,
+  "normalized_100": 89.2,
+  "unmeasured_weight": 8.0,
   "detail": {
     "conversion": {
       "outputs_expected": 25,
@@ -84,15 +92,19 @@
       ]
     },
     "developer_experience": {
-      "generated_lines": 1824,
-      "llm_ported_lines": 509,
+      "human_edit_ratio": null,
+      "human_edit_measured_screens": 0,
+      "human_edit_unmeasured_screens": 5,
+      "review_acceptance": null,
+      "generated_lines": 1662,
+      "llm_ported_lines": 266,
       "flagged_lines": 5,
-      "review_target_lines": 514,
-      "review_ratio": 0.2818,
-      "review_reduction": 0.7182,
-      "llm_calls": 15,
-      "rule_handled": 13,
-      "deterministic_ratio": 0.4643,
+      "review_target_lines": 271,
+      "review_ratio": 0.1631,
+      "review_reduction": 0.8369,
+      "llm_calls": 7,
+      "rule_handled": 21,
+      "deterministic_ratio": 0.75,
       "asis_files_per_screen": 4.0
     },
     "detection": {

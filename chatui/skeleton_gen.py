@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import hashlib
 import re
+
+from rule_port import detect_passthrough_query, render_passthrough_method
 from dataclasses import dataclass, field
 
 from converters import ConversionIssue, dto_name_for_method
@@ -582,6 +584,7 @@ def generate_skeletons(
         if simple_delegations:
             lines.append(f"import {base_pkg}.dto.*;")
         lines += [
+            "import java.util.HashMap;",
             "import java.util.List;",
             "import java.util.Map;",
             "",
@@ -592,6 +595,8 @@ def generate_skeletons(
             f"    private {prefix}Store store;",
             "",
         ]
+        # 배관 규칙은 호출 대상이 실재할 때만 적용한다(rule_port.detect_passthrough_query 참고).
+        known_d_methods = set(extract_methods(d_java_text)) if d_java_text else set()
         for method in f_methods:
             delegation = simple_delegations.get(method)
             body = f_bodies_for_delegation.get(method, "")
@@ -617,6 +622,24 @@ def generate_skeletons(
                     "callee_layer": "D", "callee_method": d_method,
                 })
                 continue
+
+            # 단순 위임은 아니지만 분기/계산이 전혀 없는 배관 패턴이면 여기서도 규칙 기반으로
+            # 옮긴다(chatui/rule_port.py). 업무 로직(분기·산술)이 하나라도 있으면 잡히지 않고
+            # 아래 LLM 포팅 경로로 내려간다 - 비중을 올리려고 로직까지 규칙으로 밀지 않는다.
+            passthrough = detect_passthrough_query(body, known_d_methods)
+            if passthrough:
+                lines += render_passthrough_method(method, passthrough)
+                result.methods.append({
+                    "layer": "F", "method_name": method, "method_name_tobe": method,
+                    "body_hash": method_body_hash(body),
+                    "conversion_method": "RULE_BASED_PASSTHROUGH", "mapper_stmt_id": None,
+                })
+                result.method_calls.append({
+                    "caller_layer": "F", "caller_method": method,
+                    "callee_layer": "D", "callee_method": passthrough.d_method,
+                })
+                continue
+
             lines += [
                 f"    // PORT_START:{method}",
                 f"    // TODO(LLM 포팅 필요): 원본 F{screen_id}.{method}의 계산/분기 로직을 그대로 옮길 것.",

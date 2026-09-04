@@ -137,15 +137,30 @@ def build_screen_plan(
     f_methods = extract_methods(f_java) if f_java else []
     f_bodies = extract_method_bodies(f_java) if f_java else {}
 
-    # F 메서드를 "단순 위임(규칙 기반으로 바로 생성)"과 "LLM 포팅 필요"로 나눈다.
+    # F 메서드를 규칙 기반 처리분과 LLM 포팅 대상으로 나눈다.
+    #
+    # **판정 순서를 `skeleton_gen.generate_skeletons()`와 정확히 일치시킨다**(단순 위임 → 배관 →
+    # LLM). 계획서가 실제 생성기와 다른 판정을 내면 "예상 LLM 호출 수"가 거짓이 되고, 이 프로젝트가
+    # 이미 여러 번 겪은 "두 개의 병렬 구현, 하나는 잊혀짐" 패턴이 된다 - 실제로 배관 규칙을
+    # 생성기에만 넣었을 때 계획서가 옛 수치(46%)를 계속 보고했다.
+    from rule_port import detect_passthrough_query
+
+    known_d_methods = set(extract_methods(buckets.get("D", {}).get("java") or ""))
+
     simple_delegations: dict[str, str] = {}
+    passthrough_queries: dict[str, str] = {}
     llm_targets: list[str] = []
     for m in f_methods:
-        delegate = detect_simple_delegation(f_bodies.get(m, ""))
+        body = f_bodies.get(m, "")
+        delegate = detect_simple_delegation(body)
         if delegate:
             simple_delegations[m] = delegate
-        else:
-            llm_targets.append(m)
+            continue
+        spec = detect_passthrough_query(body, known_d_methods)
+        if spec:
+            passthrough_queries[m] = spec.d_method
+            continue
+        llm_targets.append(m)
 
     unbalanced = {
         name: count_unbalanced_braces(buckets.get(layer, {}).get(key) or "")
@@ -168,13 +183,14 @@ def build_screen_plan(
         "expected_outputs": _expected_outputs(buckets, screen_id, package_p1, package_p2),
         "llm_porting_targets": llm_targets,
         "rule_based_delegations": simple_delegations,
+        "rule_based_passthrough": passthrough_queries,
         "estimated_llm_calls": {
             # 단순 위임 메서드는 규칙 기반으로 생성되므로 LLM을 아예 안 부른다(2026-09-04 수정).
             # 그 전에는 파이프라인이 F 메서드 전부를 보내놓고 단순 위임분 결과는 splice에서
             # 버렸고, 버려지니 재시도 라운드마다 또 불러서 PLA047 기준 유효 1건에 호출 5건이
             # 나갔다 - _convert_screen이 LLM_PENDING 메서드만 pending에 담도록 고쳐서 없앴다.
             "porting": len(llm_targets),
-            "porting_skipped_rule_based": len(simple_delegations),
+            "porting_skipped_rule_based": len(simple_delegations) + len(passthrough_queries),
             "ai_recommend": len(nctrid_map) if p_java else 0,
         },
         # 트랙은 사람이 정한다 - 여기서 추측해 채우지 않는다(CLAUDE.md/Phase 3).

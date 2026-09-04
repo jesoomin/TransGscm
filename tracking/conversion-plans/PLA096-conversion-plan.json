@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T08:37:52",
+  "generated_at": "2026-09-05T08:53:03",
   "screen_id": "PLA096",
   "ui_id": "U-PPLA096",
   "package": {
@@ -71,17 +71,19 @@
     }
   ],
   "llm_porting_targets": [
-    "fAuthCheck",
-    "fPLA096QrySelectMainList",
-    "fPLA096QrySelectDetail"
+    "fAuthCheck"
   ],
   "rule_based_delegations": {
     "fCommonCodeQry": "dCommonCodeQry",
     "fHistoryQry": "dHistoryQry"
   },
+  "rule_based_passthrough": {
+    "fPLA096QrySelectMainList": "dPLA09601",
+    "fPLA096QrySelectDetail": "dPLA09602"
+  },
   "estimated_llm_calls": {
-    "porting": 3,
-    "porting_skipped_rule_based": 2,
+    "porting": 1,
+    "porting_skipped_rule_based": 4,
     "ai_recommend": 0
   },
   "track": "UNDECIDED",

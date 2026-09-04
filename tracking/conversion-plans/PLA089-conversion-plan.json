@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T08:37:52",
+  "generated_at": "2026-09-05T08:53:03",
   "screen_id": "PLA089",
   "ui_id": "U-PPLA089",
   "package": {
@@ -71,18 +71,20 @@
     }
   ],
   "llm_porting_targets": [
-    "fAuthCheck",
-    "fPLA089QrySelectMainList",
-    "fPLA089QrySelectDetail"
+    "fAuthCheck"
   ],
   "rule_based_delegations": {
     "fCommonCodeQry": "dCommonCodeQry",
     "fHistoryQry": "dHistoryQry",
     "fExcelDownQry": "dExcelDownQry"
   },
+  "rule_based_passthrough": {
+    "fPLA089QrySelectMainList": "dPLA08901",
+    "fPLA089QrySelectDetail": "dPLA08902"
+  },
   "estimated_llm_calls": {
-    "porting": 3,
-    "porting_skipped_rule_based": 3,
+    "porting": 1,
+    "porting_skipped_rule_based": 5,
     "ai_recommend": 0
   },
   "track": "UNDECIDED",

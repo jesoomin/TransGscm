@@ -156,7 +156,16 @@ def developer_experience(state: dict) -> dict:
     # 이슈 줄 중 이미 LLM 포팅 메서드 안에 있는 것은 중복 계산이 될 수 있으나, 보수적으로
     # (=축소율을 낮게 잡는 쪽으로) 그냥 더한다. 과소평가는 감수해도 과대평가는 하지 않는다.
     review_target = review_lines + len(flagged)
+    # B-4 사람 수정 라인 비율 (멘토 §H "가장 중요") - 생성 시점 스냅샷이 있어야 측정된다.
+    #     스냅샷이 없으면 0%가 아니라 **미측정**이다. "안 고쳤다"와 "못 쟀다"는 다르다.
+    from agents.human_edit import load_pilot_files, measure_all
+    he = measure_all({sid: load_pilot_files(sid) for sid in files})
+
     return {
+        "human_edit_ratio": he["human_edit_ratio"],
+        "human_edit_measured_screens": he["measured_screens"],
+        "human_edit_unmeasured_screens": he["unmeasured_screens"],
+        "review_acceptance": (1 - he["human_edit_ratio"]) if he["human_edit_ratio"] is not None else None,
         "generated_lines": total_lines,
         "llm_ported_lines": review_lines,
         "flagged_lines": len(flagged),
@@ -213,8 +222,11 @@ _WEIGHTS = [
     # (축, 항목, 배점, 지표 키, 어디서)
     ("A. 전환 성공률", "산출물 생성률", 15, "outputs_rate", "conversion"),
     ("A. 전환 성공률", "정적 검증 통과율", 25, "static_pass_rate", "conversion"),
-    ("B. 사용자 체감", "리뷰 대상 축소율", 18, "review_reduction", "dx"),
-    ("B. 사용자 체감", "결정론 처리 비중", 12, "deterministic_ratio", "dx"),
+    ("B. 사용자 체감", "리뷰 대상 축소율", 14, "review_reduction", "dx"),
+    ("B. 사용자 체감", "결정론 처리 비중", 8, "deterministic_ratio", "dx"),
+    # 멘토 §H가 "가장 중요"라 한 지표라 B축에서 가장 큰 배점을 준다. 스냅샷이 없으면 미측정으로
+    # 빠지고 분모에서도 제외된다 - 지금은 사람 리뷰가 시작되지 않아 대개 미측정이다.
+    ("B. 사용자 체감", "사람 수정 수용률", 8, "review_acceptance", "dx"),
     ("C. 탐지 정확성", "원본 결함 재현율", 15, "defect_recall", "detect"),
     ("C. 탐지 정확성", "중복 탐지 F1", 15, "dup_f1_proxy", "detect"),
 ]
@@ -260,7 +272,8 @@ def build_scorecard(state: dict, bench: dict | None = None) -> dict:
         "detail": {"conversion": conv, "developer_experience": dx, "detection": det},
         "not_covered": [
             "L3 기능 동등성 — 포팅 코드를 실행할 환경이 없어 미측정",
-            "L4 사람 수정 라인 비율 — 사람이 리뷰한 화면 0건, 측정 시점 미도래",
+            "L4 사람 수정 라인 비율 — **측정 수단은 구현됨**(agents/human_edit.py). "
+            "생성 시점 스냅샷 대비 diff로 산출되며, 사람 리뷰가 시작되면 자동으로 채워진다",
         ],
     }
 
@@ -307,6 +320,12 @@ def render(sc: dict) -> str:
     out.append(f"  LLM/규칙      LLM {x['llm_calls']}건 · 규칙 {x['rule_handled']}건 "
                f"(결정론 {x['deterministic_ratio']:.0%})")
     out.append(f"  추적 제거     화면당 AS-IS 파일 평균 {x['asis_files_per_screen']}종 → 그래프 조회 1회")
+    if x.get("human_edit_ratio") is not None:
+        out.append(f"  사람 수정     {x['human_edit_ratio']:.1%} "
+                   f"(측정 {x['human_edit_measured_screens']}화면 / 미측정 {x['human_edit_unmeasured_screens']}화면)")
+    else:
+        out.append(f"  사람 수정     미측정 — 생성 시점 스냅샷 없음 "
+                   f"(대상 {x['human_edit_unmeasured_screens']}화면). 저장 시 스냅샷이 남아야 측정됨")
     out.append("\n[이 점수가 말하지 않는 것]")
     for n in sc["not_covered"]:
         out.append(f"  - {n}")
