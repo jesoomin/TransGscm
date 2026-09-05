@@ -1,14 +1,14 @@
 {
   "screens_total": 5,
   "screens_executed": 3,
-  "cases": 36,
-  "matched": 27,
+  "cases": 57,
+  "matched": 48,
   "by_layer": {
     "SERVICE": {
-      "cases": 27,
-      "matched": 27,
-      "payload_matched": 27,
-      "message_matched": 27,
+      "cases": 48,
+      "matched": 48,
+      "payload_matched": 48,
+      "message_matched": 48,
       "screens": 3,
       "match_rate": 1.0,
       "payload_match_rate": 1.0
@@ -23,21 +23,24 @@
       "payload_match_rate": 1.0
     }
   },
-  "match_rate": 0.75,
+  "match_rate": 0.8421,
   "per_screen": [
     {
       "screen_id": "PLA087",
       "status": "COMPILE_FAIL",
       "reason": [
-        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA087-rgz0udtp\\src\\gscm\\r\\pm\\prdb\\biz\\FPLA087.java:112: error: cannot find symbol",
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA087-6s27dtvf\\src\\gscm\\r\\pm\\prdb\\biz\\FPLA087.java:112: error: cannot find symbol",
         "\t\t\tIRecordSet rs = du.dPLA08710(requestData, onlineCtx).getRecordSet(\"MAIN_LIST\");",
         "\t\t\t                  ^",
         "  symbol:   method dPLA08710(IDataSet,IOnlineContext)",
         "  location: variable du of type DPLA087",
-        "1 error"
+        "Note: C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA087-6s27dtvf\\src\\com\\skhynix\\gscm\\r\\TODO\\TODO\\service\\Pla087Service.java uses unchecked or unsafe operations."
       ],
       "methods": [
         "fAuthCheck",
+        "fCommonCodeQry",
+        "fExcelDownQry",
+        "fHistoryQry",
         "fPLA087QrySelectDetail",
         "fPLA087QrySelectMainList"
       ]
@@ -47,24 +50,29 @@
       "status": "OK",
       "methods": [
         "fAuthCheck",
+        "fCommonCodeQry",
+        "fExcelDownQry",
+        "fHistoryQry",
         "fPLA089QrySelectDetail",
         "fPLA089QrySelectMainList"
       ],
       "api_methods": [],
       "api_layer_skipped": [
-        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA089-u4k8gjes\\src\\gscm\\r\\pm\\prdb\\biz\\PPLA089.java:123: error: reached end of file while parsing",
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA089-_caqe6s0\\src\\gscm\\r\\pm\\prdb\\biz\\PPLA089.java:123: error: reached end of file while parsing",
         "}",
         " ^"
       ],
-      "cases": 9,
-      "matched": 9,
+      "cases": 18,
+      "matched": 18,
       "match_rate": 1.0,
+      "asis_methods_total": 6,
+      "methods_skipped": [],
       "by_layer": {
         "SERVICE": {
-          "cases": 9,
-          "matched": 9,
-          "payload_matched": 9,
-          "message_matched": 9,
+          "cases": 18,
+          "matched": 18,
+          "payload_matched": 18,
+          "message_matched": 18,
           "match_rate": 1.0,
           "payload_match_rate": 1.0
         }
@@ -75,6 +83,39 @@
           "rows": 0,
           "asis": "AUTH_YN=N;",
           "tobe": "AUTH_YN=N;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fCommonCodeQry",
+          "rows": 0,
+          "asis": "CODE_LIST#0;",
+          "tobe": "CODE_LIST#0;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fExcelDownQry",
+          "rows": 0,
+          "asis": "EXCEL_LIST#0;",
+          "tobe": "EXCEL_LIST#0;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 0,
+          "asis": "HIST_LIST#0;",
+          "tobe": "HIST_LIST#0;",
           "match": true,
           "payload_match": true,
           "message_match": true,
@@ -115,6 +156,39 @@
           "tobe_message": ""
         },
         {
+          "method": "fCommonCodeQry",
+          "rows": 1,
+          "asis": "CODE_LIST#1;",
+          "tobe": "CODE_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fExcelDownQry",
+          "rows": 1,
+          "asis": "EXCEL_LIST#1;",
+          "tobe": "EXCEL_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 1,
+          "asis": "HIST_LIST#1;",
+          "tobe": "HIST_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
           "method": "fPLA089QrySelectDetail",
           "rows": 1,
           "asis": "DETAIL_LIST#1;",
@@ -141,6 +215,39 @@
           "rows": 3,
           "asis": "AUTH_YN=Y;",
           "tobe": "AUTH_YN=Y;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fCommonCodeQry",
+          "rows": 3,
+          "asis": "CODE_LIST#3;",
+          "tobe": "CODE_LIST#3;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fExcelDownQry",
+          "rows": 3,
+          "asis": "EXCEL_LIST#3;",
+          "tobe": "EXCEL_LIST#3;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 3,
+          "asis": "HIST_LIST#3;",
+          "tobe": "HIST_LIST#3;",
           "match": true,
           "payload_match": true,
           "message_match": true,
@@ -175,13 +282,16 @@
       "screen_id": "PLA093",
       "status": "COMPILE_FAIL",
       "reason": [
-        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA093-qqmm_fva\\src\\gscm\\r\\pm\\qulb\\biz\\FPLA093.java:130: error: ';' expected",
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA093-uulrzb3e\\src\\gscm\\r\\pm\\qulb\\biz\\FPLA093.java:130: error: ';' expected",
         "\t\tIDataSet responseData = new DataSet()",
         "\t\t                                     ^",
         "1 error"
       ],
       "methods": [
         "fAuthCheck",
+        "fCommonCodeQry",
+        "fExcelDownQry",
+        "fHistoryQry",
         "fPLA093QrySelectDetail",
         "fPLA093QrySelectMainList"
       ]
@@ -191,6 +301,8 @@
       "status": "OK",
       "methods": [
         "fAuthCheck",
+        "fCommonCodeQry",
+        "fHistoryQry",
         "fPLA096QrySelectDetail",
         "fPLA096QrySelectMainList"
       ],
@@ -200,15 +312,17 @@
         "pPLA09603"
       ],
       "api_layer_skipped": null,
-      "cases": 18,
-      "matched": 9,
-      "match_rate": 0.5,
+      "cases": 24,
+      "matched": 15,
+      "match_rate": 0.625,
+      "asis_methods_total": 5,
+      "methods_skipped": [],
       "by_layer": {
         "SERVICE": {
-          "cases": 9,
-          "matched": 9,
-          "payload_matched": 9,
-          "message_matched": 9,
+          "cases": 15,
+          "matched": 15,
+          "payload_matched": 15,
+          "message_matched": 15,
           "match_rate": 1.0,
           "payload_match_rate": 1.0
         },
@@ -227,6 +341,28 @@
           "rows": 0,
           "asis": "AUTH_YN=N;",
           "tobe": "AUTH_YN=N;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fCommonCodeQry",
+          "rows": 0,
+          "asis": "CODE_LIST#0;",
+          "tobe": "CODE_LIST#0;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 0,
+          "asis": "HIST_LIST#0;",
+          "tobe": "HIST_LIST#0;",
           "match": true,
           "payload_match": true,
           "message_match": true,
@@ -303,6 +439,28 @@
           "tobe_message": ""
         },
         {
+          "method": "fCommonCodeQry",
+          "rows": 1,
+          "asis": "CODE_LIST#1;",
+          "tobe": "CODE_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 1,
+          "asis": "HIST_LIST#1;",
+          "tobe": "HIST_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
           "method": "fPLA096QrySelectDetail",
           "rows": 1,
           "asis": "DETAIL_LIST#1;",
@@ -365,6 +523,28 @@
           "rows": 3,
           "asis": "AUTH_YN=Y;",
           "tobe": "AUTH_YN=Y;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fCommonCodeQry",
+          "rows": 3,
+          "asis": "CODE_LIST#3;",
+          "tobe": "CODE_LIST#3;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 3,
+          "asis": "HIST_LIST#3;",
+          "tobe": "HIST_LIST#3;",
           "match": true,
           "payload_match": true,
           "message_match": true,
@@ -436,24 +616,28 @@
       "status": "OK",
       "methods": [
         "fAuthCheck",
+        "fCommonCodeQry",
+        "fHistoryQry",
         "fPLA100QrySelectDetail",
         "fPLA100QrySelectMainList"
       ],
       "api_methods": [],
       "api_layer_skipped": [
-        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA100-do9oyv7w\\src\\gscm\\r\\pm\\logb\\biz\\PPLA100.java:30: error: cannot find symbol",
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA100-e8yn1vot\\src\\gscm\\r\\pm\\logb\\biz\\PPLA100.java:30: error: cannot find symbol",
         "\t\t\tFPLA100X fu = (FPLA100X) lookupFunctionUnit(FPLA100X.class);",
         "\t\t\t^"
       ],
-      "cases": 9,
-      "matched": 9,
+      "cases": 15,
+      "matched": 15,
       "match_rate": 1.0,
+      "asis_methods_total": 5,
+      "methods_skipped": [],
       "by_layer": {
         "SERVICE": {
-          "cases": 9,
-          "matched": 9,
-          "payload_matched": 9,
-          "message_matched": 9,
+          "cases": 15,
+          "matched": 15,
+          "payload_matched": 15,
+          "message_matched": 15,
           "match_rate": 1.0,
           "payload_match_rate": 1.0
         }
@@ -464,6 +648,28 @@
           "rows": 0,
           "asis": "AUTH_YN=N;",
           "tobe": "AUTH_YN=N;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fCommonCodeQry",
+          "rows": 0,
+          "asis": "CODE_LIST#0;",
+          "tobe": "CODE_LIST#0;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 0,
+          "asis": "HIST_LIST#0;",
+          "tobe": "HIST_LIST#0;",
           "match": true,
           "payload_match": true,
           "message_match": true,
@@ -504,6 +710,28 @@
           "tobe_message": ""
         },
         {
+          "method": "fCommonCodeQry",
+          "rows": 1,
+          "asis": "CODE_LIST#1;",
+          "tobe": "CODE_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 1,
+          "asis": "HIST_LIST#1;",
+          "tobe": "HIST_LIST#1;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
           "method": "fPLA100QrySelectDetail",
           "rows": 1,
           "asis": "DETAIL_LIST#1;",
@@ -530,6 +758,28 @@
           "rows": 3,
           "asis": "AUTH_YN=Y;",
           "tobe": "AUTH_YN=Y;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fCommonCodeQry",
+          "rows": 3,
+          "asis": "CODE_LIST#3;",
+          "tobe": "CODE_LIST#3;",
+          "match": true,
+          "payload_match": true,
+          "message_match": true,
+          "asis_message": "",
+          "tobe_message": ""
+        },
+        {
+          "method": "fHistoryQry",
+          "rows": 3,
+          "asis": "HIST_LIST#3;",
+          "tobe": "HIST_LIST#3;",
           "match": true,
           "payload_match": true,
           "message_match": true,

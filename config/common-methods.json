@@ -1,0 +1,32 @@
+{
+  "status": "CONFIRMED",
+  "generated_from": "PLA081-110_migration_sample (화면 30개)",
+  "confirmed_scope": "D(Store) 계층과 그 SQL만. Service 계층은 아래 service_deferred 참고.",
+  "store": [
+    "dAuthCheck",
+    "dCommonCodeQry",
+    "dExcelDownQry"
+  ],
+  "statements": [
+    "S901",
+    "S902",
+    "S904"
+  ],
+  "service": [],
+  "why_store_is_safe": [
+    "세 메서드 모두 30화면(dExcelDownQry는 15화면)에서 EXACT 단계, 즉 글자 그대로 같다.",
+    "본문이 dbSelect 한 줄 + putRecordset 한 줄이라 업무 판단이 들어갈 자리가 없다.",
+    "각자의 SQL(S901/S902/S904)도 추적 주석을 빼면 30벌이 동일하다 - 메서드와 SQL이 **둘 다** 공통이어야 공통화할 수 있다."
+  ],
+  "service_deferred": {
+    "이유": "여기에는 업무 로직이 들어 있어 '공통 모듈을 어디에 둘지'가 설계 결정이 된다. CLAUDE.md와 멘토 코멘트 §2가 공통 모듈은 사람이 먼저 확정하라고 못 박은 자리라 자동 적용하지 않았다.",
+    "fAuthCheck": "30/30 화면에서 SCREEN 단계 동일. 분기(권한 건수>0 -> AUTH_YN=Y/N)가 있어 규칙으로 못 옮긴다. 공통화하면 지금 화면마다 나가는 LLM 포팅 호출 30건이 1건이 된다 - 확정 시 가장 큰 절감분.",
+    "fHistoryQry": "30/30 동일, 순수 레코드셋 위임이라 규칙으로 옮길 수 있다. 지금도 화면별 규칙 기반 생성이라 LLM 절감은 없고, 줄이는 건 중복 사본 30벌이다.",
+    "fExcelDownQry": "15/30 화면에만 존재. fHistoryQry와 같은 성격.",
+    "fCommonCodeQry": "29화면은 동일하지만 PLA107 하나가 갈라진다 - 그 화면이 lookupDataUnit 대신 lookupFunctionUnit을 부르는 원본 결함(정답키 E10)이기 때문이다. 원본을 고치지 않고 보존하는 원칙상 공통화 대상에서 뺐다."
+  },
+  "how_to_apply": "status가 CONFIRMED일 때만 생성기가 이 목록을 적용한다. 항목을 빼면 그 메서드는 화면별로 그대로 생성된다. service 목록에 이름을 추가하면 공통 Service도 함께 생성되지만, 그 전에 L3 실행 하네스가 공통 클래스를 컴파일 대상에 넣도록 같이 손봐야 한다(agents/equivalence_test.py).",
+  "store_deferred": {
+    "dHistoryQry": "본문은 30화면 EXACT 동일하지만 그 SQL(S903)은 DOMAIN_CD 리터럴이 도메인(LOG/MGT/PLN/PRD/QUL)마다 달라 5그룹으로 갈린다. 메서드만 공통화하면 5개 도메인이 하나의 쿼리를 쓰게 되므로 뺐다 - agents/common_methods.check_registry()가 이 조건을 강제한다. 공통화하려면 DOMAIN_CD를 바인드 파라미터로 올리는 SQL 변경이 필요한데, 그건 사람이 결정할 일이다."
+  }
+}

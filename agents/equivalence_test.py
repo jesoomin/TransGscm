@@ -158,12 +158,12 @@ def _strip_spring(src: str) -> str:
 def _harness_main(asis_pkg: str, asis_f_cls: str, asis_d_cls: str,
                   tobe_svc_pkg: str, tobe_service: str,
                   tobe_store_pkg: str, tobe_store: str,
-                  methods: list[str],
+                  methods: list[tuple[str, str]],
                   asis_p_cls: str = "", tobe_api_pkg: str = "", tobe_api: str = "",
                   api_methods: list[str] | None = None) -> str:
     calls = "\n".join(
-        f'''        runPair("{m}", rows, out);'''
-        for m in methods
+        f'''        runPair("{a}", "{b}", rows, out);'''
+        for a, b in methods
     )
     api_methods = api_methods or []
     # Api 계층(HTTP/직렬화 경계) 비교 - P 메서드와 Api 메서드를 같은 입력으로 부른다.
@@ -266,9 +266,9 @@ public class Harness {{
         }}
     }}
 
-    static void runPair(String method, int rows, List<String> out) {{
+    static void runPair(String method, String tobeMethod, int rows, List<String> out) {{
         String asis = safeAsis(method);
-        String tobe = safeTobe(method);
+        String tobe = safeTobe(tobeMethod);
         out.add("{{\\"method\\":\\"" + method + "\\",\\"rows\\":" + rows
                 + ",\\"asis\\":" + q(asis) + ",\\"tobe\\":" + q(tobe)
                 + ",\\"match\\":" + asis.equals(tobe) + "}}");
@@ -419,7 +419,23 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
     # 양쪽에 다 존재하는 메서드만 비교한다 - 한쪽에만 있으면 동등성 질문 자체가 성립하지 않는다.
     asis_methods = set(_F_METHOD_RE.findall(f_src))
     tobe_methods = set(re.findall(r"public\s+Map<String,\s*Object>\s+(\w+)\s*\(", svc_src))
-    methods = sorted(asis_methods & tobe_methods)
+    # 이름이 그대로면 그대로 짝짓고, 아니면 생성기의 개명 규칙(단순 위임은 `f` 접두어를 떼고
+    # 전부 소문자로 - skeleton_gen.detect_simple_delegation)으로 한 번 더 찾는다.
+    #
+    # 이게 없을 때 **규칙 기반으로 생성된 메서드가 통째로 비교에서 빠졌다.** PLA096은 F 메서드가
+    # 5개인데 3개만 재고 "F 계층 100%"라고 보고하고 있었다 - 빠진 둘이 하필 결과 Map을 그대로
+    # 되돌려주는 코드라, 검증에서 빠진 쪽이 더 의심스러운 쪽이었다.
+    pairs: list[tuple[str, str]] = []
+    skipped: list[str] = []
+    for m in sorted(asis_methods):
+        if m in tobe_methods:
+            pairs.append((m, m))
+        elif m[1:].lower() in tobe_methods:
+            pairs.append((m, m[1:].lower()))
+        else:
+            skipped.append(m)
+    methods = [a for a, _ in pairs]
+    tobe_by_asis = dict(pairs)
     if not methods:
         return {"screen_id": screen_id, "status": "SKIPPED",
                 "reason": "AS-IS/TO-BE 양쪽에 공통으로 있는 F 메서드가 없음"}
@@ -448,7 +464,7 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
     (src / "Harness.java").write_text(
         _harness_main(asis_pkg, f"F{screen_id}", f"D{screen_id}",
                       tobe_svc_pkg, f"{prefix}Service",
-                      tobe_store_pkg, f"{prefix}Store", methods,
+                      tobe_store_pkg, f"{prefix}Store", pairs,
                       asis_p_cls, tobe_api_pkg, tobe_api_cls, api_methods),
         encoding="utf-8")
 
@@ -480,7 +496,7 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
         (src / "Harness.java").write_text(
             _harness_main(asis_pkg, f"F{screen_id}", f"D{screen_id}",
                           tobe_svc_pkg, f"{prefix}Service",
-                          tobe_store_pkg, f"{prefix}Store", methods),
+                          tobe_store_pkg, f"{prefix}Store", pairs),
             encoding="utf-8")
         cp = _compile([str(p) for p in src.rglob("*.java")])
 
@@ -523,6 +539,10 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
             "api_layer_skipped": api_degraded or None,
             "cases": len(results), "matched": matched,
             "match_rate": round(matched / len(results), 4) if results else None,
+            # 몇 개 중 몇 개를 실제로 비교했는지 같이 낸다 - 분모를 숨기면 "일치율 100%"가
+            # 무엇에 대한 100%인지 알 수 없다.
+            "asis_methods_total": len(asis_methods),
+            "methods_skipped": skipped,
             "by_layer": by_layer, "results": results}
 
 

@@ -1,0 +1,99 @@
+{
+  "source": "C:\\Users\\10982\\Downloads\\PLA081-110_migration_sample\\PLA081-110_migration_sample",
+  "screens_scanned": 30,
+  "methods": [
+    {
+      "layer": "F",
+      "name": "fAuthCheck",
+      "converged_at": "SCREEN",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "F",
+      "name": "fCommonCodeQry",
+      "converged_at": "SCREEN",
+      "screens": 29,
+      "share": 0.9667,
+      "outliers": {
+        "PLA107": "{ IDataSet responseData = new DataSet(); try{ DPLA107 du = (DPLA107) lookupFunctionUnit(DPLA107.class); IRecordSet rs = "
+      }
+    },
+    {
+      "layer": "F",
+      "name": "fExcelDownQry",
+      "converged_at": "SCREEN",
+      "screens": 15,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "F",
+      "name": "fHistoryQry",
+      "converged_at": "SCREEN",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "D",
+      "name": "dAuthCheck",
+      "converged_at": "EXACT",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "D",
+      "name": "dCommonCodeQry",
+      "converged_at": "EXACT",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "D",
+      "name": "dExcelDownQry",
+      "converged_at": "EXACT",
+      "screens": 15,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "D",
+      "name": "dHistoryQry",
+      "converged_at": "EXACT",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    }
+  ],
+  "statements": [
+    {
+      "layer": "XSQL",
+      "name": "S901",
+      "converged_at": "EXACT",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "XSQL",
+      "name": "S902",
+      "converged_at": "EXACT",
+      "screens": 30,
+      "share": 1.0,
+      "outliers": {}
+    },
+    {
+      "layer": "XSQL",
+      "name": "S904",
+      "converged_at": "EXACT",
+      "screens": 15,
+      "share": 1.0,
+      "outliers": {}
+    }
+  ],
+  "note": "수렴 단계가 EXACT/SCREEN인 항목만 담았습니다. 리터럴·지역변수까지 지워야 같아지는 것은 서로 다른 로직일 수 있어 자동 공통화 대상에서 제외했습니다. outliers는 다수와 갈라진 화면이며, 공통화 전에 반드시 원인을 확인해야 합니다 - 실제로 이 목록에서 원본 결함이 나왔습니다."
+}

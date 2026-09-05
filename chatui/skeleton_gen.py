@@ -107,6 +107,31 @@ _BIZUNIT_METHOD_RE = re.compile(
 # 그대로 skeleton_gen에서 import해도 동작한다.
 
 
+# 공통 클래스 좌표. 화면 패키지가 아니라 공통 패키지에 한 벌만 둔다 - 화면마다 복제하면
+# 지금 AS-IS가 겪는 "같은 함수 30벌" 상태를 TO-BE로 그대로 옮기게 된다.
+COMMON_PKG = "com.skhynix.gscm.common"
+COMMON_SERVICE_CLASS = "GscmCommonService"
+COMMON_STORE_CLASS = "GscmCommonStore"
+COMMON_MAPPER_NS = f"{COMMON_PKG}.store.{COMMON_STORE_CLASS}"
+
+
+def _common_registry(registry: dict | None) -> tuple[set[str], set[str], set[str]]:
+    """(공통 Service 메서드, 공통 Store 메서드, 공통 statement id).
+
+    레지스트리가 없거나 status가 CONFIRMED가 아니면 전부 빈 집합이다 - 즉 **아무 것도 바뀌지
+    않는다**. 공통 모듈을 사람이 먼저 확정한다는 CLAUDE.md 원칙을 파일 하나로 강제한 것이다.
+    """
+    if registry is None:
+        try:
+            from agents.common_methods import load_registry
+            registry = load_registry()
+        except Exception:  # 레지스트리를 못 읽는다고 변환이 멈추면 안 된다
+            registry = {}
+    return (set(registry.get("service", [])),
+            set(registry.get("store", [])),
+            set(registry.get("statements", [])))
+
+
 def find_delegate_call(p_method_body: str, f_method_names: list[str]) -> str | None:
     """P 메서드 본문에서 실제로 호출하는 F 메서드 이름을 찾는다(있는 것만 신뢰, 추측 안 함).
 
@@ -296,10 +321,25 @@ def detect_simple_delegation(f_body: str) -> str | None:
     이런 흔한 케이스를 전부 놓친다. match()가 이미 시작 위치는 고정하므로, 끝은 열어둬도
     "본문 앞부분이 이 모양과 다르면 매칭 안 됨"이라는 안전성은 그대로 유지된다.
     """
+    spec = detect_simple_delegation_spec(f_body)
+    return spec[0] if spec else None
+
+
+def detect_simple_delegation_spec(f_body: str) -> tuple[str, str] | None:
+    """단순 위임이면 (위임 대상 D 메서드, 원본이 꺼내는 recordset 이름)을 돌려준다.
+
+    이름까지 돌려주는 이유: 예전엔 D 메서드만 알고 `return store.dXXX(request);`로 생성했는데,
+    원본은 `getRecordSet("CODE_LIST")`로 **그 키 하나만** 꺼내 담는다. 결과 Map을 통째로
+    되돌려주면 원본이 반환하지 않던 레코드셋이 전부 새어 나간다.
+
+    이 결함은 L3 하네스가 개명된 메서드(fCommonCodeQry -> commoncodeqry)를 이름으로 못 찾아
+    비교에서 통째로 빼고 있었기 때문에 오래 안 보였다 - "규칙 기반이라 안전하다"고 말해 온
+    경로에서 나온 결함이라 더 중요하다.
+    """
     m = _SIMPLE_DELEGATION_RE.match(f_body.strip())
     if not m or m.group("rsname1") != m.group("rsname2"):
         return None
-    return m.group("dmethod")
+    return m.group("dmethod"), m.group("rsname1")
 
 
 def strip_code_fence(text: str) -> str:
@@ -502,6 +542,7 @@ def generate_skeletons(
     f_java_text: str | None,
     d_java_text: str | None,
     p_bizunit_text: str | None,
+    common_registry: dict | None = None,
 ) -> SkeletonResult:
     result = SkeletonResult()
     prefix = to_prefix(screen_id)
@@ -520,18 +561,20 @@ def generate_skeletons(
                 ),
             ))
 
+    common_service, common_store, common_stmts = _common_registry(common_registry)
     f_methods_for_delegation = extract_methods(f_java_text) if f_java_text else []
     f_bodies_for_delegation = extract_method_bodies(f_java_text) if f_java_text else {}
 
     # F 메서드 원래 이름 -> (Service에 새로 붙일 이름, 위임 대상 D 메서드명). Api 생성과 Service
     # 생성 둘 다 이 매핑이 있어야 한다 - Service 메서드명이 바뀌면 Api가 부르는 이름도 같이
     # 바꿔야 컴파일이 되기 때문에 여기서 미리 한 번만 계산해서 공유한다.
-    simple_delegations: dict[str, tuple[str, str]] = {}
+    simple_delegations: dict[str, tuple[str, str, str]] = {}
     for f_method in f_methods_for_delegation:
-        d_method = detect_simple_delegation(f_bodies_for_delegation.get(f_method, ""))
-        if d_method:
+        spec = detect_simple_delegation_spec(f_bodies_for_delegation.get(f_method, ""))
+        if spec:
+            d_method, rs_name = spec
             renamed = d_method[1:].lower() if d_method[:1].lower() == "d" else d_method.lower()
-            simple_delegations[f_method] = (renamed, d_method)
+            simple_delegations[f_method] = (renamed, d_method, rs_name)
 
     # ---- Api (Controller) ----
     if p_java_text:
@@ -650,7 +693,7 @@ def generate_skeletons(
             # 파라미터/응답 타입도 Map<String,Object> 대신 실제 DTO로 맞춘다.
             param_type, return_type, arg_name = "Map<String, Object>", "Map<String, Object>", "request"
             if delegate and delegate in simple_delegations:
-                renamed, d_method = simple_delegations[delegate]
+                renamed, d_method, _rs = simple_delegations[delegate]
                 call_target = renamed
                 # Service 위임 메서드가 Map<String,Object> 시그니처로 통일됐으므로 Api도 맞춘다
                 # (예전 DTO 타입은 생성되지 않는 클래스라 컴파일이 안 됐다 - Service 쪽 주석 참고).
@@ -720,6 +763,8 @@ def generate_skeletons(
             # 안 되는데, 실행 하네스를 붙이기 전까지는 아무도 컴파일해보지 않아 드러나지 않았다.
             "import com.skhynix.gscm.common.exception.BizRuntimeException;",
         ]
+        if common_service:
+            lines.append(f"import {COMMON_PKG}.service.{COMMON_SERVICE_CLASS};")
         if simple_delegations:
             lines.append(f"import {base_pkg}.dto.*;")
         lines += [
@@ -734,13 +779,19 @@ def generate_skeletons(
             f"    private {prefix}Store store;",
             "",
         ]
+        if common_service:
+            lines += [
+                f"    @Autowired",
+                f"    private {COMMON_SERVICE_CLASS} common;",
+                "",
+            ]
         # 배관 규칙은 호출 대상이 실재할 때만 적용한다(rule_port.detect_passthrough_query 참고).
         known_d_methods = set(extract_methods(d_java_text)) if d_java_text else set()
         for method in f_methods:
             delegation = simple_delegations.get(method)
             body = f_bodies_for_delegation.get(method, "")
             if delegation:
-                renamed, d_method = delegation
+                renamed, d_method, rs_name = delegation
                 lines += [
                     f"    // 원본 {method}가 {d_method} 하나만 호출하고 recordset을 그대로 돌려주는 단순",
                     f"    // 위임이라(계산/분기 없음) LLM 포팅 없이 규칙 기반으로 바로 옮겼다 - 원본과",
@@ -752,7 +803,12 @@ def generate_skeletons(
                     # 이미 Map<String,Object>를 쓰므로 여기에 맞추면 세 경로의 시그니처가 같아져
                     # 서로 바꿔 껴도 계층 간 참조가 깨지지 않는다.
                     f"    public Map<String, Object> {renamed}(Map<String, Object> request) {{",
-                    f"        return store.{d_method}(request);",
+                    f"        Map<String, Object> result = store.{d_method}(request);",
+                    f"        Map<String, Object> response = new HashMap<>();",
+                    # 원본이 꺼내던 키 하나만 담는다 - 결과를 통째로 넘기면 원본이 반환하지
+                    # 않던 레코드셋까지 응답에 실린다(L3 하네스 실측으로 확인한 실제 결함).
+                    f'        response.put("{rs_name}", result == null ? null : result.get("{rs_name}"));',
+                    f"        return response;",
                     f"    }}",
                     "",
                 ]
@@ -765,6 +821,26 @@ def generate_skeletons(
                 result.method_calls.append({
                     "caller_layer": "F", "caller_method": method,
                     "callee_layer": "D", "callee_method": d_method,
+                })
+                continue
+
+            # 확정된 공통 메서드는 화면마다 다시 만들지 않는다. 시그니처는 그대로 두고 본문만
+            # 공통 클래스로 위임한다 - 호출부(Api, 콜그래프, 검증기)를 하나도 안 건드리면서
+            # 30벌 사본을 한 벌로 줄이는 가장 좁은 변경이다.
+            if method in common_service:
+                lines += [
+                    f"    /** 공통 로직 - {COMMON_SERVICE_CLASS}에서 한 곳으로 관리한다"
+                    f"(config/common-methods.json). */",
+                    f"    public Map<String, Object> {method}(Map<String, Object> request) {{",
+                    f"        return common.{method}(request);",
+                    f"    }}",
+                    "",
+                ]
+                result.methods.append({
+                    "layer": "F", "method_name": method, "method_name_tobe": method,
+                    "body_hash": method_body_hash(body),
+                    "body_hash_norm": method_body_hash_norm(body, screen_id),
+                    "conversion_method": "COMMON_DELEGATION", "mapper_stmt_id": None,
                 })
                 continue
 
@@ -845,12 +921,37 @@ def generate_skeletons(
             f"    private SqlSessionTemplate sqlSession;",
             "",
         ]
+        if common_store:
+            # Store가 공통 조회를 직접 하지 않고 공통 Store에 넘긴다. 그래야 그 SQL이 화면마다
+            # 복제되지 않고 공통 Mapper 한 곳에만 존재한다.
+            lines.insert(2, f"import {COMMON_PKG}.store.{COMMON_STORE_CLASS};")
+            lines += [
+                f"    @Autowired",
+                f"    private {COMMON_STORE_CLASS} common;",
+                "",
+            ]
         # 이 변환기가 못 다루는 verb(dbInsert/dbUpdate/dbDelete 등)를 쓰는 D 메서드를 먼저 잡아둔다.
         # 지금까지 확보한 원본(PLA047)이 전부 조회 전용이라 이 경로는 **한 번도 검증된 적이 없다** -
         # 그래서 지원을 추측으로 만들지 않고, 생성물에 주석 + BLOCKER 이슈로 이름 붙여 드러낸다
         # (멘토 코멘트 §6의 insert/update/delete 리스크와 같은 자리).
         bad_verbs = unsupported_db_verbs(d_java_text)
         for method in d_methods:
+            if method in common_store:
+                lines += [
+                    f"    /** 공통 조회 - {COMMON_STORE_CLASS}에서 한 곳으로 관리한다"
+                    f"(config/common-methods.json). */",
+                    f"    public Map<String, Object> {method}(Map<String, Object> params) {{",
+                    f"        return common.{method}(params);",
+                    f"    }}",
+                    "",
+                ]
+                result.methods.append({
+                    "layer": "D", "method_name": method, "method_name_tobe": method,
+                    "body_hash": method_body_hash(d_bodies.get(method, "")),
+                    "body_hash_norm": method_body_hash_norm(d_bodies.get(method, ""), screen_id),
+                    "conversion_method": "COMMON_DELEGATION", "mapper_stmt_id": None,
+                })
+                continue
             stmt_id = method if method in stmt_ids else ""
             mapper_ref = f"NS + \"{stmt_id}\"" if stmt_id else f'NS + "TODO_확인필요_{method}"'
             if method in bad_verbs:

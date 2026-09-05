@@ -393,6 +393,9 @@ def render(sc: dict) -> str:
                    f"(측정 {x['human_edit_measured_screens']}화면 / 미측정 {x['human_edit_unmeasured_screens']}화면)")
         out.append("                ※ 리뷰 주체를 함께 봐야 한다 — 현재 값은 "
                    "**AI 리뷰어 1차 리뷰** 기준이며 사람 개발자 리뷰는 더 많이 손댈 수 있다(하한값)")
+        out.append("                ※ 이 값은 리뷰가 찾아낸 결함 수와 다르다 — 이번 리뷰가 찾은 "
+                   "3건 중 2건(엔드포인트 경로 충돌, 단순 위임의 레코드셋 누수)은 "
+                   "생성기를 고쳐 해소해서 산출물 수정 라인으로 잡히지 않는다")
     else:
         out.append(f"  사람 수정     미측정 — 생성 시점 스냅샷 없음 "
                    f"(대상 {x['human_edit_unmeasured_screens']}화면). 저장 시 스냅샷이 남아야 측정됨")

@@ -69,6 +69,7 @@ from quality_scanner import run_review  # noqa: E402
 from langgraph.graph import END, START, StateGraph  # noqa: E402
 from langgraph.types import Send  # noqa: E402
 
+from .common_methods import load_registry as load_common_registry  # noqa: E402
 from .llm_gateway import chat  # noqa: E402
 from .reasoning_log import log  # noqa: E402
 
@@ -301,9 +302,14 @@ def _convert_screen(
     이슈는 skel/mapper/dto로 따로 반환한다(하나로 합치지 않음) - DB에 저장할 때
     AS_IS_LAYER(P(JAVA)/XSQL/DERIVED)별로 정확히 귀속시켜야 하기 때문(`_run_batch_save` 참고).
     """
+    # 확정된 공통 메서드 목록은 화면마다 다시 읽지 않고 한 번만 읽어 넘긴다.
+    # status가 CONFIRMED가 아니면 빈 목록이라 아무 것도 바뀌지 않는다.
+    common_registry = load_common_registry()
+
     skel = generate_skeletons(
         screen_id=screen_id, package_p1=package_p1, package_p2=package_p2,
         p_java_text=p_java, f_java_text=f_java, d_java_text=d_java, p_bizunit_text=p_bizunit,
+        common_registry=common_registry,
     )
     files = dict(skel.files)
 
@@ -313,6 +319,7 @@ def _convert_screen(
         doc_result = finalize_mapper_document(
             mapper_result.mybatis_xml, screen_id=screen_id, package_p1=package_p1, package_p2=package_p2,
             stmt_id_to_method=skel.stmt_id_to_method,
+            common_statements=set(common_registry.get("statements", [])),
         )
         files[f"{to_prefix(screen_id)}Mapper.xml"] = doc_result.mybatis_xml
         mapper_issues = list(mapper_result.issues) + list(doc_result.issues)

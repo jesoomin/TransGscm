@@ -437,6 +437,7 @@ def finalize_mapper_document(
     package_p1: str,
     package_p2: str,
     stmt_id_to_method: dict[str, str],
+    common_statements: set[str] | None = None,
 ) -> ConversionResult:
     """XSQL 문서 전체를 감싸는 뼈대를 TO-BE 관례로 맞춘다(SQL 본문은 건드리지 않음):
 
@@ -454,6 +455,25 @@ def finalize_mapper_document(
     issues: list[ConversionIssue] = []
 
     text = mybatis_text
+
+    # 확정된 공통 statement(예: 사용자 권한 조회 S902)는 화면마다 똑같은 SQL이 복제돼 있다.
+    # 여기서 걷어내고 공통 Mapper 한 곳에만 남긴다 - 안 그러면 나중에 권한 쿼리를 한 번 고칠 때
+    # 1,416벌을 고쳐야 한다. 무엇이 공통인지는 config/common-methods.json(사람 확정)이 정한다.
+    for stmt_id in sorted(common_statements or ()):
+        pattern = re.compile(
+            rf'[ \t]*<select\s+id="{re.escape(stmt_id)}".*?</select>\s*\n?',
+            re.DOTALL | re.IGNORECASE,
+        )
+        text, n = pattern.subn("", text)
+        if n:
+            issues.append(ConversionIssue(
+                issue_type="COMMON_STATEMENT_EXTRACTED", severity="INFO",
+                message=(
+                    f'<select id="{stmt_id}">는 화면 간 공통 SQL로 확정돼 있어 이 Mapper에서 '
+                    f'제외했습니다 - 공통 Mapper 한 곳에서 관리합니다'
+                    f'(config/common-methods.json).'
+                ),
+            ))
 
     # 4) DOCTYPE
     text = _OLD_DOCTYPE_RE.sub(_NEW_DOCTYPE, text)

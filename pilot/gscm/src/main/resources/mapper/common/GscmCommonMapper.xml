@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//mybatid.org//DTD Mapper 3.0//EN" "http://mybatid.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.skhynix.gscm.common.store.GscmCommonStore">
+
+	<select id="dCommonCodeQry" parameterType="map" resultType="map">
+		<![CDATA[
+		/* Biz: 공통 (GscmCommonStore) */
+		SELECT CD_GRP_ID
+			 , CD
+			 , CD_NM
+			 , SORT_SEQ
+		  FROM COM_CODE_MST
+		 WHERE CD_GRP_ID = #{CD_GRP_ID}
+		   AND USE_YN = 'Y'
+		 ORDER BY SORT_SEQ
+		]]>
+	</select>
+
+	<select id="dAuthCheck" parameterType="map" resultType="map">
+		<![CDATA[
+		/* Biz: 공통 (GscmCommonStore) */
+		SELECT USER_ID
+			 , MENU_ID
+			 , AUTH_TYP_CD
+		  FROM COM_USER_AUTH
+		 WHERE USER_ID = #{USER_ID}
+		   AND MENU_ID = #{MENU_ID}
+		   AND AUTH_TYP_CD IN ('R','W')
+		]]>
+	</select>
+
+	<select id="dExcelDownQry" parameterType="map" resultType="map">
+		<![CDATA[
+		/* Biz: 공통 (GscmCommonStore) */
+		SELECT A.TGT_CD
+			 , A.TGT_CD_NM
+			 , A.WORK_YM
+			 , A.QTY
+			 , A.AMT
+			 , A.RATE
+		  FROM COM_EXCEL_DOWN_VW A
+		 WHERE A.SEARCH_DT BETWEEN #{SEARCH_DT_FROM} AND #{SEARCH_DT_TO}
+		 ORDER BY A.WORK_YM DESC
+		]]>
+	</select>
+
+</mapper>
