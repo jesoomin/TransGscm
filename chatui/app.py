@@ -49,6 +49,7 @@ from skeleton_gen import (  # noqa: E402
 from validators import validate_screen  # noqa: E402
 from quality_scanner import run_review, llm_review  # noqa: E402
 from react_variant import recommend_react_variant  # noqa: E402
+from agents.common_methods import load_registry as load_common_registry  # noqa: E402
 from agents.source_scan import (  # noqa: E402
     FILENAME_RE,
     scan_folder as _scan_folder,
@@ -1516,6 +1517,10 @@ if screen_id:
         progress = st.progress(0, text="변환 시작...")
 
         progress.progress(15, text="1/4 골격(Api/Service/Store) 생성 중...")
+        # 폴더 모드(파이프라인)와 같은 공통 메서드 레지스트리를 쓴다. 한쪽만 넘기면 같은 화면을
+        # 어느 경로로 변환했느냐에 따라 산출물이 달라진다 - 이 프로젝트가 이미 여러 번 겪은
+        # "두 개의 병렬 구현, 하나는 잊혀짐" 패턴이라 여기서 같이 맞춘다.
+        common_registry = load_common_registry()
         skel = generate_skeletons(
             screen_id=screen_id,
             package_p1=package_p1,
@@ -1524,6 +1529,7 @@ if screen_id:
             f_java_text=buckets["F"].get("java"),
             d_java_text=buckets["D"].get("java"),
             p_bizunit_text=buckets["P"].get("bizunit"),
+            common_registry=common_registry,
         )
 
         progress.progress(40, text="2/4 XSQL → MyBatis Mapper 변환 중...")
@@ -1539,6 +1545,7 @@ if screen_id:
                 package_p1=package_p1,
                 package_p2=package_p2,
                 stmt_id_to_method=skel.stmt_id_to_method,
+                common_statements=set(common_registry.get("statements", [])),
             )
             mapper_result.mybatis_xml = doc_result.mybatis_xml
             mapper_result.issues.extend(doc_result.issues)
