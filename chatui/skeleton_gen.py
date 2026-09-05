@@ -30,6 +30,19 @@ def method_body_hash(body: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def method_body_hash_norm(body: str, screen_id: str) -> str:
+    """공백 + **화면 ID**까지 정규화한 본문 해시 - CONV_METHOD.BODY_HASH_NORM.
+
+    `method_body_hash`는 메서드가 품고 있는 자기 화면 클래스명(`DPLA081` 등) 때문에 화면마다
+    값이 달라진다. 그래서 "이름이 같은 이 함수가 화면 간에 실제로 같은 내용인가"를 판별할 수
+    없다(실측: `fCommonCodeQry` 49건이 전부 다른 해시). 화면 ID를 자리표시자로 바꿔서 그
+    질문에 답할 수 있게 한다 - 영향도 분석이 이 값으로 대상을 묶는다.
+    """
+    normalized = re.sub(r"\s+", " ", body).strip()
+    normalized = re.sub(re.escape(screen_id), "{SCREEN}", normalized, flags=re.I)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 @dataclass
 class SkeletonResult:
     files: dict[str, str] = field(default_factory=dict)
@@ -526,6 +539,7 @@ def generate_skeletons(
             result.methods.append({
                 "layer": "P", "method_name": method, "method_name_tobe": method,
                 "body_hash": method_body_hash(p_bodies.get(method, "")),
+                "body_hash_norm": method_body_hash_norm(p_bodies.get(method, ""), screen_id),
                 "conversion_method": "RULE_BASED_SKELETON", "mapper_stmt_id": None,
                 "nctrid": nctrid or None,
             })
@@ -615,6 +629,7 @@ def generate_skeletons(
                 result.methods.append({
                     "layer": "F", "method_name": method, "method_name_tobe": renamed,
                     "body_hash": method_body_hash(body),
+                "body_hash_norm": method_body_hash_norm(body, screen_id),
                     "conversion_method": "RULE_BASED_DELEGATION", "mapper_stmt_id": None,
                 })
                 result.method_calls.append({
@@ -632,6 +647,7 @@ def generate_skeletons(
                 result.methods.append({
                     "layer": "F", "method_name": method, "method_name_tobe": method,
                     "body_hash": method_body_hash(body),
+                "body_hash_norm": method_body_hash_norm(body, screen_id),
                     "conversion_method": "RULE_BASED_PASSTHROUGH", "mapper_stmt_id": None,
                 })
                 result.method_calls.append({
@@ -653,6 +669,7 @@ def generate_skeletons(
             result.methods.append({
                 "layer": "F", "method_name": method, "method_name_tobe": None,
                 "body_hash": method_body_hash(body),
+                "body_hash_norm": method_body_hash_norm(body, screen_id),
                 "conversion_method": "LLM_PENDING", "mapper_stmt_id": None,
             })
         lines.append("}")
@@ -732,6 +749,7 @@ def generate_skeletons(
             result.methods.append({
                 "layer": "D", "method_name": method, "method_name_tobe": method,
                 "body_hash": method_body_hash(d_bodies.get(method, "")),
+                "body_hash_norm": method_body_hash_norm(d_bodies.get(method, ""), screen_id),
                 "conversion_method": "RULE_BASED_SKELETON",
                 "mapper_stmt_id": stmt_id or None,
             })

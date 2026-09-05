@@ -49,6 +49,7 @@ from skeleton_gen import (  # noqa: E402
     find_all_calls,
     find_bare_calls,
     method_body_hash,
+    method_body_hash_norm,
 )
 
 from agents.source_scan import guess_package, scan_folder  # noqa: E402
@@ -83,7 +84,9 @@ def analyze_screen(screen_id: str, buckets: dict) -> dict:
         nctrid = nctrid_map.get(m)
         methods.append({
             "layer": "P", "method_name": m,
-            "body_hash": method_body_hash(p_bodies.get(m, "")), "nctrid": nctrid,
+            "body_hash": method_body_hash(p_bodies.get(m, "")),
+            "body_hash_norm": method_body_hash_norm(p_bodies.get(m, ""), screen_id),
+            "nctrid": nctrid,
         })
         if not nctrid:
             unresolved.append(
@@ -100,7 +103,9 @@ def analyze_screen(screen_id: str, buckets: dict) -> dict:
             calls.append({"caller_layer": "P", "caller_method": m, "callee_layer": "P", "callee_method": sibling})
 
     for m in f_methods:
-        methods.append({"layer": "F", "method_name": m, "body_hash": method_body_hash(f_bodies.get(m, ""))})
+        methods.append({"layer": "F", "method_name": m,
+                        "body_hash": method_body_hash(f_bodies.get(m, "")),
+                        "body_hash_norm": method_body_hash_norm(f_bodies.get(m, ""), screen_id)})
         callees = find_all_calls(f_bodies.get(m, ""), d_methods)
         if not callees and d_methods:
             unresolved.append(
@@ -114,7 +119,9 @@ def analyze_screen(screen_id: str, buckets: dict) -> dict:
 
     for m in d_methods:
         stmt_id = stmt_ids.get(m)
-        methods.append({"layer": "D", "method_name": m, "mapper_stmt_id": stmt_id})
+        methods.append({"layer": "D", "method_name": m, "mapper_stmt_id": stmt_id,
+                        "body_hash": method_body_hash(d_bodies.get(m, "")),
+                        "body_hash_norm": method_body_hash_norm(d_bodies.get(m, ""), screen_id)})
         if not stmt_id:
             unresolved.append(
                 f"{screen_id}/D.{m}: dbSelect(\"S00N\", ...) 호출을 못 찾음 "
@@ -229,7 +236,7 @@ def persist_screen(db, screen_id: str, buckets: dict, paths: dict, graph: dict) 
             continue
         method_id = db.upsert_conv_method(
             file_id=file_id, method_name=m["method_name"],
-            body_hash=m.get("body_hash"), mapper_stmt_id=m.get("mapper_stmt_id"),
+            body_hash=m.get("body_hash"), body_hash_norm=m.get("body_hash_norm"), mapper_stmt_id=m.get("mapper_stmt_id"),
             nctrid=m.get("nctrid"), conversion_method="ANALYZED",
         )
         method_ids[m["layer"]][m["method_name"]] = method_id

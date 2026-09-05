@@ -37,6 +37,9 @@ CREATE TABLE CONV_METHOD (
     METHOD_NAME       VARCHAR2(200) NOT NULL,  -- AS-IS 원본 메서드명 (예: fPLA047QrySelectRev)
     METHOD_NAME_TOBE  VARCHAR2(200),           -- TO-BE 변환명 (예: pla04701) - 미정이면 NULL
     BODY_HASH         VARCHAR2(64),            -- SHA-256(공백 정규화한 본문) - 화면 간 중복/유사 로직 탐지용
+    BODY_HASH_NORM    VARCHAR2(64),            -- SHA-256(공백 + 화면ID 정규화) - 이름이 같은 함수가
+                                                -- 화면 간에 실제로 같은 내용인지 판별할 때 쓴다.
+                                                -- BODY_HASH는 자기 화면 클래스명을 품고 있어 늘 달라진다.
     CONVERSION_METHOD VARCHAR2(50),            -- RULE_BASED_SKELETON, RULE_BASED_DELEGATION, LLM_PENDING, LLM_PORTED, MANUAL
     MAPPER_STMT_ID    VARCHAR2(100),           -- D 메서드일 때 참조하는 Mapper statement id
     NCTRID            VARCHAR2(50),            -- P 메서드일 때 .bizunit(<method>/<transactionId>)에서 뽑은 nctRid.

@@ -101,6 +101,15 @@ def ensure_schema() -> None:
             (error,) = e.args
             if error.code != 1430:
                 raise
+        # 화면 ID까지 정규화한 본문 해시. BODY_HASH는 메서드가 자기 화면의 클래스명을 품고 있어
+        # 화면마다 늘 달라지는데, 그러면 "이름은 같은데 내용도 같은가"를 판별할 수가 없다
+        # (실측: fCommonCodeQry 49건이 전부 다른 해시로 나왔다).
+        try:
+            cur.execute("ALTER TABLE CONV_METHOD ADD (BODY_HASH_NORM VARCHAR2(64))")
+        except oracledb.DatabaseError as e:
+            (error,) = e.args
+            if error.code != 1430:
+                raise
         # NCTRID_MAP도 PU_ID/FU_ID/DU_ID/XSQL_ID보다 먼저 만들어진 설치본이 있을 수 있어 같은
         # 패턴으로 뒤늦게 추가한다. 컬럼 하나만 이미 있어도 여러 개를 한 ALTER 문에 같이 넣으면
         # 전체가 ORA-01430으로 실패하므로 컬럼별로 따로 실행한다.
@@ -291,6 +300,7 @@ def upsert_conv_method(
     method_name: str,
     method_name_tobe: str | None = None,
     body_hash: str | None = None,
+    body_hash_norm: str | None = None,
     conversion_method: str | None = None,
     mapper_stmt_id: str | None = None,
     nctrid: str | None = None,
@@ -309,11 +319,13 @@ def upsert_conv_method(
                 """
                 UPDATE CONV_METHOD SET
                     METHOD_NAME_TOBE = :method_name_tobe, BODY_HASH = :body_hash,
+                    BODY_HASH_NORM = :body_hash_norm,
                     CONVERSION_METHOD = :conversion_method, MAPPER_STMT_ID = :mapper_stmt_id,
                     NCTRID = :nctrid, UPDATED_AT = SYSTIMESTAMP
                 WHERE METHOD_ID = :method_id
                 """,
                 method_name_tobe=method_name_tobe, body_hash=body_hash,
+                body_hash_norm=body_hash_norm,
                 conversion_method=conversion_method, mapper_stmt_id=mapper_stmt_id,
                 nctrid=nctrid, method_id=method_id,
             )
@@ -322,14 +334,17 @@ def upsert_conv_method(
             cur.execute(
                 """
                 INSERT INTO CONV_METHOD (
-                    FILE_ID, METHOD_NAME, METHOD_NAME_TOBE, BODY_HASH, CONVERSION_METHOD, MAPPER_STMT_ID, NCTRID
+                    FILE_ID, METHOD_NAME, METHOD_NAME_TOBE, BODY_HASH, BODY_HASH_NORM,
+                    CONVERSION_METHOD, MAPPER_STMT_ID, NCTRID
                 ) VALUES (
-                    :file_id, :method_name, :method_name_tobe, :body_hash, :conversion_method, :mapper_stmt_id, :nctrid
+                    :file_id, :method_name, :method_name_tobe, :body_hash, :body_hash_norm,
+                    :conversion_method, :mapper_stmt_id, :nctrid
                 )
                 RETURNING METHOD_ID INTO :method_id
                 """,
                 file_id=file_id, method_name=method_name, method_name_tobe=method_name_tobe,
-                body_hash=body_hash, conversion_method=conversion_method, mapper_stmt_id=mapper_stmt_id,
+                body_hash=body_hash, body_hash_norm=body_hash_norm,
+                conversion_method=conversion_method, mapper_stmt_id=mapper_stmt_id,
                 nctrid=nctrid, method_id=method_id_var,
             )
             method_id = method_id_var.getvalue()[0]

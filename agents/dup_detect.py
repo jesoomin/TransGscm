@@ -38,6 +38,10 @@ from dataclasses import dataclass, field
 _COMMENT_BLOCK_RE = re.compile(r"/\*.*?\*/", re.S)
 _COMMENT_LINE_RE = re.compile(r"//[^\n]*")
 _WS_RE = re.compile(r"\s+")
+_STMT_ID_RE = re.compile(r'"S\d{3,}"')
+_STRING_LIT_RE = re.compile(r'"[^"]*"')
+_NUM_LIT_RE = re.compile(r"\b\d+\b")
+_LOCAL_DECL_RE = re.compile(r"\b(?:String|int|long|double|boolean|Object|Map|List|IRecordSet|IDataSet)\b[\w<>,\s\[\]]*?\b(\w+)\s*=")
 
 TIER_EXACT = "EXACT"
 TIER_NORMALIZED = "NORMALIZED"
@@ -61,13 +65,73 @@ class DupGroup:
 
 
 def normalize(body: str, screen: str | None = None) -> str:
-    """주석·공백 제거. `screen`을 주면 화면 ID까지 자리표시자로 바꾼다(Type-2 정규화)."""
+    """주석·공백 제거. `screen`을 주면 화면 ID까지 자리표시자로 바꾼다(Type-2 정규화).
+
+    `NORM_STEPS`의 처음 두 단계와 같다 - 기존 호출부 호환을 위해 남겨둔다.
+    """
+    text = _strip_comments_ws(body)
+    return _sub_screen(text, screen) if screen else text
+
+
+def _strip_comments_ws(body: str) -> str:
     body = _COMMENT_BLOCK_RE.sub("", body)
     body = _COMMENT_LINE_RE.sub("", body)
-    body = _WS_RE.sub(" ", body).strip()
-    if screen:
-        body = re.sub(re.escape(screen), "{SCREEN}", body, flags=re.I)
+    return _WS_RE.sub(" ", body).strip()
+
+
+def _sub_screen(body: str, screen: str | None) -> str:
+    return re.sub(re.escape(screen), "{SCREEN}", body, flags=re.I) if screen else body
+
+
+def _sub_stmt_ids(body: str, _screen: str | None = None) -> str:
+    """`dbSelect("S001", ...)` / `"S002"` 같은 statement id를 자리표시자로."""
+    return _STMT_ID_RE.sub('"{STMT}"', body)
+
+
+def _sub_literals(body: str, _screen: str | None = None) -> str:
+    """문자열·숫자 리터럴을 자리표시자로. 여기부터는 **값이 달라도 같다고 본다** - 병합이 급격히
+    늘어나므로 상위 단계에서 안 걸린 것만 여기서 걸린다는 점을 읽는 사람이 알아야 한다."""
+    body = _STRING_LIT_RE.sub('"{LIT}"', body)
+    return _NUM_LIT_RE.sub("{NUM}", body)
+
+
+def _sub_locals(body: str, _screen: str | None = None) -> str:
+    """지역 변수명을 선언 순서 기반 자리표시자로 바꾼다(α-치환).
+
+    `String strTGT_CD = ...` 처럼 선언된 이름만 대상으로 한다 - 필드/메서드명은 건드리지 않는다
+    (그것까지 바꾸면 서로 다른 API를 부르는 코드도 같아져 버린다).
+    """
+    names = list(dict.fromkeys(_LOCAL_DECL_RE.findall(body)))
+    for i, name in enumerate(names):
+        body = re.sub(rf"\b{re.escape(name)}\b", f"{{V{i}}}", body)
     return body
+
+
+# 정규화 단계 - **위에서 아래로 갈수록 관대해진다.** 두 본문이 처음으로 일치하는 단계가 곧
+# "얼마나 같은가"의 등급이 된다. 하나의 해시로 뭉뚱그리지 않고 단계를 남기는 이유는, 리뷰어가
+# "왜 같다고 판정했는지"를 알아야 조치를 정할 수 있기 때문이다 - 공백만 다르면 바로 통합하면
+# 되지만, 리터럴이 달라서 같아진 거라면 값의 의미부터 확인해야 한다.
+NORM_STEPS: list[tuple[str, str]] = [
+    ("EXACT", "주석·공백만 제거 — 텍스트가 그대로 같다"),
+    ("SCREEN", "화면 ID까지 치환 — 화면마다 자기 클래스명만 다르다"),
+    ("STMT_ID", "SQL statement id까지 치환 — 참조하는 쿼리 번호만 다르다"),
+    ("LITERAL", "문자열·숫자 리터럴까지 치환 — 넘기는 **값**이 다르다"),
+    ("LOCAL_VAR", "지역 변수명까지 치환 — 이름만 다르고 흐름은 같다"),
+]
+
+_STEP_FN = {
+    "EXACT": lambda b, s: _strip_comments_ws(b),
+    "SCREEN": lambda b, s: _sub_screen(_strip_comments_ws(b), s),
+    "STMT_ID": lambda b, s: _sub_stmt_ids(_sub_screen(_strip_comments_ws(b), s)),
+    "LITERAL": lambda b, s: _sub_literals(_sub_stmt_ids(_sub_screen(_strip_comments_ws(b), s))),
+    "LOCAL_VAR": lambda b, s: _sub_locals(
+        _sub_literals(_sub_stmt_ids(_sub_screen(_strip_comments_ws(b), s)))),
+}
+
+
+def normalized_at(body: str, screen: str | None, step: str) -> str:
+    """지정한 단계까지 정규화한 본문."""
+    return _STEP_FN[step](body, screen)
 
 
 def _digest(text: str) -> str:

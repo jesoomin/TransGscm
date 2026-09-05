@@ -86,7 +86,7 @@ def _persist_methods_and_calls(
             continue
         method_id = db.upsert_conv_method(
             file_id=file_id, method_name=m["method_name"],
-            method_name_tobe=m.get("method_name_tobe"), body_hash=m.get("body_hash"),
+            method_name_tobe=m.get("method_name_tobe"), body_hash=m.get("body_hash"), body_hash_norm=m.get("body_hash_norm"),
             conversion_method=m.get("conversion_method"), mapper_stmt_id=m.get("mapper_stmt_id"),
             nctrid=m.get("nctrid"),
         )

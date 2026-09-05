@@ -106,6 +106,57 @@ def _method_info(cur, method_ids: list[int]) -> dict[int, dict]:
     return info
 
 
+def resolve_method_identity(method_name: str, screen_id: str | None = None) -> list[dict]:
+    """같은 이름의 메서드를 **본문 내용 기준으로** 묶는다.
+
+    이 프로젝트에서 메서드 이름은 화면 간에 겹친다 - `fCommonCodeQry`/`fAuthCheck`처럼 화면마다
+    같은 이름으로 존재하는 공통 함수가 많다. 그래서 "이 함수를 바꾸면 어디가 영향받나"를
+    **이름만으로** 답하면 서로 무관한 화면까지 한 덩어리로 묶여 범위가 부풀려진다.
+
+    여기서는 `BODY_HASH`(공백 정규화한 본문 해시)로 묶어서, 같은 이름이라도 **내용이 다르면 다른
+    것으로** 취급한다. D 계층 메서드는 실행하는 쿼리가 본질이므로 `MAPPER_STMT_ID`도 함께 묶음
+    키에 넣는다.
+
+    **한계(그대로 적는다)**: DB에는 Mapper.xml의 SQL 텍스트 자체가 아니라 statement id만 있다.
+    따라서 "id는 같은데 SQL 본문이 다른" 경우는 여기서 구분하지 못한다 - 그런 화면은 결과의
+    `notes`로 알린다. SQL 본문까지 비교하려면 Mapper.xml을 읽어야 하는데, 그건 저장된 산출물이
+    있어야 가능하므로 이 조회 함수의 범위 밖이다.
+    """
+    from agents import db
+
+    with db.get_connection() as conn:
+        cur = conn.cursor()
+        sql = (
+            "SELECT cm.METHOD_ID, cf.SCREEN_ID, cm.METHOD_NAME, NVL(cm.BODY_HASH_NORM, cm.BODY_HASH), "
+            "cm.MAPPER_STMT_ID, cf.AS_IS_LAYER "
+            "FROM CONV_METHOD cm JOIN CONV_FILE cf ON cf.FILE_ID = cm.FILE_ID "
+            "WHERE cm.METHOD_NAME = :m"
+        )
+        params = {"m": method_name}
+        if screen_id:
+            sql += " AND cf.SCREEN_ID = :s"
+            params["s"] = screen_id
+        cur.execute(sql, **params)
+        rows = cur.fetchall()
+
+    groups: dict[tuple, dict] = {}
+    for mid, screen, name, body_hash, stmt_id, layer in rows:
+        # 내용 키: 본문 해시 + (D 계층이면) 참조 쿼리 id. 본문 해시가 없으면 묶지 않고 개별 취급.
+        key = (body_hash or f"__no_hash__{mid}", stmt_id or "")
+        g = groups.setdefault(key, {
+            "body_hash": body_hash, "mapper_stmt_id": stmt_id,
+            "members": [], "method_ids": [],
+        })
+        g["members"].append({"screen_id": screen, "method_name": name, "layer": layer,
+                             "method_id": mid})
+        g["method_ids"].append(mid)
+    out = sorted(groups.values(), key=lambda g: -len(g["members"]))
+    for i, g in enumerate(out, 1):
+        g["group_no"] = i
+        g["screens"] = sorted({m["screen_id"] for m in g["members"]})
+    return out
+
+
 def find_impact_of_method(
     method_name: str, screen_id: str | None = None, max_depth: int = 10,
 ) -> dict:
@@ -122,18 +173,46 @@ def find_impact_of_method(
 
     with db.get_connection() as conn:
         cur = conn.cursor()
+        # **내용 기준으로 묶는다.** 이름만으로 잡으면 화면 간 동명이인(fCommonCodeQry 등)이
+        # 전부 한 덩어리가 돼 영향 범위가 부풀려진다(resolve_method_identity 참고).
+        sql = (
+            "SELECT cm.METHOD_ID, NVL(cm.BODY_HASH_NORM, cm.BODY_HASH), cm.MAPPER_STMT_ID, cf.SCREEN_ID "
+            "FROM CONV_METHOD cm JOIN CONV_FILE cf ON cf.FILE_ID = cm.FILE_ID "
+            "WHERE cm.METHOD_NAME = :m"
+        )
+        params = {"m": method_name}
         if screen_id:
-            cur.execute(
-                """
-                SELECT cm.METHOD_ID FROM CONV_METHOD cm
-                JOIN CONV_FILE cf ON cf.FILE_ID = cm.FILE_ID
-                WHERE cm.METHOD_NAME = :m AND cf.SCREEN_ID = :s
-                """,
-                m=method_name, s=screen_id,
+            sql += " AND cf.SCREEN_ID = :s"
+            params["s"] = screen_id
+        cur.execute(sql, **params)
+        rows = cur.fetchall()
+
+        content_groups: dict[tuple, list[int]] = {}
+        group_screens: dict[tuple, set] = {}
+        for mid, body_hash, stmt_id, screen in rows:
+            key = (body_hash or f"__no_hash__{mid}", stmt_id or "")
+            content_groups.setdefault(key, []).append(mid)
+            group_screens.setdefault(key, set()).add(screen)
+
+        # 화면을 지정하지 않았고 내용이 여러 갈래면, **가장 많은 화면이 공유하는 내용**을 기본
+        # 대상으로 삼고 나머지는 notes로 알린다 - 조용히 전부 합치지 않는다.
+        content_note = None
+        if len(content_groups) > 1:
+            ordered = sorted(content_groups.items(), key=lambda kv: -len(kv[1]))
+            chosen_key, target_ids = ordered[0]
+            others = [
+                f"{len(v)}건({', '.join(sorted(group_screens[k])[:4])}"
+                f"{'...' if len(group_screens[k]) > 4 else ''})"
+                for k, v in ordered[1:]
+            ]
+            content_note = (
+                f"'{method_name}'는 이름이 같지만 **본문 내용이 {len(content_groups)}가지**입니다. "
+                f"가장 많은 화면({len(group_screens[chosen_key])}개)이 공유하는 내용을 대상으로 "
+                f"분석했습니다. 나머지 내용 그룹: {'; '.join(others)}. "
+                "특정 화면 기준으로 보려면 screen_id를 지정하세요."
             )
         else:
-            cur.execute("SELECT METHOD_ID FROM CONV_METHOD WHERE METHOD_NAME = :m", m=method_name)
-        target_ids = [r[0] for r in cur.fetchall()]
+            target_ids = [mid for ids in content_groups.values() for mid in ids]
         if not target_ids:
             return {
                 "targets": [], "callers": [], "affected_screens": [], "affected_nctrids": [],
@@ -141,6 +220,7 @@ def find_impact_of_method(
                           "DB에 적재됐는지(저장 또는 nctrid_graph 실행) 확인하세요."],
             }
 
+        extra_notes: list[str] = []
         reverse = _load_reverse_edges(cur)
 
         # 역방향 BFS - 자기 자신을 다시 방문하지 않으므로 순환 호출이 있어도 멈춘다.
@@ -190,7 +270,12 @@ def find_impact_of_method(
         "콜그래프는 P→F, F→D 계층 간 호출과 같은 계층 내부 호출을 정적 분석(정규식)으로 잡은 "
         "것입니다 - 이름이 같은 다른 클래스의 메서드를 호출로 오인할 수 있어 **확정이 아니라 검토 "
         "범위**로 보세요.",
+        "대상은 **이름이 아니라 본문 내용(BODY_HASH, D 계층은 참조 쿼리 id 포함)** 기준으로 "
+        "묶었습니다 - 화면 간에 같은 이름의 함수가 흔해서, 이름만으로 묶으면 무관한 화면까지 "
+        "영향 범위에 들어옵니다.",
     ]
+    if content_note:
+        notes.append(content_note)
     if not callers:
         notes.append(
             "이 메서드를 호출하는 곳을 콜그래프에서 찾지 못했습니다 - 정말 미사용이거나, 아직 "
