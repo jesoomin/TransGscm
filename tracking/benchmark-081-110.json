@@ -166,7 +166,9 @@
       "exact_members": 164,
       "normalized_groups": 11,
       "normalized_members": 161,
-      "note": "EXACT는 주석·공백만 다른 확실한 복붙이고, NORMALIZED는 화면 ID를 치환하면 같아지는 **검토 후보**다. 자동 삭제하지 않는다."
+      "structural_groups": 1,
+      "structural_members": 2,
+      "note": "EXACT는 주석·공백만 다른 확실한 복붙, NORMALIZED는 화면 ID를 치환하면 같아지는 **검토 후보**, STRUCTURAL은 이름·값을 전부 추상화했을 때 같은 틀인 **공통 템플릿 후보**다(같은 코드라는 뜻이 아니다). 어느 티어도 자동 삭제하지 않는다."
     }
   }
 }
