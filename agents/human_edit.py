@@ -24,8 +24,10 @@
 from __future__ import annotations
 
 import difflib
+import hashlib
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -33,6 +35,51 @@ SNAPSHOT_DIR = _PROJECT_ROOT / "tracking" / "generated-snapshots"
 # 리뷰를 거친 산출물을 두는 곳. `pilot/`은 사람이 "승인하고 저장"을 눌러야만 파일이 생기는
 # 곳이라(그 보장을 깨면 안 된다), 승인 전 리뷰 결과는 여기에 따로 둔다.
 REVIEWED_DIR = _PROJECT_ROOT / "tracking" / "reviewed"
+# 리뷰본이 «어느 생성분»을 보고 만들어졌는지 적어두는 파일. 이게 없으면 파이프라인을 다시 돌려
+# 스냅샷이 갱신됐을 때, 옛 리뷰본과 새 생성물을 비교해 엉뚱한 수치가 나온다 - 실제로 그 일이
+# 일어나서(4.34% -> 15.3%) 원인을 찾는 데 시간을 썼다. 그때는 사람이 눈치채야 했지만 이제는
+# 측정기가 스스로 "이 리뷰본은 낡았다"고 말한다.
+REVIEW_META = "_review.json"
+
+
+def file_digest(text: str) -> str:
+    """줄바꿈 차이(CRLF/LF)에 흔들리지 않는 내용 해시."""
+    return hashlib.sha256("\n".join(text.splitlines()).encode("utf-8")).hexdigest()
+
+
+def snapshot_digests(screen_id: str, snapshot_dir: Path | None = None) -> dict[str, str]:
+    """생성 스냅샷의 파일별 내용 해시. 리뷰 시작 시점을 고정하는 데 쓴다."""
+    base = (snapshot_dir or SNAPSHOT_DIR) / screen_id
+    if not base.is_dir():
+        return {}
+    return {p.name: file_digest(p.read_text(encoding="utf-8", errors="replace"))
+            for p in sorted(base.iterdir())
+            if p.is_file() and p.name not in ("_manifest.json", REVIEW_META)}
+
+
+def read_review_meta(screen_id: str, reviewed_dir: Path | None = None) -> dict | None:
+    meta = (reviewed_dir or REVIEWED_DIR) / screen_id / REVIEW_META
+    if not meta.is_file():
+        return None
+    try:
+        return json.loads(meta.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def review_staleness(screen_id: str, snapshot_dir: Path | None = None,
+                     reviewed_dir: Path | None = None) -> list[str]:
+    """리뷰본과 현재 생성분이 어긋난 부분을 파일 단위로 돌려준다(빈 리스트 = 최신)."""
+    meta = read_review_meta(screen_id, reviewed_dir)
+    if meta is None:
+        return []
+    base = meta.get("base_digests") or {}
+    now = snapshot_digests(screen_id, snapshot_dir)
+    drift = []
+    for fname in sorted(set(base) | set(now)):
+        if base.get(fname) != now.get(fname):
+            drift.append(fname)
+    return drift
 
 
 @dataclass
@@ -112,9 +159,32 @@ def measure_screen(screen_id: str, current_files: dict[str, str],
         return ScreenEdit(screen_id, measured=False,
                           note="생성 시점 스냅샷이 없습니다 — 저장 시 snapshot_screen()이 호출돼야 합니다")
 
+    # 리뷰본이 지금 스냅샷이 아니라 예전 생성분을 보고 만들어졌으면 비교 자체가 성립하지 않는다.
+    # 0%도 아니고 큰 수치도 아니라 **미측정**이다 - "안 고쳤다"와 "못 쟀다"를 섞지 않는 것과 같은
+    # 이유로, "낡은 기준으로 쟀다"도 섞지 않는다.
+    # 리뷰본 폴더는 있는데 기준선 기록(_review.json)이 없으면 «무엇을 보고 고쳤는지»를 알 수
+    # 없다. 이 상태에서 나온 숫자는 지난 세션에 실제로 사람을 헷갈리게 했다 - 재생성 뒤에도
+    # 옛 리뷰본이 남아 30% 가까운 값을 태연히 보고했다. 모르면 모른다고 한다.
+    reviewed = REVIEWED_DIR / screen_id
+    if reviewed.is_dir() and not (reviewed / REVIEW_META).is_file():
+        return ScreenEdit(
+            screen_id, measured=False,
+            note=("리뷰본의 기준선 기록이 없습니다(_review.json) — 어느 생성분을 보고 고친 "
+                  f"것인지 알 수 없어 측정하지 않습니다. `python -m agents.review open "
+                  f"{screen_id}`로 리뷰를 다시 시작하세요."))
+
+    drift = review_staleness(screen_id, snapshot_dir)
+    if drift:
+        return ScreenEdit(
+            screen_id, measured=False,
+            note=(f"리뷰본이 이전 생성분 기준입니다 — 그 뒤 재생성으로 {len(drift)}개 파일이 "
+                  f"바뀌었습니다({', '.join(drift[:3])}"
+                  f"{' 외 %d건' % (len(drift) - 3) if len(drift) > 3 else ''}). "
+                  f"`python -m agents.review open {screen_id}`로 리뷰를 다시 시작하세요."))
+
     out = ScreenEdit(screen_id, measured=True)
     for snap in sorted(base.glob("*")):
-        if snap.name == "_manifest.json" or not snap.is_file():
+        if snap.name in ("_manifest.json", REVIEW_META) or not snap.is_file():
             continue
         generated = snap.read_text(encoding="utf-8", errors="replace")
         current = current_files.get(snap.name)
@@ -168,12 +238,68 @@ def save_reviewed(screen_id: str, files: dict[str, str],
     return base
 
 
+def open_review(screen_id: str, reviewer: str = "",
+                snapshot_dir: Path | None = None,
+                reviewed_dir: Path | None = None,
+                reset: bool = False) -> tuple[Path, list[str]]:
+    """생성분을 리뷰 작업본으로 펼치고, 그 시점의 기준선을 고정한다.
+
+    이미 사람이 손댄 파일은 **덮어쓰지 않는다**(reset=True일 때만 덮어쓴다) - 리뷰 도중 파이프라인을
+    다시 돌렸다고 사람 작업이 날아가면 안 된다. 대신 어떤 파일이 새 생성분과 갈라졌는지 돌려줘서
+    사람이 직접 판단하게 한다.
+    """
+    src = (snapshot_dir or SNAPSHOT_DIR) / screen_id
+    if not src.is_dir():
+        raise FileNotFoundError(f"생성 스냅샷이 없습니다: {src}")
+    dst = (reviewed_dir or REVIEWED_DIR) / screen_id
+    dst.mkdir(parents=True, exist_ok=True)
+
+    kept: list[str] = []
+    for p in sorted(src.iterdir()):
+        if not p.is_file() or p.name in ("_manifest.json", REVIEW_META):
+            continue
+        target = dst / p.name
+        generated = p.read_text(encoding="utf-8", errors="replace")
+        if target.exists() and not reset:
+            if file_digest(target.read_text(encoding="utf-8", errors="replace")) != file_digest(generated):
+                kept.append(p.name)
+                continue
+        target.write_text(generated, encoding="utf-8")
+
+    (dst / REVIEW_META).write_text(
+        json.dumps({
+            "screen_id": screen_id,
+            "opened_at": datetime.now().isoformat(timespec="seconds"),
+            "reviewer": reviewer,
+            "accepted_at": None,
+            "base_digests": snapshot_digests(screen_id, snapshot_dir),
+        }, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return dst, kept
+
+
+def accept_review(screen_id: str, reviewer: str = "",
+                  reviewed_dir: Path | None = None) -> dict:
+    """사람이 리뷰를 마쳤다고 표시한다. 이후 이 화면의 «현재» 산출물은 리뷰본이 된다."""
+    meta = read_review_meta(screen_id, reviewed_dir)
+    if meta is None:
+        raise FileNotFoundError(
+            f"{screen_id}: 리뷰가 시작되지 않았습니다 — 먼저 `review open {screen_id}`를 실행하세요")
+    meta["accepted_at"] = datetime.now().isoformat(timespec="seconds")
+    if reviewer:
+        meta["reviewer"] = reviewer
+    ((reviewed_dir or REVIEWED_DIR) / screen_id / REVIEW_META).write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    return meta
+
+
 def load_current_files(screen_id: str) -> dict[str, str]:
     """측정 대상 «현재» 파일을 찾는다 - 리뷰본이 있으면 그걸, 없으면 `pilot/` 저장분을 쓴다."""
     base = REVIEWED_DIR / screen_id
     if base.is_dir():
         return {p.name: p.read_text(encoding="utf-8", errors="replace")
-                for p in base.iterdir() if p.is_file()}
+                for p in base.iterdir() if p.is_file() and p.name != REVIEW_META}
     return load_pilot_files(screen_id)
 
 

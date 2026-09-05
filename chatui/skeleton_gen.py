@@ -582,13 +582,17 @@ def generate_skeletons(
             nctrid = nctrid_map.get(method, "")
             # 메서드명이 전부 대문자 화면코드를 포함해서(pPLA04701) 일반적인 camelCase->kebab
             # 변환을 쓰면 글자마다 대시가 붙는 이상한 slug가 나온다. nctRid가 있으면 그걸 쓰고,
-            # 없으면 화면 접두어를 떼어낸 나머지만 소문자로 slug화한다 - 둘 다 최종 URL 설계는
-            # 사람이 확정해야 하는 자리라 주석에도 nctRid를 남겨 대조할 수 있게 한다.
+            # 없으면 P 메서드명 전체를 소문자로 쓴다 - 최종 URL 설계는 사람이 확정해야 하는
+            # 자리라 주석에도 nctRid를 남겨 대조할 수 있게 한다.
+            #
+            # **화면 ID를 떼면 안 된다**(2026-09-05 수정). 예전엔 `pPLA09601`에서 화면 접두어를
+            # 떼어 `01`만 남겼는데, 그러면 같은 패키지에 있는 화면들이 전부 `/api/pm/qul/01`을
+            # 주장한다 - PLA093과 PLA096이 실제로 그랬다(둘 다 qulb). Spring은 기동 시점에
+            # 중복 매핑으로 죽는데, 정적 검증은 화면 하나씩만 보므로 아무도 못 잡았다.
             if nctrid:
                 slug = nctrid.lower()
             else:
-                stripped = re.sub(rf"^[a-z]{re.escape(screen_id)}", "", method, flags=re.IGNORECASE)
-                slug = (stripped or method).lower()
+                slug = method.lower()
             p_body = p_bodies.get(method, "")
             # P가 위임만 하는지, 아니면 업무 흐름(권한 게이트·결과 메시지·레코드셋 선별)을
             # 들고 있는지 먼저 판정한다 - 후자를 위임 한 줄로 생성하면 그 로직이 조용히 사라진다.

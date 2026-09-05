@@ -29,10 +29,48 @@ class DuplicateGroup:
 
 
 @dataclass
+class EndpointConflict:
+    """서로 다른 화면이 같은 REST 경로를 주장하는 경우. Spring은 기동 시점에 죽는다."""
+    path: str
+    locations: list[str] = field(default_factory=list)  # "화면ID:메서드"
+
+
+@dataclass
 class CrossAnalysisResult:
     screens_analyzed: list[str]
     duplicate_groups: list[DuplicateGroup] = field(default_factory=list)
+    endpoint_conflicts: list[EndpointConflict] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+
+
+_REQUEST_MAPPING_RE = re.compile(r'@RequestMapping\(\s*"([^"]+)"')
+_POST_MAPPING_RE = re.compile(
+    r'@(?:Post|Get|Put|Delete)Mapping\(\s*"([^"]+)"\s*\)\s*(?://[^\n]*\n\s*)*'
+    r'(?://[^\n]*\n\s*)*public\s+[\w<>\[\],.\s]+?\s(\w+)\s*\(',
+    re.MULTILINE,
+)
+
+
+def find_endpoint_conflicts(api_texts: dict[str, str]) -> list[EndpointConflict]:
+    """{화면ID: Api.java 내용} -> 같은 전체 경로를 두 화면 이상이 주장하는 목록.
+
+    **왜 여기 있나**: `validators.validate_screen()`은 화면 하나만 본다. 그래서 화면마다
+    `/api/pm/qul/01`을 만들어도 각각은 완벽히 유효해 보인다 - 충돌은 화면을 나란히 놓아야만
+    보이고, 나란히 놓는 곳은 여기뿐이다. 실제로 이 함수를 만들자마자 파일럿 5화면이 전부
+    `/01`, `/02`, `/03`을 주장하고 있었다(PLA093과 PLA096은 패키지까지 같아 진짜 충돌).
+    """
+    by_path: dict[str, list[str]] = {}
+    for screen_id, text in sorted(api_texts.items()):
+        if not text:
+            continue
+        base_m = _REQUEST_MAPPING_RE.search(text)
+        base = base_m.group(1).rstrip("/") if base_m else ""
+        for path, method in _POST_MAPPING_RE.findall(text):
+            full = f"{base}/{path.lstrip('/')}"
+            by_path.setdefault(full, []).append(f"{screen_id}:{method}")
+    return [EndpointConflict(path=p, locations=locs)
+            for p, locs in sorted(by_path.items())
+            if len({loc.split(":")[0] for loc in locs}) > 1]
 
 
 def _normalize(text: str) -> str:
@@ -112,8 +150,19 @@ def analyze_pilot_folder(pilot_root: Path) -> CrossAnalysisResult:
 
     service_like_paths = list(pilot_root.rglob("*Service.java")) + list(pilot_root.rglob("*Store.java"))
     mapper_paths = list(pilot_root.rglob("*Mapper.xml"))
+    api_paths = list(pilot_root.rglob("*Api.java"))
     screens = sorted({_screen_prefix(p.name) for p in service_like_paths + mapper_paths})
     result = CrossAnalysisResult(screens_analyzed=screens)
+
+    conflicts = find_endpoint_conflicts({
+        _screen_prefix(p.name): p.read_text(encoding="utf-8", errors="replace")
+        for p in api_paths
+    })
+    result.endpoint_conflicts = conflicts
+    for c in conflicts:
+        result.notes.append(
+            f"엔드포인트 충돌: {c.path} 를 {len(c.locations)}곳이 주장합니다 "
+            f"({', '.join(c.locations)}) - Spring 기동 시 중복 매핑으로 실패합니다.")
 
     if len(screens) < 2:
         result.notes.append(
