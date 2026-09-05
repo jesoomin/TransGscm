@@ -118,8 +118,11 @@ _VALUE_TYPE_NOTE = (
 )
 
 
-def _callee_note(callees: list[str] | None) -> str:
-    """이 F 메서드가 원본에서 실제로 호출하는 D 메서드 목록을 포팅 프롬프트에 명시한다.
+def _callee_note(callees: list[str] | None, holder: str = "store") -> str:
+    """이 메서드가 원본에서 실제로 호출하는 하위 계층 메서드 목록을 포팅 프롬프트에 명시한다.
+
+    `holder`는 TO-BE에서 그 메서드들을 들고 있는 필드 이름이다 - F→D 포팅이면 `store`,
+    P→Api 포팅이면 `service`. 계층이 늘면서 "store로 고정"이 틀린 지시가 됐다.
 
     AlphaTrans(FSE 2025)가 프래그먼트를 번역할 때 콜러/콜리 의존관계를 명시적 메타데이터로
     넘기는 것과 같은 발상이다 - LLM이 D 메서드 이름을 추측하게 두지 않고, 이미 결정론적으로
@@ -128,12 +131,14 @@ def _callee_note(callees: list[str] | None) -> str:
     """
     if not callees:
         return ""
-    call_forms = ", ".join(f"store.{c}(...)" for c in callees)
+    call_forms = ", ".join(f"{holder}.{c}(...)" for c in callees)
+    layer_name = "F 계층" if holder == "service" else "D 계층"
+    class_name = "Service" if holder == "service" else "Store"
     return (
-        f"\n\n**호출 대상 참고**: 이 메서드는 원본에서 D 계층 메서드 {', '.join(callees)}를 "
-        f"호출한다. Store 계층에는 이미 이 이름 그대로 메서드가 만들어져 있으니, 포팅한 코드에서도 "
-        f"정확히 이 이름으로 {call_forms} 형태로 호출해라(새로 이름을 짓거나 존재하지 않는 메서드를 "
-        "부르지 마라)."
+        f"\n\n**호출 대상 참고**: 이 메서드는 원본에서 {layer_name} 메서드 {', '.join(callees)}를 "
+        f"호출한다. {class_name} 계층에는 이미 이 이름 그대로 메서드가 만들어져 있으니, 포팅한 "
+        f"코드에서도 정확히 이 이름으로 {call_forms} 형태로 호출해라(새로 이름을 짓거나 존재하지 "
+        "않는 메서드를 부르지 마라)."
     )
 
 
@@ -162,6 +167,52 @@ def _port_prompt(method: str, body: str, callees: list[str] | None = None) -> st
     )
 
 
+_MESSAGE_CONVENTION_NOTE = (
+    "결과 메시지 코드(setOkResultMessage(\"W0024\", ...) 등)를 TO-BE 응답에 어떻게 실을지는 "
+    "**아직 확정되지 않은 공통 규약**이다(docs/09-common-response-convention.md 열린 질문 2번). "
+    "임의의 응답 키를 새로 만들지 마라 - 원본에 메시지 설정이 있던 자리에 "
+    "`// TODO(응답 규약 미확정): setOkResultMessage(\"코드\", ...) 상당` 주석만 남기고, "
+    "그 외의 흐름(조기 반환 여부 포함)은 원본 그대로 유지해라."
+)
+
+
+def _api_port_prompt(method: str, body: str, callees: list[str] | None = None) -> str:
+    """P(Presentation) BizUnit 메서드를 Api(Controller) 메서드로 옮기는 프롬프트.
+
+    F 계층과 프롬프트를 나눈 이유: P가 하는 일이 다르다. F는 계산/분기와 Store 호출이지만 P는
+    **여러 F를 순서대로 부르고, 권한 게이트로 조기 반환하고, 이름 붙은 레코드셋만 골라 담는**
+    오케스트레이션이다. 이걸 F용 프롬프트로 처리하면 `Map`을 그대로 되돌려주는 코드가 나와서
+    응답에 무관한 레코드셋이 통째로 새어 나간다(L3 하네스 실측: Api 계층 0/9).
+    """
+    return (
+        f"다음은 NEXCORE(BizUnit) P(Presentation) 계층 Java 메서드 {method}의 본문이다. "
+        "이 메서드는 화면 요청 하나를 받아 F 계층 메서드를 순서대로 호출하고, 그 결과에서 "
+        "필요한 레코드셋만 골라 응답에 담는 진입점이다. "
+        "이 **호출 순서와 분기(권한 확인 후 조기 반환, 결과 유무에 따른 분기 등)를 하나도 "
+        "빠짐없이 그대로 유지**하면서 Spring Controller 메서드로 옮겨라.\n"
+        "- `lookupFunctionUnit(...)`으로 얻은 FU 호출 `fu.fXXX(...)`은 `service.fXXX(request)` "
+        "형태로 바꿔라 (Api에 이미 `service` 필드가 있다).\n"
+        "- F 호출 결과는 `Map<String, Object>`다. 원본이 `ds.getRecordSet(\"NAME\")`으로 "
+        "특정 레코드셋만 꺼내 `responseData.putRecordset(\"NAME\", ...)` 했다면, TO-BE도 "
+        "**그 키만** 새 응답 Map에 담아라. 결과 Map을 통째로 되돌려주면 원본이 반환하지 않던 "
+        "데이터가 새어 나간다.\n"
+        "- `getRecordSet(\"NAME\").getRecordCount() > 0` 같은 건수 판정은 꺼낸 값이 "
+        "`java.util.List`일 때 그 크기로, 아니면 null 여부로 판정해라(방어적으로 작성).\n"
+        "- `responseData.getField(\"X\")` / `putField`는 Map의 get/put으로 바꿔라.\n"
+        "- 원본의 try/catch(BizRuntimeException 재던지기 포함) 구조는 그대로 유지해라.\n"
+        "- 원본에 컴파일 에러나 미선언 변수가 있어도 고치지 말고 그대로 옮긴 뒤 "
+        "`// FIXME(원본 버그): ...`로 표시해라.\n"
+        f"`public ResponseEntity<Map<String, Object>> {method}"
+        f"(@RequestBody Map<String, Object> request) {{ ... }}` 형태의 완성된 메서드 코드 하나만 "
+        "출력해라. `@PostMapping` 같은 라우팅 애노테이션은 이미 위에 붙어 있으니 다시 쓰지 마라. "
+        "코드 펜스나 다른 설명도 붙이지 마라."
+        + _callee_note(callees, holder="service")
+        + f"\n\n{_MESSAGE_CONVENTION_NOTE}"
+        + f"\n\n{_VALUE_TYPE_NOTE}\n\n{_RATIONALE_NOTE}"
+        + f"\n\n원본 메서드 본문:\n```\n{body}\n```"
+    )
+
+
 # 수리 후보를 여러 갈래로 만들 때 쓰는 전략. Tree-of-Thoughts의 "가지를 여러 개 펼친 뒤
 # 평가해서 고른다"를 이 문제에 맞게 적용한 것인데, **평가자가 LLM이 아니라 결정론적 검증기**라는
 # 점이 일반적인 ToT와 다르다(보통은 모델이 자기 가지를 자기가 채점해서 신뢰도가 낮다). 우리는
@@ -178,21 +229,33 @@ _REPAIR_STRATEGIES: list[tuple[str, str]] = [
 
 def _repair_prompt(method: str, current_code: str, error_message: str,
                    available_callees: list[str] | None = None,
-                   strategy: str = "") -> str:
+                   strategy: str = "", layer: str = "F") -> str:
     """정적 검증에서 BLOCKER가 난 방금 포팅한 메서드를 다시 LLM에게 보여주고 그 오류만 고치게
     한다(MatchFixAgent/ACToR 패턴, docs/06-mentor-feedback.md §D) - `repair_gate_node`가 호출
     대상을 정하고, 이 함수는 그 대상 1건에 대한 프롬프트만 만든다. 업무 로직 재설계를 막기 위해
     "이 오류만 고쳐라"를 반복해서 강조한다 - 안 그러면 LLM이 김에 코드를 통째로 다시 짜서 원본
     로직이 바뀔 위험이 있다.
     """
+    # 수리 대상이 Api면 시그니처도, 실재하는 호출 대상도 다르다 - 한쪽 문구로 고정하면
+    # "Map<String,Object>를 반환하라"는 틀린 지시가 Api 수리에 그대로 들어간다.
+    is_api = layer == "P"
+    kind = "Spring Controller 메서드" if is_api else "Spring 서비스 메서드"
+    holder = "service" if is_api else "store"
+    holder_cls = "Service" if is_api else "Store"
+    signature = (
+        f"public ResponseEntity<Map<String, Object>> {method}"
+        f"(@RequestBody Map<String, Object> request)"
+        if is_api else
+        f"public Map<String, Object> {method}(Map<String, Object> request)"
+    )
     return (
-        f"다음은 방금 포팅한 Spring 서비스 메서드 {method}의 현재 코드다. 정적 검증에서 아래 오류가 "
+        f"다음은 방금 포팅한 {kind} {method}의 현재 코드다. 정적 검증에서 아래 오류가 "
         f"났다:\n{error_message}\n\n"
         "**이 오류만 고쳐라** - 계산/분기 등 업무 로직은 절대 바꾸지 말고, 오류의 직접 원인이 되는 "
         "구문/구조 문제만 최소한으로 고쳐라. 원본 자체에 있던 결함을 `// FIXME(원본 버그)`로 표시만 "
         "해두고 옮긴 거라면, 그 부분은 정적 검증을 통과할 수 있는 최소한의 형태로만 고치고(예: 짝이 "
         "안 맞는 중괄호 보정) 로직 자체를 새로 설계하지 마라. "
-        f"`public Map<String, Object> {method}(Map<String, Object> request) {{ ... }}` 형태의 완성된 "
+        f"`{signature} {{ ... }}` 형태의 완성된 "
         "메서드 코드 하나만 출력하고, 코드 펜스나 다른 설명은 붙이지 마라. "
         "메서드 본문 첫 줄에 `// AI 수정: <무엇을 왜 고쳤는지 한 줄>` 주석을 추가해라.\n\n"
         # 최초 포팅에는 콜리 계약(_callee_note)을 주는데 수리에는 안 줬다 - 그래서 "없는 Store
@@ -200,10 +263,11 @@ def _repair_prompt(method: str, current_code: str, error_message: str,
         # 없었다(실측: PLA087의 주입 결함 dPLA08710을 2라운드 다 쓰고도 못 고침). 실재하는
         # 메서드 목록은 이미 생성된 Store에서 그대로 읽은 사실이라 추측을 주는 게 아니다.
         + (
-            f"참고 - `store`에 실제로 정의된 메서드는 이것뿐이다: {', '.join(available_callees)}. "
+            f"참고 - `{holder}`에 실제로 정의된 메서드는 이것뿐이다: "
+            f"{', '.join(available_callees)}. "
             "이 목록에 없는 이름을 호출하고 있었다면 목록 안에서 의미가 맞는 것으로 바꿔라. "
             "맞는 것이 없다고 판단되면 지어내지 말고 호출부에 "
-            "`// FIXME(사람 확인 필요): 대응되는 Store 메서드를 찾지 못함` 주석을 남겨라.\n\n"
+            f"`// FIXME(사람 확인 필요): 대응되는 {holder_cls} 메서드를 찾지 못함` 주석을 남겨라.\n\n"
             if available_callees else ""
         )
         + (f"**이번 시도의 접근 방침**: {strategy}\n\n" if strategy else "")
@@ -272,13 +336,21 @@ def _convert_screen(
     # 라운드마다 다시 호출했다(PLA047 실측: 유효 1건에 호출 5건, 80% 낭비). 생성기가 스스로 남긴
     # conversion_method 기록을 그대로 신뢰한다 - 여기서 detect_simple_delegation을 다시 부르면
     # 두 판정이 어긋날 수 있다.
-    pending = (
-        [
-            m["method_name"] for m in skel.methods
-            if m.get("layer") == "F" and m.get("conversion_method") == "LLM_PENDING"
-        ]
-        if service_fname in files else []
-    )
+    # 포팅 대상은 F(Service)만이 아니다 - P가 권한 게이트·결과 메시지·레코드셋 선별을 들고
+    # 있으면 Api도 PORT 스텁으로 생성되므로 같은 레인을 탄다. 계층마다 결과가 들어갈 파일이
+    # 다르므로 메서드명 -> 파일명 지도를 같이 돌려준다(예전엔 Service.java로 하드코딩돼 있었다).
+    api_fname = f"{prefix}Api.java"
+    target_by_layer = {"F": service_fname, "P": api_fname}
+    pending: list[str] = []
+    port_targets: dict[str, str] = {}
+    for m in skel.methods:
+        if m.get("conversion_method") != "LLM_PENDING":
+            continue
+        target = target_by_layer.get(m.get("layer"))
+        if not target or target not in files:
+            continue
+        pending.append(m["method_name"])
+        port_targets[m["method_name"]] = target
 
     return {
         "files": files,
@@ -286,6 +358,7 @@ def _convert_screen(
         "mapper_issues": mapper_issues,
         "dto_issues": dto_issues,
         "pending_methods": pending,
+        "port_targets": port_targets,
         "skel_methods": skel.methods,
         "skel_method_calls": skel.method_calls,
     }
@@ -489,7 +562,10 @@ class PipelineState(TypedDict, total=False):
     skel_issues: Annotated[dict[str, list], _merge_dicts]  # P(JAVA) 계층 이슈 - _run_batch_save 저장용
     mapper_issues: Annotated[dict[str, list], _merge_dicts]  # XSQL 계층 이슈
     dto_issues: Annotated[dict[str, list], _merge_dicts]  # DERIVED 계층 이슈
-    pending_methods: dict[str, list[str]]  # {screen_id: [F 메서드명, ...]}
+    pending_methods: dict[str, list[str]]  # {screen_id: [포팅 대상 메서드명, ...]}
+    # {screen_id: {메서드명: 결과가 들어갈 파일명}} - F는 Service.java, P는 Api.java로
+    # 간다. 예전엔 Service.java로 하드코딩돼 있어서 Api 계층은 포팅 대상이 될 수 없었다.
+    port_targets: dict[str, dict[str, str]]
     skel_methods: dict[str, list]  # {screen_id: SkeletonResult.methods} - CONV_METHOD 적재용
     skel_method_calls: dict[str, list]  # {screen_id: SkeletonResult.method_calls} - CONV_METHOD_CALL 적재용
 
@@ -555,6 +631,12 @@ def plan_all_node(state: PipelineState) -> dict:
         for m in plan.get("rule_based_delegations", []):
             log.decide(f"{screen_id}.{m}", "규칙 기반 생성 (LLM 호출 안 함)",
                        "단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능")
+        for m in plan.get("llm_porting_targets_api", []):
+            log.decide(f"{screen_id}.{m}", "LLM 포팅 (Api 계층)",
+                       "P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함")
+        for m in plan.get("rule_based_api_delegations", []):
+            log.decide(f"{screen_id}.{m}", "규칙 기반 생성 (Api, LLM 호출 안 함)",
+                       "P가 순수 위임 — service 호출 1건으로 결정론적 생성 가능")
         sig = plan.get("track_signals", {})
         if sig.get("as_is_source_broken"):
             log.block(f"{screen_id}: AS-IS 원본이 그대로는 컴파일 안 됨",
@@ -588,6 +670,7 @@ def convert_all_node(state: PipelineState) -> dict:
     mapper_issues: dict[str, list] = {}
     dto_issues: dict[str, list] = {}
     pending: dict[str, list[str]] = {}
+    port_targets: dict[str, dict[str, str]] = {}
     skel_methods: dict[str, list] = {}
     skel_method_calls: dict[str, list] = {}
 
@@ -605,6 +688,7 @@ def convert_all_node(state: PipelineState) -> dict:
         mapper_issues[screen_id] = result["mapper_issues"]
         dto_issues[screen_id] = result["dto_issues"]
         pending[screen_id] = result["pending_methods"]
+        port_targets[screen_id] = result["port_targets"]
         skel_methods[screen_id] = result["skel_methods"]
         skel_method_calls[screen_id] = result["skel_method_calls"]
         n_issue = len(result["skel_issues"]) + len(result["mapper_issues"]) + len(result["dto_issues"])
@@ -618,9 +702,16 @@ def convert_all_node(state: PipelineState) -> dict:
     log.end_stage(f"규칙 기반 변환 완료 — 화면 {len(screens)}건, LLM 포팅 대상 {total_pending}건만 남음")
     return {
         "files": files, "skel_issues": skel_issues, "mapper_issues": mapper_issues, "dto_issues": dto_issues,
-        "pending_methods": pending, "skel_methods": skel_methods, "skel_method_calls": skel_method_calls,
+        "pending_methods": pending, "port_targets": port_targets,
+        "skel_methods": skel_methods, "skel_method_calls": skel_method_calls,
         "attempt_count": 0,
     }
+
+
+def _port_target(state: PipelineState, screen_id: str, method: str) -> str:
+    """포팅 결과가 들어갈 파일명. 기록이 없으면 Service.java(F 계층)가 기본이다."""
+    return (state.get("port_targets", {}).get(screen_id, {}).get(method)
+            or f"{to_prefix(screen_id)}Service.java")
 
 
 def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: PipelineState) -> list[Send]:
@@ -631,27 +722,36 @@ def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: Pipel
     """
     screens = state.get("screens", {})
     skel_calls = state.get("skel_method_calls", {})
-    body_cache: dict[str, dict[str, str]] = {}
+    body_cache: dict[tuple[str, str], dict[str, str]] = {}
     sends = []
     for screen_id, method in screen_method_pairs:
-        if screen_id not in body_cache:
-            f_java = screens.get(screen_id, {}).get("F", {}).get("java") or ""
-            body_cache[screen_id] = extract_method_bodies(f_java)
+        # 대상 파일이 Api면 P 계층 포팅이다 - 원본 본문도 P.java에서 읽고, 콜리 계약도
+        # "Store의 D 메서드"가 아니라 "Service의 F 메서드"를 넘겨야 한다.
+        target = _port_target(state, screen_id, method)
+        layer = "P" if target.endswith("Api.java") else "F"
+        src_key = (screen_id, layer)
+        if src_key not in body_cache:
+            src_java = screens.get(screen_id, {}).get(layer, {}).get("java") or ""
+            body_cache[src_key] = extract_method_bodies(src_java)
+        callee_layer = "F" if layer == "P" else "D"
         callees = [
             c["callee_method"] for c in skel_calls.get(screen_id, [])
-            if c.get("caller_layer") == "F" and c.get("caller_method") == method and c.get("callee_layer") == "D"
+            if c.get("caller_layer") == layer and c.get("caller_method") == method
+            and c.get("callee_layer") == callee_layer
         ]
+        holder = "Service" if layer == "P" else "Store"
         if callees:
             log.context(
                 f"{screen_id}.{method} ← 피호출자 계약 {len(callees)}건 주입: {', '.join(callees)}",
-                "콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 "
+                f"콜그래프에서 뽑은 실제 {holder} 메서드명 — LLM이 이름을 추측하지 않게 고정 "
                 "(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)",
             )
         else:
             log.context(f"{screen_id}.{method} ← 피호출자 없음", "이 메서드는 하위 계층을 호출하지 않는다")
         sends.append(Send("port_one_screen_method", {
-            "_screen_id": screen_id, "_method": method, "_method_body": body_cache[screen_id].get(method, ""),
-            "_callees": callees,
+            "_screen_id": screen_id, "_method": method,
+            "_method_body": body_cache[src_key].get(method, ""),
+            "_callees": callees, "_layer": layer,
         }))
     return sends
 
@@ -678,10 +778,13 @@ def port_one_screen_method_node(state: dict) -> dict:
     method = state["_method"]
     body = state["_method_body"]
     repair_error = state.get("_repair_error")
-    prompt = (
-        _repair_prompt(method, body, repair_error, state.get("_callees"))
-        if repair_error else _port_prompt(method, body, state.get("_callees"))
-    )
+    layer = state.get("_layer", "F")
+    if repair_error:
+        prompt = _repair_prompt(method, body, repair_error, state.get("_callees"), layer=layer)
+    elif layer == "P":
+        prompt = _api_port_prompt(method, body, state.get("_callees"))
+    else:
+        prompt = _port_prompt(method, body, state.get("_callees"))
     kind = "수리 재생성" if repair_error else "최초 포팅"
     log.tool("LLM Gateway", f"{screen_id}.{method}",
              f"{kind} · 프롬프트 {len(prompt):,}자" + (f" · 오류 피드백 주입: {repair_error[:80]}" if repair_error else ""))
@@ -700,8 +803,7 @@ def splice_all_node(state: PipelineState) -> dict:
     files = {sid: dict(f) for sid, f in state.get("files", {}).items()}
     newly_ported: list[tuple[str, str]] = []
     for screen_id, method, code in state.get("port_results", []):
-        prefix = to_prefix(screen_id)
-        service_fname = f"{prefix}Service.java"
+        service_fname = _port_target(state, screen_id, method)
         screen_files = files.get(screen_id)
         if not screen_files or service_fname not in screen_files:
             continue
@@ -718,7 +820,7 @@ def splice_all_node(state: PipelineState) -> dict:
                       "스텁이 남아 있는데 포팅 마커를 찾지 못했다")
         screen_files[service_fname] = spliced
     if newly_ported:
-        log.ok(f"결합(fan-in) 완료 — {len(newly_ported)}건을 Service에 반영",
+        log.ok(f"결합(fan-in) 완료 — {len(newly_ported)}건을 Service/Api에 반영",
                ", ".join(f"{s}.{m}" for s, m in newly_ported))
     return {"files": files, "ported_methods": newly_ported, "attempt_count": state.get("attempt_count", 0) + 1}
 
@@ -757,7 +859,8 @@ def validate_all_node(state: PipelineState) -> dict:
 
 
 def _find_repairable_targets(state: PipelineState) -> list[tuple[str, str, str]]:
-    """방금 validate_all이 낸 BLOCKER 이슈 중, "LLM이 실제로 포팅한 F 메서드"에 귀속된 것만 골라
+    """방금 validate_all이 낸 BLOCKER 이슈 중, "LLM이 실제로 포팅한 메서드"(F→Service, P→Api)에
+    귀속된 것만 골라
     (screen_id, method, 합친 오류 메시지) 목록으로 돌려준다.
 
     규칙 기반으로 생성된 골격(Api/Store/단순위임 Service)의 BLOCKER는 대상에서 뺀다 - 그건
@@ -796,7 +899,8 @@ def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState)
     sends = []
     for screen_id, method, error_message in targets:
         prefix = to_prefix(screen_id)
-        service_fname = f"{prefix}Service.java"
+        service_fname = _port_target(state, screen_id, method)
+        layer = "P" if service_fname.endswith("Api.java") else "F"
         screen_files = files_by_screen.get(screen_id, {})
         service_java = screen_files.get(service_fname, "")
         # TO-BE 산출물이므로 AS-IS용 extract_method_bodies를 쓰면 안 된다 - 그 함수는
@@ -805,7 +909,9 @@ def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState)
         bodies = extract_tobe_method_bodies(service_java)
         # 이미 생성된 Store에 실제로 정의된 메서드 이름을 읽어 수리 프롬프트에 넘긴다 - 최초
         # 포팅에만 있던 의존 계약 주입을 수리에도 일관되게 적용하는 것이다(_repair_prompt 참고).
-        available = sorted(extract_tobe_method_bodies(screen_files.get(f"{prefix}Store.java", "")))
+        # 수리 대상이 Api면 실재하는 이름은 Store의 D가 아니라 Service의 F 메서드다.
+        holder_fname = f"{prefix}Service.java" if layer == "P" else f"{prefix}Store.java"
+        available = sorted(extract_tobe_method_bodies(screen_files.get(holder_fname, "")))
         # 후보를 여러 갈래로 펼친다(ToT). 각 가지는 서로 다른 접근 방침을 받고, 나중에
         # select_repair_node가 **검증기로 채점해서** 하나만 고른다.
         n = max(1, min(len(_REPAIR_STRATEGIES), state.get("repair_candidates_n", 2)))
@@ -814,7 +920,7 @@ def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState)
             sends.append(Send("repair_candidate", {
                 "_screen_id": screen_id, "_method": method, "_method_body": bodies.get(method, ""),
                 "_repair_error": error_message, "_callees": available,
-                "_strategy": strategy, "_strategy_label": label,
+                "_strategy": strategy, "_strategy_label": label, "_layer": layer,
             }))
     return sends
 
@@ -824,7 +930,8 @@ def repair_candidate_node(state: dict) -> dict:
     screen_id, method = state["_screen_id"], state["_method"]
     label = state.get("_strategy_label", "")
     prompt = _repair_prompt(method, state["_method_body"], state.get("_repair_error", ""),
-                            state.get("_callees"), state.get("_strategy", ""))
+                            state.get("_callees"), state.get("_strategy", ""),
+                            layer=state.get("_layer", "F"))
     log.tool("LLM Gateway", f"{screen_id}.{method}", f"수리 후보 [{label}] · 프롬프트 {len(prompt):,}자")
     try:
         raw = chat(messages=[{"role": "user", "content": prompt}])
@@ -854,7 +961,7 @@ def select_repair_node(state: PipelineState) -> dict:
     newly: list[tuple[str, str]] = []
     for (screen_id, method), cands in grouped.items():
         prefix = to_prefix(screen_id)
-        service_fname = f"{prefix}Service.java"
+        service_fname = _port_target(state, screen_id, method)
         screen_files = files.get(screen_id)
         if not screen_files or service_fname not in screen_files:
             continue

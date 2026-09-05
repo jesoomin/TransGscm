@@ -20,24 +20,24 @@
       "axis": "B. 사용자 체감",
       "item": "리뷰 대상 축소율",
       "weight": 11,
-      "value": 0.8364,
-      "score": 9.2,
+      "value": 0.8758,
+      "score": 9.63,
       "status": "측정"
     },
     {
       "axis": "B. 사용자 체감",
       "item": "결정론 처리 비중",
       "weight": 7,
-      "value": 0.75,
-      "score": 5.25,
+      "value": 0.4565,
+      "score": 3.2,
       "status": "측정"
     },
     {
       "axis": "B. 사용자 체감",
       "item": "사람 수정 수용률",
       "weight": 7,
-      "value": 0.9057,
-      "score": 6.34,
+      "value": 0.7034,
+      "score": 4.92,
       "status": "측정"
     },
     {
@@ -88,7 +88,7 @@
       "unmeasured": 0
     },
     "B. 사용자 체감": {
-      "earned": 20.79,
+      "earned": 17.75,
       "available": 25.0,
       "unmeasured": 0
     },
@@ -103,9 +103,9 @@
       "unmeasured": 0
     }
   },
-  "earned": 81.86,
+  "earned": 78.82,
   "available": 100.0,
-  "normalized_100": 81.9,
+  "normalized_100": 78.8,
   "unmeasured_weight": 0.0,
   "detail": {
     "conversion": {
@@ -121,19 +121,19 @@
       ]
     },
     "developer_experience": {
-      "human_edit_ratio": 0.0943,
+      "human_edit_ratio": 0.2966,
       "human_edit_measured_screens": 5,
       "human_edit_unmeasured_screens": 0,
-      "review_acceptance": 0.9057,
-      "generated_lines": 1699,
-      "llm_ported_lines": 275,
-      "flagged_lines": 3,
-      "review_target_lines": 278,
-      "review_ratio": 0.1636,
-      "review_reduction": 0.8364,
-      "llm_calls": 7,
+      "review_acceptance": 0.7034,
+      "generated_lines": 2093,
+      "llm_ported_lines": 255,
+      "flagged_lines": 5,
+      "review_target_lines": 260,
+      "review_ratio": 0.1242,
+      "review_reduction": 0.8758,
+      "llm_calls": 25,
       "rule_handled": 21,
-      "deterministic_ratio": 0.75,
+      "deterministic_ratio": 0.4565,
       "asis_files_per_screen": 4.0
     },
     "detection": {
@@ -163,11 +163,15 @@
       "api_match_rate": 0.0,
       "api_cases": 9,
       "api_matched": 0,
-      "api_screens": 1
+      "api_screens": 1,
+      "api_payload_match_rate": 1.0,
+      "api_payload_matched": 9,
+      "api_message_matched": 0
     }
   },
   "not_covered": [
     "Api~클라이언트 구간(실제 HTTP 왕복·JSON 직렬화) — Api 계층은 메서드 호출로 비교했지만 서블릿/Jackson을 거치는 진짜 왕복은 아직 검증하지 않았다",
+    "결과 메시지 코드(W0024/I0016 등)의 TO-BE 응답 규약 — 확정 전이라 어떤 키로도 싣지 않았다(docs/09 열린 질문 2번). Api 계층 엄격 일치율이 낮은 유일한 원인이며, 규약이 정해지기 전에는 우리가 코드로 해소할 수 없다",
     "L4 사람 수정 라인 비율 — 값은 나왔으나 **AI 리뷰어 1차 리뷰 기준**이다. 사람 개발자가 업무 로직까지 검토하면 더 높아질 수 있으므로 하한값으로 읽어야 한다"
   ]
 }

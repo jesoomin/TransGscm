@@ -350,6 +350,22 @@ public class Harness {{
 """
 
 
+def _split_render(rendered: str) -> tuple[str, str]:
+    """렌더 문자열을 (결과 메시지 코드, 데이터 페이로드)로 가른다.
+
+    두 가지가 섞여 있으면 "우리가 못 옮긴 것"과 "아직 규약이 없어서 못 옮기는 것"을 구분할 수
+    없다. 메시지 코드(setOkResultMessage)를 TO-BE 응답에 어떤 키로 실을지는 아직 확정되지 않은
+    공통 규약이라(docs/09-common-response-convention.md 열린 질문 2번) 생성기가 일부러 비워둔
+    자리다 - 그걸 변환 실패와 같은 칸에 넣고 세면 둘 다 못 읽는 수치가 된다.
+    """
+    msgs, payload = [], []
+    for token in rendered.split(";"):
+        if not token:
+            continue
+        (msgs if token.startswith("@msg=") else payload).append(token)
+    return ";".join(msgs), ";".join(payload)
+
+
 def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
                javac: str, java: str, work: Path) -> dict:
     """화면 하나에 대해 AS-IS/TO-BE를 실행하고 비교한다."""
@@ -483,15 +499,25 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
     except (ValueError, IndexError):
         return {"screen_id": screen_id, "status": "PARSE_FAIL", "reason": rp.stdout[:400]}
 
+    for r in results:
+        asis_msg, asis_payload = _split_render(r.get("asis", ""))
+        tobe_msg, tobe_payload = _split_render(r.get("tobe", ""))
+        r["payload_match"] = asis_payload == tobe_payload
+        r["message_match"] = asis_msg == tobe_msg
+        r["asis_message"], r["tobe_message"] = asis_msg, tobe_msg
     matched = sum(1 for r in results if r["match"])
     by_layer: dict[str, dict] = {}
     for r in results:
         layer = r.get("layer", "SERVICE")
-        b = by_layer.setdefault(layer, {"cases": 0, "matched": 0})
+        b = by_layer.setdefault(layer, {"cases": 0, "matched": 0, "payload_matched": 0,
+                                        "message_matched": 0})
         b["cases"] += 1
         b["matched"] += int(r["match"])
+        b["payload_matched"] += int(r["payload_match"])
+        b["message_matched"] += int(r["message_match"])
     for b in by_layer.values():
         b["match_rate"] = round(b["matched"] / b["cases"], 4) if b["cases"] else None
+        b["payload_match_rate"] = round(b["payload_matched"] / b["cases"], 4) if b["cases"] else None
     return {"screen_id": screen_id, "status": "OK", "methods": methods,
             "api_methods": api_methods,
             "api_layer_skipped": api_degraded or None,
@@ -523,12 +549,16 @@ def run(asis_dir: Path, screens: list[str], tobe_root: Path | None = None) -> di
     layers: dict[str, dict] = {}
     for s in ok:
         for name, b in (s.get("by_layer") or {}).items():
-            agg = layers.setdefault(name, {"cases": 0, "matched": 0, "screens": 0})
+            agg = layers.setdefault(name, {"cases": 0, "matched": 0, "payload_matched": 0,
+                                           "message_matched": 0, "screens": 0})
             agg["cases"] += b["cases"]
             agg["matched"] += b["matched"]
+            agg["payload_matched"] += b.get("payload_matched", 0)
+            agg["message_matched"] += b.get("message_matched", 0)
             agg["screens"] += 1
     for b in layers.values():
         b["match_rate"] = round(b["matched"] / b["cases"], 4) if b["cases"] else None
+        b["payload_match_rate"] = round(b["payload_matched"] / b["cases"], 4) if b["cases"] else None
     return {
         "screens_total": len(screens),
         "screens_executed": len(ok),
@@ -577,7 +607,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"      ! Api 계층 비교 생략(P/Api 컴파일 실패) — Service 계층만 측정")
         for r in s["results"]:
             if not r["match"]:
-                print(f"      X {r['method']} (rows={r['rows']})")
+                kind = ("메시지 코드만 다름" if r["payload_match"]
+                        else ("페이로드 다름" if r["message_match"] else "둘 다 다름"))
+                print(f"      X {r['method']} (rows={r['rows']})  [{kind}]")
                 print(f"          AS-IS: {r['asis'][:90]}")
                 print(f"          TO-BE: {r['tobe'][:90]}")
     print("-" * 78)
@@ -585,6 +617,11 @@ def main(argv: list[str] | None = None) -> int:
     for name, b in sorted((res.get("by_layer") or {}).items()):
         print(f"  {label.get(name, name):<22} {b['matched']:>3}/{b['cases']:<3} "
               f"({b['match_rate']:.0%})  · 화면 {b['screens']}개")
+        if b["payload_matched"] != b["matched"]:
+            # 완전 일치와 페이로드 일치가 갈리면 그 차이가 곧 "규약 미확정으로 못 옮긴 부분"이다.
+            print(f"    └ 데이터 페이로드만: {b['payload_matched']}/{b['cases']} "
+                  f"({b['payload_match_rate']:.0%}) · 결과 메시지 코드 "
+                  f"{b['message_matched']}/{b['cases']} (TO-BE 응답 규약 미확정)")
     if res["match_rate"] is not None:
         print(f"  {'합계':<22} {res['matched']:>3}/{res['cases']:<3} ({res['match_rate']:.1%})"
               f"  · 화면 {res['screens_executed']}/{res['screens_total']} 실행")

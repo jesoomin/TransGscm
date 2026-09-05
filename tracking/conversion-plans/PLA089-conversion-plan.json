@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T14:17:39",
+  "generated_at": "2026-09-05T14:32:13",
   "screen_id": "PLA089",
   "ui_id": "U-PPLA089",
   "package": {
@@ -82,8 +82,15 @@
     "fPLA089QrySelectMainList": "dPLA08901",
     "fPLA089QrySelectDetail": "dPLA08902"
   },
+  "llm_porting_targets_api": [
+    "pPLA08901",
+    "pPLA08902",
+    "pPLA08903",
+    "pPLA08904"
+  ],
+  "rule_based_api_delegations": [],
   "estimated_llm_calls": {
-    "porting": 1,
+    "porting": 5,
     "porting_skipped_rule_based": 5,
     "ai_recommend": 0
   },

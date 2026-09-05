@@ -37,6 +37,7 @@ for _p in (str(_PROJECT_ROOT), str(_CHATUI_DIR)):
 
 from skeleton_gen import (  # noqa: E402
     detect_simple_delegation,
+    detect_p_orchestration,
     extract_method_bodies,
     extract_methods,
     extract_nctrid_map,
@@ -162,6 +163,21 @@ def build_screen_plan(
             continue
         llm_targets.append(m)
 
+    # P 계층도 포팅 대상이 될 수 있다. P가 순수 위임이면 Api는 규칙 기반 한 줄로 끝나지만,
+    # 권한 게이트·결과 메시지·레코드셋 선별을 들고 있으면 Api도 PORT 스텁으로 생성된다
+    # (skeleton_gen.detect_p_orchestration). 여기서 같이 세지 않으면 계획서의 "LLM 호출 예산"이
+    # 실제보다 적게 나온다 - 생성기와 계획서 판정이 갈리는 건 이 프로젝트가 이미 겪은 패턴이라
+    # 같은 탐지 함수를 그대로 재사용한다.
+    p_java = buckets.get("P", {}).get("java")
+    p_bodies = extract_method_bodies(p_java) if p_java else {}
+    p_llm_targets: list[str] = []
+    p_rule_based: list[str] = []
+    for m in extract_methods(p_java or ""):
+        if detect_p_orchestration(p_bodies.get(m, ""), f_methods):
+            p_llm_targets.append(m)
+        else:
+            p_rule_based.append(m)
+
     unbalanced = {
         name: count_unbalanced_braces(buckets.get(layer, {}).get(key) or "")
         for layer, key, name in _FRAGMENTS
@@ -184,13 +200,16 @@ def build_screen_plan(
         "llm_porting_targets": llm_targets,
         "rule_based_delegations": simple_delegations,
         "rule_based_passthrough": passthrough_queries,
+        "llm_porting_targets_api": p_llm_targets,
+        "rule_based_api_delegations": p_rule_based,
         "estimated_llm_calls": {
             # 단순 위임 메서드는 규칙 기반으로 생성되므로 LLM을 아예 안 부른다(2026-09-04 수정).
             # 그 전에는 파이프라인이 F 메서드 전부를 보내놓고 단순 위임분 결과는 splice에서
             # 버렸고, 버려지니 재시도 라운드마다 또 불러서 PLA047 기준 유효 1건에 호출 5건이
             # 나갔다 - _convert_screen이 LLM_PENDING 메서드만 pending에 담도록 고쳐서 없앴다.
-            "porting": len(llm_targets),
-            "porting_skipped_rule_based": len(simple_delegations) + len(passthrough_queries),
+            "porting": len(llm_targets) + len(p_llm_targets),
+            "porting_skipped_rule_based": (len(simple_delegations) + len(passthrough_queries)
+                                           + len(p_rule_based)),
             "ai_recommend": len(nctrid_map) if p_java else 0,
         },
         # 트랙은 사람이 정한다 - 여기서 추측해 채우지 않는다(CLAUDE.md/Phase 3).

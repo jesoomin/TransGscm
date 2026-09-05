@@ -13,23 +13,25 @@
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
 [  0.1s] │  DECIDE   PLA087.fPLA087QrySelectMainList → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA087.fPLA087QrySelectDetail → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
 [  0.1s] │  DECIDE   PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
 [  0.1s] │  DECIDE   PLA087.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
 [  0.1s] │  DECIDE   PLA087.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA087.pPLA08701 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA087.pPLA08702 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA087.pPLA08703 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA087.pPLA08704 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
 [  0.1s] │  OBSERVE  PLA087: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
 [  0.1s] │  OBSERVE  PLA089: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
 [  0.1s] │  DECIDE   PLA089.fAuthCheck → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA089.fPLA089QrySelectMainList → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA089.fPLA089QrySelectDetail → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
 [  0.1s] │  DECIDE   PLA089.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
@@ -37,6 +39,14 @@
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
 [  0.1s] │  DECIDE   PLA089.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA089.pPLA08901 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA089.pPLA08902 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA089.pPLA08903 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA089.pPLA08904 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
 [  0.1s] │  BLOCK    PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
          │           ↳ 중괄호 불일치 {'P.java': 1, 'F.java': 0, 'D.java': 0} — 원본을 고치지 않고 보존, Reimagine 트랙 후보로 신호만 남김(트랙 결정은 사람 몫)
 [  0.1s] │  OBSERVE  PLA089: 트랙 = UNDECIDED
@@ -44,8 +54,6 @@
 [  0.1s] │  OBSERVE  PLA093: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
 [  0.1s] │  DECIDE   PLA093.fAuthCheck → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA093.fPLA093QrySelectMainList → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
 [  0.1s] │  DECIDE   PLA093.fPLA093QrySelectDetail → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
@@ -55,170 +63,351 @@
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
 [  0.1s] │  DECIDE   PLA093.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA093.pPLA09301 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA093.pPLA09302 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA093.pPLA09303 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA093.pPLA09304 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
 [  0.1s] │  OBSERVE  PLA093: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
 [  0.1s] │  OBSERVE  PLA096: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
 [  0.1s] │  DECIDE   PLA096.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA096.fPLA096QrySelectMainList → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA096.fPLA096QrySelectDetail → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
 [  0.1s] │  DECIDE   PLA096.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
 [  0.1s] │  DECIDE   PLA096.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA096.pPLA09601 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA096.pPLA09602 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA096.pPLA09603 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
 [  0.1s] │  OBSERVE  PLA096: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
 [  0.1s] │  OBSERVE  PLA100: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
 [  0.1s] │  DECIDE   PLA100.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA100.fPLA100QrySelectMainList → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA100.fPLA100QrySelectDetail → LLM 포팅
-         │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
 [  0.1s] │  DECIDE   PLA100.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
 [  0.1s] │  DECIDE   PLA100.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+[  0.1s] │  DECIDE   PLA100.pPLA10001 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA100.pPLA10002 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
+[  0.1s] │  DECIDE   PLA100.pPLA10003 → LLM 포팅 (Api 계층)
+         │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
 [  0.1s] │  OBSERVE  PLA100: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
-[  0.1s] │  PLAN     LLM 호출 예산 확정: 15건
-         │           ↳ 13/28건(46%)을 규칙으로 처리 → LLM 호출 회피
+[  0.1s] │  PLAN     LLM 호출 예산 확정: 25건
+         │           ↳ 21/46건(45%)을 규칙으로 처리 → LLM 호출 회피
 [  0.1s] └─ 계획 고정 완료 — tracking/conversion-plans/ 에 5건 기록
 [  0.1s] ┌─ STAGE 2/7  TOOL  규칙 기반 변환 — 화면 5건 (LLM 미사용)
 [  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA087)
-         │           ↳ 산출 5종 · 콜그래프 간선 10개 · 이슈 6건 · LLM 대기 3건
-[  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA089)
-         │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 6건 · LLM 대기 3건
-[  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA093)
-         │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 6건 · LLM 대기 3건
+         │           ↳ 산출 5종 · 콜그래프 간선 10개 · 이슈 14건 · LLM 대기 6건
+[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA089)
+         │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 14건 · LLM 대기 5건
+[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA093)
+         │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 14건 · LLM 대기 6건
 [  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA096)
-         │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 6건 · LLM 대기 3건
+         │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 12건 · LLM 대기 4건
 [  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA100)
-         │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 6건 · LLM 대기 3건
-[  0.2s] └─ 규칙 기반 변환 완료 — 화면 5건, LLM 포팅 대상 15건만 남음
-[  0.2s] ┌─ STAGE 3/7  TOOL  LLM 포팅 — 15건 병렬 디스패치 (fan-out)
+         │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 12건 · LLM 대기 4건
+[  0.2s] └─ 규칙 기반 변환 완료 — 화면 5건, LLM 포팅 대상 25건만 남음
+[  0.2s] ┌─ STAGE 3/7  TOOL  LLM 포팅 — 25건 병렬 디스패치 (fan-out)
+[  0.2s] │  CONTEXT  PLA087.pPLA08701 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA087QrySelectMainList
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA087.pPLA08702 ← 피호출자 계약 1건 주입: fPLA087QrySelectDetail
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA087.pPLA08703 ← 피호출자 계약 1건 주입: fHistoryQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA087.pPLA08704 ← 피호출자 계약 1건 주입: fExcelDownQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA087.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA087.fPLA087QrySelectMainList ← 피호출자 없음
          │           ↳ 이 메서드는 하위 계층을 호출하지 않는다
-[  0.2s] │  CONTEXT  PLA087.fPLA087QrySelectDetail ← 피호출자 계약 1건 주입: dPLA08702
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.pPLA08901 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA089QrySelectMainList
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.pPLA08902 ← 피호출자 계약 1건 주입: fPLA089QrySelectDetail
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.pPLA08903 ← 피호출자 계약 1건 주입: fHistoryQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA089.pPLA08904 ← 피호출자 계약 1건 주입: fExcelDownQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA089.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA089.fPLA089QrySelectMainList ← 피호출자 계약 1건 주입: dPLA08901
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA089.fPLA089QrySelectDetail ← 피호출자 계약 1건 주입: dPLA08902
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.pPLA09301 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA093QrySelectMainList
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.pPLA09302 ← 피호출자 계약 1건 주입: fPLA093QrySelectDetail
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.pPLA09303 ← 피호출자 계약 1건 주입: fHistoryQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA093.pPLA09304 ← 피호출자 계약 1건 주입: fExcelDownQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA093.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA093.fPLA093QrySelectMainList ← 피호출자 계약 1건 주입: dPLA09301
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA093.fPLA093QrySelectDetail ← 피호출자 계약 1건 주입: dPLA09302
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA096.pPLA09601 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA096QrySelectMainList
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA096.pPLA09602 ← 피호출자 계약 1건 주입: fPLA096QrySelectDetail
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA096.pPLA09603 ← 피호출자 계약 1건 주입: fHistoryQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA096.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA096.fPLA096QrySelectMainList ← 피호출자 계약 1건 주입: dPLA09601
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA096.fPLA096QrySelectDetail ← 피호출자 계약 1건 주입: dPLA09602
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA100.pPLA10001 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA100QrySelectMainList
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA100.pPLA10002 ← 피호출자 계약 1건 주입: fPLA100QrySelectDetail
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  CONTEXT  PLA100.pPLA10003 ← 피호출자 계약 1건 주입: fHistoryQry
+         │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
 [  0.2s] │  CONTEXT  PLA100.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA100.fPLA100QrySelectMainList ← 피호출자 계약 1건 주입: dPLA10001
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.2s] │  CONTEXT  PLA100.fPLA100QrySelectDetail ← 피호출자 계약 1건 주입: dPLA10002
-         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정 (AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
+[  0.2s] │  TOOL     LLM Gateway(PLA087.pPLA08701)
+         │           ↳ 최초 포팅 · 프롬프트 3,072자
+[  0.2s] │  TOOL     LLM Gateway(PLA087.pPLA08702)
+         │           ↳ 최초 포팅 · 프롬프트 2,833자
+[  0.2s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
+         │           ↳ 최초 포팅 · 프롬프트 2,637자
+[  0.2s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
+         │           ↳ 최초 포팅 · 프롬프트 2,653자
 [  0.2s] │  TOOL     LLM Gateway(PLA087.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,799자
 [  0.2s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
          │           ↳ 최초 포팅 · 프롬프트 1,997자
-[  0.2s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectDetail)
-         │           ↳ 최초 포팅 · 프롬프트 1,969자
-[  0.2s] │  TOOL     LLM Gateway(PLA089.fPLA089QrySelectMainList)
-         │           ↳ 최초 포팅 · 프롬프트 2,172자
-[  0.2s] │  TOOL     LLM Gateway(PLA089.fPLA089QrySelectDetail)
-         │           ↳ 최초 포팅 · 프롬프트 1,970자
-[  0.2s] │  TOOL     LLM Gateway(PLA089.fAuthCheck)
+[  0.2s] │  TOOL     LLM Gateway(PLA089.pPLA08901)
+         │           ↳ 최초 포팅 · 프롬프트 3,072자
+[  0.2s] │  TOOL     LLM Gateway(PLA089.pPLA08902)
+         │           ↳ 최초 포팅 · 프롬프트 2,833자
+[  4.0s] │  PASS     PLA087.pPLA08703 응답 수신 (722자)
+[  4.0s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
+         │           ↳ 최초 포팅 · 프롬프트 2,637자
+[  4.4s] │  PASS     PLA087.pPLA08704 응답 수신 (737자)
+[  4.4s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
+         │           ↳ 최초 포팅 · 프롬프트 2,680자
+[  4.4s] │  PASS     PLA087.pPLA08702 응답 수신 (1,098자)
+[  4.4s] │  TOOL     LLM Gateway(PLA089.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,799자
-[  0.2s] │  TOOL     LLM Gateway(PLA093.fAuthCheck)
+[  5.1s] │  PASS     PLA089.pPLA08901 응답 수신 (1,335자)
+[  5.1s] │  TOOL     LLM Gateway(PLA093.pPLA09301)
+         │           ↳ 최초 포팅 · 프롬프트 3,069자
+[  5.7s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,432자)
+[  5.7s] │  TOOL     LLM Gateway(PLA093.pPLA09302)
+         │           ↳ 최초 포팅 · 프롬프트 2,830자
+[  5.7s] │  PASS     PLA087.fAuthCheck 응답 수신 (1,452자)
+[  5.7s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
+         │           ↳ 최초 포팅 · 프롬프트 2,635자
+[  5.9s] │  PASS     PLA087.pPLA08701 응답 수신 (1,274자)
+[  5.9s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
+         │           ↳ 최초 포팅 · 프롬프트 2,651자
+[  6.5s] │  PASS     PLA089.pPLA08902 응답 수신 (1,131자)
+[  6.5s] │  TOOL     LLM Gateway(PLA093.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,799자
-[  0.2s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectMainList)
-         │           ↳ 최초 포팅 · 프롬프트 2,172자
-[  4.3s] │  PASS     PLA087.fPLA087QrySelectDetail 응답 수신 (1,003자)
-[  4.3s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectDetail)
+[  7.6s] │  PASS     PLA089.pPLA08904 응답 수신 (784자)
+[  7.6s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectDetail)
          │           ↳ 최초 포팅 · 프롬프트 2,146자
-[  4.4s] │  PASS     PLA089.fPLA089QrySelectDetail 응답 수신 (1,061자)
-[  4.4s] │  TOOL     LLM Gateway(PLA096.fAuthCheck)
+[  8.5s] │  PASS     PLA093.pPLA09303 응답 수신 (767자)
+[  8.5s] │  TOOL     LLM Gateway(PLA096.pPLA09601)
+         │           ↳ 최초 포팅 · 프롬프트 3,072자
+[  9.1s] │  PASS     PLA093.pPLA09301 응답 수신 (1,345자)
+[  9.1s] │  TOOL     LLM Gateway(PLA096.pPLA09602)
+         │           ↳ 최초 포팅 · 프롬프트 2,833자
+[  9.3s] │  PASS     PLA089.fAuthCheck 응답 수신 (1,619자)
+[  9.3s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
+         │           ↳ 최초 포팅 · 프롬프트 2,637자
+[  9.6s] │  PASS     PLA093.pPLA09302 응답 수신 (1,151자)
+[  9.6s] │  TOOL     LLM Gateway(PLA096.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,799자
-[  4.5s] │  PASS     PLA093.fPLA093QrySelectMainList 응답 수신 (1,266자)
-[  4.5s] │  TOOL     LLM Gateway(PLA096.fPLA096QrySelectMainList)
-         │           ↳ 최초 포팅 · 프롬프트 2,172자
-[  4.9s] │  PASS     PLA089.fPLA089QrySelectMainList 응답 수신 (1,245자)
-[  4.9s] │  TOOL     LLM Gateway(PLA096.fPLA096QrySelectDetail)
-         │           ↳ 최초 포팅 · 프롬프트 1,969자
-[  5.1s] │  PASS     PLA089.fAuthCheck 응답 수신 (1,652자)
-[  5.1s] │  TOOL     LLM Gateway(PLA100.fAuthCheck)
+[ 10.8s] │  PASS     PLA093.fAuthCheck 응답 수신 (1,374자)
+[ 10.8s] │  TOOL     LLM Gateway(PLA100.pPLA10001)
+         │           ↳ 최초 포팅 · 프롬프트 3,075자
+[ 11.4s] │  PASS     PLA093.fPLA093QrySelectDetail 응답 수신 (1,169자)
+[ 11.4s] │  TOOL     LLM Gateway(PLA100.pPLA10002)
+         │           ↳ 최초 포팅 · 프롬프트 2,833자
+[ 12.3s] │  PASS     PLA096.pPLA09601 응답 수신 (1,350자)
+[ 12.3s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
+         │           ↳ 최초 포팅 · 프롬프트 2,637자
+[ 12.3s] │  PASS     PLA093.pPLA09304 응답 수신 (741자)
+[ 12.3s] │  TOOL     LLM Gateway(PLA100.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,799자
-[  5.2s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,246자)
-[  5.2s] │  TOOL     LLM Gateway(PLA100.fPLA100QrySelectMainList)
-         │           ↳ 최초 포팅 · 프롬프트 2,172자
-[  5.2s] │  PASS     PLA087.fAuthCheck 응답 수신 (1,354자)
-[  5.2s] │  TOOL     LLM Gateway(PLA100.fPLA100QrySelectDetail)
-         │           ↳ 최초 포팅 · 프롬프트 1,969자
-[  6.4s] │  PASS     PLA093.fAuthCheck 응답 수신 (2,310자)
-[  7.9s] │  PASS     PLA096.fPLA096QrySelectDetail 응답 수신 (895자)
-[  8.0s] │  PASS     PLA093.fPLA093QrySelectDetail 응답 수신 (937자)
-[  8.3s] │  PASS     PLA100.fPLA100QrySelectMainList 응답 수신 (1,284자)
-[  8.7s] │  PASS     PLA096.fAuthCheck 응답 수신 (1,580자)
-[  9.9s] │  PASS     PLA096.fPLA096QrySelectMainList 응답 수신 (1,254자)
-[ 10.2s] │  PASS     PLA100.fAuthCheck 응답 수신 (1,928자)
-[ 13.0s] │  PASS     PLA100.fPLA100QrySelectDetail 응답 수신 (893자)
-[ 13.0s] │  PASS     결합(fan-in) 완료 — 15건을 Service에 반영
-         │           ↳ PLA087.fAuthCheck, PLA087.fPLA087QrySelectMainList, PLA087.fPLA087QrySelectDetail, PLA089.fAuthCheck, PLA089.fPLA089QrySelectMainList, PLA089.fPLA089QrySelectDetail, PLA093.fAuthCheck, PLA093.fPLA093QrySelectMainList, PLA093.fPLA093QrySelectDetail, PLA096.fAuthCheck, PLA096.fPLA096QrySelectMainList, PLA096.fPLA096QrySelectDetail, PLA100.fAuthCheck, PLA100.fPLA100QrySelectMainList, PLA100.fPLA100QrySelectDetail
+[ 12.4s] │  PASS     PLA096.pPLA09602 응답 수신 (1,061자)
+[ 12.7s] │  PASS     PLA096.pPLA09603 응답 수신 (715자)
+[ 13.6s] │  PASS     PLA089.pPLA08903 응답 수신 (774자)
+[ 14.1s] │  PASS     PLA096.fAuthCheck 응답 수신 (1,393자)
+[ 14.5s] │  PASS     PLA100.pPLA10001 응답 수신 (1,386자)
+[ 14.8s] │  PASS     PLA100.pPLA10003 응답 수신 (716자)
+[ 17.9s] │  PASS     PLA100.fAuthCheck 응답 수신 (1,693자)
+[ 22.5s] │  PASS     PLA100.pPLA10002 응답 수신 (1,110자)
+[ 22.5s] │  PASS     결합(fan-in) 완료 — 25건을 Service/Api에 반영
+         │           ↳ PLA087.pPLA08701, PLA087.pPLA08702, PLA087.pPLA08703, PLA087.pPLA08704, PLA087.fAuthCheck, PLA087.fPLA087QrySelectMainList, PLA089.pPLA08901, PLA089.pPLA08902, PLA089.pPLA08903, PLA089.pPLA08904, PLA089.fAuthCheck, PLA093.pPLA09301, PLA093.pPLA09302, PLA093.pPLA09303, PLA093.pPLA09304, PLA093.fAuthCheck, PLA093.fPLA093QrySelectDetail, PLA096.pPLA09601, PLA096.pPLA09602, PLA096.pPLA09603, PLA096.fAuthCheck, PLA100.pPLA10001, PLA100.pPLA10002, PLA100.pPLA10003, PLA100.fAuthCheck
         └─
-[ 13.0s] ┌─ STAGE 4/7  VALIDATE  정적 검증 — 변환기와 분리된 검증기
-[ 13.0s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:82
-         │           ↳ 82행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
-[ 13.0s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:80
+[ 22.5s] ┌─ STAGE 4/7  VALIDATE  정적 검증 — 변환기와 분리된 검증기
+[ 22.5s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08703:93
+         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08704:113
+         │           ↳ 113행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:88
+         │           ↳ 88행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA089 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08903:100
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA089 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08904:120
+         │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA093 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09303:100
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA093 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09304:120
+         │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:80
          │           ↳ 유효한 XML이 아닙니다: mismatched tag: line 80, column 2
-[ 13.0s] │  BLOCK    검증 결과 — BLOCKER 2건 · WARNING 0건
-[ 13.0s] └─ 정적 검증 완료 — 화면 5건
-[ 13.0s] ┌─ STAGE 5/7  REFLECT  자기 수정 게이트 — 라운드 0/2 사용
-[ 13.0s] │  REFLECT  수리 대상 1건 확정 → 라운드 1 진입
+[ 22.5s] │  BLOCK    PLA096 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09603:93
+         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    PLA100 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA10003:100
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  BLOCK    검증 결과 — BLOCKER 10건 · WARNING 0건
+[ 22.5s] └─ 정적 검증 완료 — 화면 5건
+[ 22.5s] ┌─ STAGE 5/7  REFLECT  자기 수정 게이트 — 라운드 0/2 사용
+[ 22.5s] │  REFLECT  수리 대상 9건 확정 → 라운드 1 진입
          │           ↳ 검증 실패 메시지를 프롬프트에 피드백해 해당 메서드만 재생성한다 (MatchFixAgent/ACToR 패턴: 검증·수리를 변환기와 분리)
-[ 13.0s] │  REPAIR   PLA087.fPLA087QrySelectMainList 재생성 요청
-         │           ↳ 82행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
-[ 13.0s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
-         │           ↳ 수리 재생성 · 프롬프트 2,165자 · 오류 피드백 주입: 82행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
-[ 16.3s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,178자)
-[ 16.3s] │  PASS     결합(fan-in) 완료 — 1건을 Service에 반영
-         │           ↳ PLA087.fPLA087QrySelectMainList
+[ 22.5s] │  REPAIR   PLA087.pPLA08703 재생성 요청
+         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA087.pPLA08704 재생성 요청
+         │           ↳ 113행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA087.fPLA087QrySelectMainList 재생성 요청
+         │           ↳ 88행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA089.pPLA08903 재생성 요청
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA089.pPLA08904 재생성 요청
+         │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA093.pPLA09303 재생성 요청
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA093.pPLA09304 재생성 요청
+         │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA096.pPLA09603 재생성 요청
+         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  REPAIR   PLA100.pPLA10003 재생성 요청
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[ 22.5s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,781자
+[ 22.5s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,838자
+[ 22.5s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,662자
+[ 22.5s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,719자
+[ 22.5s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 2,470자
+[ 22.5s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,834자
+[ 22.5s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 2,527자
+[ 22.5s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,891자
+[ 24.7s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,709자
+[ 24.8s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,766자
+[ 24.9s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,827자
+[ 25.0s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,884자
+[ 25.4s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,666자
+[ 25.4s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,723자
+[ 26.7s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,623자
+[ 27.4s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,680자
+[ 27.4s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,625자
+[ 27.6s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,682자
+[ 30.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  DECIDE   PLA087.pPLA08703 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  DECIDE   PLA087.pPLA08704 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  DECIDE   PLA087.fPLA087QrySelectMainList 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.4s] │  DECIDE   PLA089.pPLA08903 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  DECIDE   PLA089.pPLA08904 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.5s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  DECIDE   PLA093.pPLA09303 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.5s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  DECIDE   PLA093.pPLA09304 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.5s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  DECIDE   PLA096.pPLA09603 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+[ 30.5s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[ 30.5s] │  DECIDE   PLA100.pPLA10003 수리 후보 2개 → [최소수정] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
         └─
-[ 16.3s] ┌─ STAGE 4/7  VALIDATE  정적 검증 (수리 1라운드 후 재검증) — 변환기와 분리된 검증기
-[ 16.3s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:80
+[ 30.5s] ┌─ STAGE 4/7  VALIDATE  정적 검증 (수리 1라운드 후 재검증) — 변환기와 분리된 검증기
+[ 30.5s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:80
          │           ↳ 유효한 XML이 아닙니다: mismatched tag: line 80, column 2
-[ 16.3s] │  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건
-[ 16.3s] └─ 정적 검증 완료 — 화면 5건
-[ 16.3s] ┌─ STAGE 5/7  REFLECT  자기 수정 게이트 — 라운드 1/2 사용
-[ 16.3s] │  REFLECT  수리 불필요 → 다음 단계로 진행
+[ 30.5s] │  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건
+[ 30.5s] └─ 정적 검증 완료 — 화면 5건
+[ 30.5s] ┌─ STAGE 5/7  REFLECT  자기 수정 게이트 — 라운드 1/2 사용
+[ 30.5s] │  REFLECT  수리 불필요 → 다음 단계로 진행
          │           ↳ LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 (규칙 기반 생성물의 BLOCKER는 대상에서 제외 — LLM이 고칠 문제가 아님)
-[ 16.3s] └─ 수리 0라운드
-[ 16.3s] ┌─ STAGE 6/7  TOOL  품질·취약점 스캔 — 검증기와 분리된 스캐너
-[ 16.4s] └─ 품질 스캔 완료 — 화면 5건, 지적 6건
-[ 16.4s] ┌─ STAGE 7/7  DECIDE  AI 추천 건너뜀 (opt-in 미선택)
-[ 16.4s] └─ 파이프라인 완료 — 사람 승인 대기
+[ 30.5s] └─ 수리 0라운드
+[ 30.5s] ┌─ STAGE 6/7  TOOL  품질·취약점 스캔 — 검증기와 분리된 스캐너
+[ 30.6s] └─ 품질 스캔 완료 — 화면 5건, 지적 4건
+[ 30.6s] ┌─ STAGE 7/7  DECIDE  AI 추천 건너뜀 (opt-in 미선택)
+[ 30.6s] └─ 파이프라인 완료 — 사람 승인 대기
 
 ==============================================================================
   실행 요약
 ==============================================================================
   처리 화면       5건
   생성 파일       25종
-  LLM 포팅 호출   15건 (규칙 기반으로 회피 13건, 결정론 처리 비중 46%)
+  LLM 포팅 호출   25건 (규칙 기반으로 회피 21건, 결정론 처리 비중 45%)
   자기 수정 라운드   1회
   잔여 BLOCKER  1건
   반영 여부       미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨
 ==============================================================================
 
+[ 30.6s]    OBSERVE  생성 스냅샷 5화면 기록 — tracking/generated-snapshots/
+                     ↳ 사람 수정 라인 비율의 기준선(pilot/은 건드리지 않음)

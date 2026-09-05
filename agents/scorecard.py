@@ -211,6 +211,12 @@ def functional_equivalence(equiv: dict | None) -> dict:
         "api_cases": api.get("cases"),
         "api_matched": api.get("matched"),
         "api_screens": api.get("screens"),
+        # 엄격 일치와 페이로드 일치를 같이 들고 간다. 점수는 엄격 일치로 매긴다(그게 진짜 동등성
+        # 이다) - 다만 남은 차이가 "변환 실패"인지 "아직 규약이 없어서 비워둔 자리"인지는 보고서에
+        # 반드시 구분해 적어야 읽는 사람이 오해하지 않는다.
+        "api_payload_match_rate": api.get("payload_match_rate"),
+        "api_payload_matched": api.get("payload_matched"),
+        "api_message_matched": api.get("message_matched"),
     }
     return out
 
@@ -331,6 +337,9 @@ def build_scorecard(state: dict, bench: dict | None = None,
         "not_covered": [
             "Api~클라이언트 구간(실제 HTTP 왕복·JSON 직렬화) — Api 계층은 메서드 호출로 "
             "비교했지만 서블릿/Jackson을 거치는 진짜 왕복은 아직 검증하지 않았다",
+            "결과 메시지 코드(W0024/I0016 등)의 TO-BE 응답 규약 — 확정 전이라 어떤 키로도 "
+            "싣지 않았다(docs/09 열린 질문 2번). Api 계층 엄격 일치율이 낮은 유일한 원인이며, "
+            "규약이 정해지기 전에는 우리가 코드로 해소할 수 없다",
             "L4 사람 수정 라인 비율 — 값은 나왔으나 **AI 리뷰어 1차 리뷰 기준**이다. "
             "사람 개발자가 업무 로직까지 검토하면 더 높아질 수 있으므로 하한값으로 읽어야 한다",
         ],
@@ -400,6 +409,13 @@ def render(sc: dict) -> str:
             out.append(f"                Api 계층(HTTP/직렬화) "
                        f"{e['api_matched']}/{e['api_cases']} "
                        f"({e['api_match_rate']:.0%}) · 화면 {e['api_screens']}개")
+            if e.get("api_payload_match_rate") is not None:
+                out.append(f"                  └ 데이터 페이로드 "
+                           f"{e['api_payload_matched']}/{e['api_cases']} "
+                           f"({e['api_payload_match_rate']:.0%}) · 결과 메시지 코드 "
+                           f"{e['api_message_matched']}/{e['api_cases']}")
+                out.append("                    (메시지 코드를 담을 TO-BE 응답 규약이 "
+                           "미확정이라 생성기가 일부러 비워둔 자리 — 사람 결정 대기)")
         else:
             out.append("                Api 계층(HTTP/직렬화) 미측정 — "
                        "P 원본이 컴파일되지 않아 비교 대상이 없음")

@@ -22,6 +22,9 @@
     --repair-rounds N    자기 수정 라운드 상한(기본 2)
     --no-color           ANSI 색 끄기(녹화 도구가 색을 못 다룰 때)
     --dry-run            LLM을 호출하지 않는다(계획·규칙 기반 변환·검증 경로만 확인)
+    --snapshot           생성 결과를 tracking/generated-snapshots/에 기록한다
+                         (사람 수정 라인 비율의 기준선 - 이게 없으면 나중에 무엇이 사람 손을
+                          거쳤는지 알 방법이 없다. `pilot/`은 여전히 건드리지 않는다.)
 """
 
 from __future__ import annotations
@@ -45,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repair-rounds", type=int, default=2)
     ap.add_argument("--no-color", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="LLM 호출 없이 규칙 기반 경로만")
+    ap.add_argument("--snapshot", action="store_true",
+                    help="생성 결과를 tracking/generated-snapshots/에 기록(사람 수정 측정 기준선)")
     args = ap.parse_args(argv)
 
     if args.no_color:
@@ -105,6 +110,18 @@ def main(argv: list[str] | None = None) -> int:
         max_repair_retries=args.repair_rounds,
         all_paths=all_paths,
     )
+
+    if args.snapshot:
+        # 생성 시점 스냅샷은 `pilot/`이 아니라 tracking/에 남긴다 - 승인 게이트를 건드리지 않으면서
+        # "AI가 만든 원본"을 고정해야, 나중에 사람이 고친 결과와 라인 단위로 비교할 수 있다.
+        from agents.human_edit import snapshot_screen
+
+        saved = 0
+        for screen_id, screen_files in state.get("files", {}).items():
+            snapshot_screen(screen_id, screen_files)
+            saved += 1
+        log.observe(f"생성 스냅샷 {saved}화면 기록 — tracking/generated-snapshots/",
+                    "사람 수정 라인 비율의 기준선(pilot/은 건드리지 않음)")
 
     n_block = sum(
         len([i for r in results for i in r.issues if i.severity == "BLOCKER"])

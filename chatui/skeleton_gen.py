@@ -120,6 +120,57 @@ def find_delegate_call(p_method_body: str, f_method_names: list[str]) -> str | N
     return None
 
 
+@dataclass
+class POrchestration:
+    """P 메서드가 "순수 위임"이 아니라는 증거. 값은 전부 원본에서 읽은 것만 담는다."""
+    f_calls: list[str]
+    recordsets: list[str]
+    message_codes: list[str]
+    has_auth_gate: bool
+    has_control_flow: bool
+
+    def reasons(self) -> list[str]:
+        out = []
+        if len(self.f_calls) > 1:
+            out.append(f"F 메서드를 {len(self.f_calls)}개 호출({', '.join(self.f_calls)})")
+        if self.has_auth_gate:
+            out.append("권한 게이트(AUTH_YN 확인 후 조기 반환)")
+        if self.message_codes:
+            out.append(f"결과 메시지 코드 {', '.join(sorted(set(self.message_codes)))}")
+        if self.recordsets:
+            out.append(f"레코드셋 선별 반환({', '.join(sorted(set(self.recordsets)))})")
+        if self.has_control_flow and not (self.has_auth_gate or self.message_codes):
+            out.append("분기 로직")
+        return out
+
+
+_P_CONTROL_FLOW_RE = re.compile(r"\b(if|else|for|while|switch)\s*[({]")
+_P_MESSAGE_RE = re.compile(r"setOkResultMessage\s*\(\s*\"([^\"]+)\"")
+_P_RECORDSET_RE = re.compile(r"(?:getRecordSet|putRecordset)\s*\(\s*\"([^\"]+)\"")
+
+
+def detect_p_orchestration(p_method_body: str, f_method_names: list[str]) -> POrchestration | None:
+    """P 메서드가 단순 위임을 넘어서는 일을 하면 그 내용을 돌려준다(아니면 None).
+
+    `docs/02-architecture.md`는 "P는 순수 위임"이라고 적어뒀지만 그건 **PLA047 한 건**을 보고
+    쓴 문장이다. PLA081-110 코퍼스를 전수 확인한 결과 30/30 화면의 P가 권한 게이트를 갖고 있고
+    `setOkResultMessage` 호출이 195건 있다 - Api를 `service.fXxx()` 위임 한 줄로 생성하면 그
+    로직이 통째로 사라진다. 실제로 L3 하네스가 이걸 Api 계층 0/9로 잡아냈다.
+
+    탐지만 하고 변환은 하지 않는다 - 분기가 섞여 있어 결정론적 규칙으로는 못 옮기고,
+    CLAUDE.md의 결정론/LLM 경계상 이런 건 LLM 포팅 대상이다.
+    """
+    calls = find_all_calls(p_method_body, f_method_names)
+    codes = _P_MESSAGE_RE.findall(p_method_body)
+    recordsets = _P_RECORDSET_RE.findall(p_method_body)
+    control = bool(_P_CONTROL_FLOW_RE.search(p_method_body))
+    auth = bool(re.search(r"\bAUTH_YN\b", p_method_body))
+    if len(calls) <= 1 and not codes and not recordsets and not control:
+        return None
+    return POrchestration(f_calls=calls, recordsets=recordsets, message_codes=codes,
+                          has_auth_gate=auth, has_control_flow=control)
+
+
 def find_all_calls(method_body: str, candidate_names: list[str]) -> list[str]:
     """메서드 본문에서 실제로 호출되는 후보 메서드 이름을 전부(등장 순서대로) 찾는다.
 
@@ -502,15 +553,23 @@ def generate_skeletons(
             # import가 반드시 있어야 컴파일된다. Store import와 정확히 같은 누락이었고, Api
             # 계층까지 실행 비교를 확장하면서 javac가 잡아냈다.
             f"import {base_pkg}.service.{prefix}Service;",
+            # P 오케스트레이션을 포팅하면 원본의 예외 처리(BizRuntimeException 재던지기)와
+            # 응답 Map 조립(HashMap/List)이 그대로 따라온다 - Service에서 똑같은 import 누락으로
+            # 컴파일이 깨졌던 것과 같은 자리다. 포팅 대상이 없어도 넣어두면 미사용 import 하나뿐이라
+            # 부작용이 없고, 있으면 반드시 필요하다.
+            "import com.skhynix.gscm.common.exception.BizRuntimeException;",
             "",
         ]
         if simple_delegations:
             lines.append(f"import {base_pkg}.dto.*;")
-            lines.append("import java.util.List;")
         lines += [
+            "import java.util.HashMap;",
+            "import java.util.List;",
             "import java.util.Map;",
             "",
-            f"// TODO: 원본 P BizUnit의 화면 검증 로직 유무를 다시 한번 확인할 것(PLA047은 순수 위임이었음, 다른 화면은 표본 확대 전)",
+            "// 주의: P가 순수 위임이라는 가정은 PLA047 1건 기준이었고, PLA081-110 코퍼스"
+            " 30/30 화면에서 거짓으로 확인됐다(권한 게이트·결과 메시지·레코드셋 선별)."
+            "\n// 그런 메서드는 위임 한 줄로 생성하지 않고 PORT 스텁으로 남긴다.",
             f"@RestController",
             f'@RequestMapping("/api/{package_p1}/{package_p2}")',
             f"public class {prefix}Api {{",
@@ -530,7 +589,32 @@ def generate_skeletons(
             else:
                 stripped = re.sub(rf"^[a-z]{re.escape(screen_id)}", "", method, flags=re.IGNORECASE)
                 slug = (stripped or method).lower()
-            delegate = find_delegate_call(p_bodies.get(method, ""), f_methods_for_delegation)
+            p_body = p_bodies.get(method, "")
+            # P가 위임만 하는지, 아니면 업무 흐름(권한 게이트·결과 메시지·레코드셋 선별)을
+            # 들고 있는지 먼저 판정한다 - 후자를 위임 한 줄로 생성하면 그 로직이 조용히 사라진다.
+            orchestration = detect_p_orchestration(p_body, f_methods_for_delegation)
+            if orchestration:
+                result.issues.append(ConversionIssue(
+                    issue_type="P_ORCHESTRATION_PORT_REQUIRED", severity="WARNING",
+                    message=(
+                        f"{method}는 순수 위임이 아닙니다({'; '.join(orchestration.reasons())}) - "
+                        f"Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다."
+                    ),
+                    method_name=method,
+                ))
+                if orchestration.message_codes:
+                    result.issues.append(ConversionIssue(
+                        issue_type="RESPONSE_MESSAGE_CONVENTION_UNDEFINED", severity="BLOCKER",
+                        message=(
+                            f"{method}가 반환하는 결과 메시지 코드"
+                            f"({', '.join(sorted(set(orchestration.message_codes)))})를 담을 TO-BE "
+                            f"응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md "
+                            f"열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 "
+                            f"현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다."
+                        ),
+                        method_name=method,
+                    ))
+            delegate = find_delegate_call(p_body, f_methods_for_delegation)
             if delegate is None and f_methods_for_delegation:
                 result.issues.append(ConversionIssue(
                     issue_type="DELEGATE_CALL_NOT_FOUND",
@@ -542,16 +626,19 @@ def generate_skeletons(
                     method_name=method,
                 ))
             result.methods.append({
-                "layer": "P", "method_name": method, "method_name_tobe": method,
-                "body_hash": method_body_hash(p_bodies.get(method, "")),
-                "body_hash_norm": method_body_hash_norm(p_bodies.get(method, ""), screen_id),
-                "conversion_method": "RULE_BASED_SKELETON", "mapper_stmt_id": None,
+                "layer": "P", "method_name": method,
+                "method_name_tobe": None if orchestration else method,
+                "body_hash": method_body_hash(p_body),
+                "body_hash_norm": method_body_hash_norm(p_body, screen_id),
+                "conversion_method": "LLM_PENDING" if orchestration else "RULE_BASED_SKELETON",
+                "mapper_stmt_id": None,
                 "nctrid": nctrid or None,
             })
-            if delegate:
+            for callee in (orchestration.f_calls if orchestration
+                           else ([delegate] if delegate else [])):
                 result.method_calls.append({
                     "caller_layer": "P", "caller_method": method,
-                    "callee_layer": "F", "callee_method": delegate,
+                    "callee_layer": "F", "callee_method": callee,
                 })
             call_target = delegate or method
             # delegate가 단순 위임 F 메서드면 Service 쪽 메서드명이 이미 D 메서드 기준으로 바뀌었으니
@@ -565,14 +652,31 @@ def generate_skeletons(
                 # (예전 DTO 타입은 생성되지 않는 클래스라 컴파일이 안 됐다 - Service 쪽 주석 참고).
                 param_type, return_type, arg_name = (
                     "Map<String, Object>", "Map<String, Object>", "request")
+
             lines += [
                 f"    // nctRid: {nctrid or '미확인 - .bizunit에서 못 찾음'}",
                 f'    @PostMapping("/{slug}")',
-                f"    public ResponseEntity<{return_type}> {method}(@RequestBody {param_type} {arg_name}) {{",
-                f"        return ResponseEntity.ok(service.{call_target}({arg_name}));",
-                f"    }}",
-                "",
             ]
+            if orchestration:
+                # 애노테이션은 마커 **밖**에 둔다 - splice는 PORT_START~PORT_END만 교체하므로
+                # LLM이 라우팅 애노테이션을 잃어버릴 여지를 아예 없앤다.
+                lines += [
+                    f"    // PORT_START:{method}",
+                    f"    // TODO(LLM 포팅 필요): 원본 P{screen_id}.{method}의 오케스트레이션을 그대로 옮길 것.",
+                    f"    //   " + " / ".join(orchestration.reasons()),
+                    f"    public ResponseEntity<{return_type}> {method}(@RequestBody {param_type} {arg_name}) {{",
+                    f"        throw new UnsupportedOperationException(\"TODO: {method} 포팅 필요\");",
+                    f"    }}",
+                    f"    // PORT_END:{method}",
+                    "",
+                ]
+            else:
+                lines += [
+                    f"    public ResponseEntity<{return_type}> {method}(@RequestBody {param_type} {arg_name}) {{",
+                    f"        return ResponseEntity.ok(service.{call_target}({arg_name}));",
+                    f"    }}",
+                    "",
+                ]
         lines.append("}")
         result.files[f"{prefix}Api.java"] = "\n".join(lines)
     else:

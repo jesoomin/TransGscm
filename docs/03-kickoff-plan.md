@@ -9,7 +9,7 @@
 - [ ] `.xjs` 스크립트의 `transaction()` 호출부 → nctRid 문자열 추출 규칙 확인 (화면 자체는 2단계 몫이지만 화면↔nctRid 대응은 1단계에 필요)
 - [ ] `.BIZUNIT` XML 샘플 1세트 확보 및 스키마(필드/타입 정의 포맷) 파악 — 지금까지 본 3개(PLA047)는 전부 `<fields/>` 비어있음, 실제로 항상 비는지 다른 화면으로 확인 필요
 - [x] PPLA047.JAVA / FPLA047.JAVA / DPLA047.JAVA / DPLA047.XSQL 실제 소스 1세트 확보 — `/legacy`에 확보됨. **소스 자체에 무결성 문제 있음** (아래 참고), 재확보 또는 원본 대조 필요
-- [x] P BizUnit이 순수 진입점인지, 화면별 검증 로직이 섞여 있는지 코드로 확인 — PPLA047.java 확인 결과 **순수 위임(delegation)만 수행**, 검증 로직 없음. `PLA047` 1건 기준, 나머지 화면은 표본 확대 필요
+- [x] P BizUnit이 순수 진입점인지, 화면별 검증 로직이 섞여 있는지 코드로 확인 — PPLA047.java는 **순수 위임(delegation)만 수행**했다. **표본 확대 결과 정정(2026-09-05): 일반적으로는 순수 위임이 아니다.** `PLA081-110_migration_sample` 30화면 전수 확인 결과 30/30이 권한 게이트(`AUTH_YN` 확인 후 `setOkResultMessage("W0024")` + 조기 반환)를 갖고 있고, `setOkResultMessage` 195건·`getRecordSet` 165건으로 결과 메시지와 레코드셋 선별까지 P가 담당한다. 이 사실을 모른 채 Api를 `ResponseEntity.ok(service.fXxx(request))` 한 줄로 생성하고 있었고, 정적 검증은 전부 통과하는데 실행 결과가 다른 상태였다 — L3 하네스가 Api 계층 0/9로 처음 잡아냈다
 - [ ] 소스코드 외부 LLM 전송 관련 사내 보안 정책 확인 (폐쇄망/사내 LLM 게이트웨이 필요 여부)
 - [ ] 1,416개 전체 화면 목록·메뉴구조 전체본 확보 — 현재 `docs/메뉴구조.xlsx`(xfdl 포함, 2단계 참고용)와 `docs/07-tobe-structure.xlsx`(PLA047 AS-IS/TO-BE 1건)만 있음, 전체본 아님
 - [x] AS-IS 원본 소스를 `/legacy` 폴더에 정리 — PLA047 세트(P/F/D BizUnit + XSQL) 확보됨
