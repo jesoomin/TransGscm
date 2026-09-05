@@ -556,8 +556,10 @@ def generate_skeletons(
             if delegate and delegate in simple_delegations:
                 renamed, d_method = simple_delegations[delegate]
                 call_target = renamed
-                dto_name = dto_name_for_method(d_method)
-                param_type, return_type, arg_name = dto_name, f"List<{dto_name}>", "dto"
+                # Service 위임 메서드가 Map<String,Object> 시그니처로 통일됐으므로 Api도 맞춘다
+                # (예전 DTO 타입은 생성되지 않는 클래스라 컴파일이 안 됐다 - Service 쪽 주석 참고).
+                param_type, return_type, arg_name = (
+                    "Map<String, Object>", "Map<String, Object>", "request")
             lines += [
                 f"    // nctRid: {nctrid or '미확인 - .bizunit에서 못 찾음'}",
                 f'    @PostMapping("/{slug}")',
@@ -594,6 +596,16 @@ def generate_skeletons(
             "import org.springframework.stereotype.Service;",
             "import org.springframework.beans.factory.annotation.Autowired;",
             "",
+            # Service는 `store` 필드로 Store를 참조하는데 둘이 서로 다른 패키지(service/store)라
+            # import가 반드시 있어야 컴파일된다. 이게 빠져 있어서 생성된 Service가 실제로는
+            # 컴파일되지 않는 상태였다 - 계층 간 참조 검증기는 "그 이름의 메서드가 Store에 있나"만
+            # 텍스트로 확인해서 import 누락을 못 봤고, 실행 하네스(agents/equivalence_test.py)를
+            # 만들면서 javac가 처음 잡아냈다.
+            f"import {base_pkg}.store.{prefix}Store;",
+            # LLM이 포팅한 본문이 원본의 예외 처리를 그대로 옮기면서 BizRuntimeException을
+            # 그대로 쓴다(원본 로직 보존 원칙상 자연스러운 결과다). import가 없으면 컴파일이
+            # 안 되는데, 실행 하네스를 붙이기 전까지는 아무도 컴파일해보지 않아 드러나지 않았다.
+            "import com.skhynix.gscm.common.exception.BizRuntimeException;",
         ]
         if simple_delegations:
             lines.append(f"import {base_pkg}.dto.*;")
@@ -616,13 +628,18 @@ def generate_skeletons(
             body = f_bodies_for_delegation.get(method, "")
             if delegation:
                 renamed, d_method = delegation
-                dto_name = dto_name_for_method(d_method)
                 lines += [
                     f"    // 원본 {method}가 {d_method} 하나만 호출하고 recordset을 그대로 돌려주는 단순",
                     f"    // 위임이라(계산/분기 없음) LLM 포팅 없이 규칙 기반으로 바로 옮겼다 - 원본과",
                     f"    // 다르게 동작한다고 판단되면 사람이 확인할 것.",
-                    f"    public List<{dto_name}> {renamed}({dto_name} dto) {{",
-                    f"        return store.{d_method}(dto);",
+                    # 시그니처를 Map으로 통일한다(2026-09-05). 예전에는 dto_name_for_method()로
+                    # DTO 타입을 지어 썼는데, 그 이름(`CommoncodeqryDto` 등)은 **DTO 생성기가
+                    # 만들지 않는 클래스**라 생성된 Service가 컴파일되지 않았다 - 실행 하네스를
+                    # 붙이고 javac를 돌리자마자 드러났다. 배관 경로(rule_port)·LLM 포팅 경로가
+                    # 이미 Map<String,Object>를 쓰므로 여기에 맞추면 세 경로의 시그니처가 같아져
+                    # 서로 바꿔 껴도 계층 간 참조가 깨지지 않는다.
+                    f"    public Map<String, Object> {renamed}(Map<String, Object> request) {{",
+                    f"        return store.{d_method}(request);",
                     f"    }}",
                     "",
                 ]

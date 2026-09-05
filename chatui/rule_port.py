@@ -126,8 +126,13 @@ def render_passthrough_method(method: str, spec: PassthroughSpec) -> list[str]:
     for key, val in spec.literal_params:
         out.append(f"        param.put(\"{key}\", \"{val}\");  // 원본의 고정값")
     out += [
+        "        Map<String, Object> result = store." + spec.d_method + "(param);",
         "        Map<String, Object> response = new HashMap<>();",
-        f"        response.put(\"{spec.recordset}\", store.{spec.d_method}(param));",
+        # 원본은 `du.dXxx(...).getRecordSet("NAME")`으로 **레코드셋을 꺼내서** 담는다. 여기서
+        # Store 반환값을 통째로 담으면 한 겹 더 감싸져 원본과 다른 모양이 된다 - 실행 하네스
+        # (agents/equivalence_test.py)가 AS-IS와 대조하면서 잡아낸 실제 불일치다.
+        f"        response.put(\"{spec.recordset}\", result == null ? null "
+        f": result.get(\"{spec.recordset}\"));",
         "        return response;",
         "    }",
         "",

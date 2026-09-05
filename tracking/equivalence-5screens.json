@@ -1,0 +1,273 @@
+{
+  "screens_total": 5,
+  "screens_executed": 3,
+  "cases": 27,
+  "matched": 27,
+  "match_rate": 1.0,
+  "per_screen": [
+    {
+      "screen_id": "PLA087",
+      "status": "COMPILE_FAIL",
+      "reason": [
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA087-0w30k1ok\\src\\gscm\\r\\pm\\prdb\\biz\\FPLA087.java:112: error: cannot find symbol",
+        "\t\t\tIRecordSet rs = du.dPLA08710(requestData, onlineCtx).getRecordSet(\"MAIN_LIST\");",
+        "\t\t\t                  ^",
+        "  symbol:   method dPLA08710(IDataSet,IOnlineContext)",
+        "  location: variable du of type DPLA087",
+        "1 error"
+      ],
+      "methods": [
+        "fAuthCheck",
+        "fPLA087QrySelectDetail",
+        "fPLA087QrySelectMainList"
+      ]
+    },
+    {
+      "screen_id": "PLA089",
+      "status": "OK",
+      "methods": [
+        "fAuthCheck",
+        "fPLA089QrySelectDetail",
+        "fPLA089QrySelectMainList"
+      ],
+      "cases": 9,
+      "matched": 9,
+      "match_rate": 1.0,
+      "results": [
+        {
+          "method": "fAuthCheck",
+          "rows": 0,
+          "asis": "AUTH_YN=N;",
+          "tobe": "AUTH_YN=N;",
+          "match": true
+        },
+        {
+          "method": "fPLA089QrySelectDetail",
+          "rows": 0,
+          "asis": "DETAIL_LIST#0;",
+          "tobe": "DETAIL_LIST#0;",
+          "match": true
+        },
+        {
+          "method": "fPLA089QrySelectMainList",
+          "rows": 0,
+          "asis": "MAIN_LIST#0;",
+          "tobe": "MAIN_LIST#0;",
+          "match": true
+        },
+        {
+          "method": "fAuthCheck",
+          "rows": 1,
+          "asis": "AUTH_YN=Y;",
+          "tobe": "AUTH_YN=Y;",
+          "match": true
+        },
+        {
+          "method": "fPLA089QrySelectDetail",
+          "rows": 1,
+          "asis": "DETAIL_LIST#1;",
+          "tobe": "DETAIL_LIST#1;",
+          "match": true
+        },
+        {
+          "method": "fPLA089QrySelectMainList",
+          "rows": 1,
+          "asis": "MAIN_LIST#1;",
+          "tobe": "MAIN_LIST#1;",
+          "match": true
+        },
+        {
+          "method": "fAuthCheck",
+          "rows": 3,
+          "asis": "AUTH_YN=Y;",
+          "tobe": "AUTH_YN=Y;",
+          "match": true
+        },
+        {
+          "method": "fPLA089QrySelectDetail",
+          "rows": 3,
+          "asis": "DETAIL_LIST#3;",
+          "tobe": "DETAIL_LIST#3;",
+          "match": true
+        },
+        {
+          "method": "fPLA089QrySelectMainList",
+          "rows": 3,
+          "asis": "MAIN_LIST#3;",
+          "tobe": "MAIN_LIST#3;",
+          "match": true
+        }
+      ]
+    },
+    {
+      "screen_id": "PLA093",
+      "status": "COMPILE_FAIL",
+      "reason": [
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA093-zy0_i1vm\\src\\gscm\\r\\pm\\qulb\\biz\\FPLA093.java:130: error: ';' expected",
+        "\t\tIDataSet responseData = new DataSet()",
+        "\t\t                                     ^",
+        "1 error"
+      ],
+      "methods": [
+        "fAuthCheck",
+        "fPLA093QrySelectDetail",
+        "fPLA093QrySelectMainList"
+      ]
+    },
+    {
+      "screen_id": "PLA096",
+      "status": "OK",
+      "methods": [
+        "fAuthCheck",
+        "fPLA096QrySelectDetail",
+        "fPLA096QrySelectMainList"
+      ],
+      "cases": 9,
+      "matched": 9,
+      "match_rate": 1.0,
+      "results": [
+        {
+          "method": "fAuthCheck",
+          "rows": 0,
+          "asis": "AUTH_YN=N;",
+          "tobe": "AUTH_YN=N;",
+          "match": true
+        },
+        {
+          "method": "fPLA096QrySelectDetail",
+          "rows": 0,
+          "asis": "DETAIL_LIST#0;",
+          "tobe": "DETAIL_LIST#0;",
+          "match": true
+        },
+        {
+          "method": "fPLA096QrySelectMainList",
+          "rows": 0,
+          "asis": "MAIN_LIST#0;",
+          "tobe": "MAIN_LIST#0;",
+          "match": true
+        },
+        {
+          "method": "fAuthCheck",
+          "rows": 1,
+          "asis": "AUTH_YN=Y;",
+          "tobe": "AUTH_YN=Y;",
+          "match": true
+        },
+        {
+          "method": "fPLA096QrySelectDetail",
+          "rows": 1,
+          "asis": "DETAIL_LIST#1;",
+          "tobe": "DETAIL_LIST#1;",
+          "match": true
+        },
+        {
+          "method": "fPLA096QrySelectMainList",
+          "rows": 1,
+          "asis": "MAIN_LIST#1;",
+          "tobe": "MAIN_LIST#1;",
+          "match": true
+        },
+        {
+          "method": "fAuthCheck",
+          "rows": 3,
+          "asis": "AUTH_YN=Y;",
+          "tobe": "AUTH_YN=Y;",
+          "match": true
+        },
+        {
+          "method": "fPLA096QrySelectDetail",
+          "rows": 3,
+          "asis": "DETAIL_LIST#3;",
+          "tobe": "DETAIL_LIST#3;",
+          "match": true
+        },
+        {
+          "method": "fPLA096QrySelectMainList",
+          "rows": 3,
+          "asis": "MAIN_LIST#3;",
+          "tobe": "MAIN_LIST#3;",
+          "match": true
+        }
+      ]
+    },
+    {
+      "screen_id": "PLA100",
+      "status": "OK",
+      "methods": [
+        "fAuthCheck",
+        "fPLA100QrySelectDetail",
+        "fPLA100QrySelectMainList"
+      ],
+      "cases": 9,
+      "matched": 9,
+      "match_rate": 1.0,
+      "results": [
+        {
+          "method": "fAuthCheck",
+          "rows": 0,
+          "asis": "AUTH_YN=N;",
+          "tobe": "AUTH_YN=N;",
+          "match": true
+        },
+        {
+          "method": "fPLA100QrySelectDetail",
+          "rows": 0,
+          "asis": "DETAIL_LIST#0;",
+          "tobe": "DETAIL_LIST#0;",
+          "match": true
+        },
+        {
+          "method": "fPLA100QrySelectMainList",
+          "rows": 0,
+          "asis": "MAIN_LIST#0;",
+          "tobe": "MAIN_LIST#0;",
+          "match": true
+        },
+        {
+          "method": "fAuthCheck",
+          "rows": 1,
+          "asis": "AUTH_YN=Y;",
+          "tobe": "AUTH_YN=Y;",
+          "match": true
+        },
+        {
+          "method": "fPLA100QrySelectDetail",
+          "rows": 1,
+          "asis": "DETAIL_LIST#1;",
+          "tobe": "DETAIL_LIST#1;",
+          "match": true
+        },
+        {
+          "method": "fPLA100QrySelectMainList",
+          "rows": 1,
+          "asis": "MAIN_LIST#1;",
+          "tobe": "MAIN_LIST#1;",
+          "match": true
+        },
+        {
+          "method": "fAuthCheck",
+          "rows": 3,
+          "asis": "AUTH_YN=Y;",
+          "tobe": "AUTH_YN=Y;",
+          "match": true
+        },
+        {
+          "method": "fPLA100QrySelectDetail",
+          "rows": 3,
+          "asis": "DETAIL_LIST#3;",
+          "tobe": "DETAIL_LIST#3;",
+          "match": true
+        },
+        {
+          "method": "fPLA100QrySelectMainList",
+          "rows": 3,
+          "asis": "MAIN_LIST#3;",
+          "tobe": "MAIN_LIST#3;",
+          "match": true
+        }
+      ]
+    }
+  ],
+  "scope_note": "D 계층(SQL)을 양쪽 동일한 캔드 데이터로 고정하고 F 계층 로직만 비교했습니다. SQL 정확성은 agents/diff_test.py가, HTTP/직렬화 계층은 아직 아무도 검증하지 않습니다. 캔드 데이터는 합성값이라 실제 운영 데이터 분포를 대표하지 않습니다."
+}
