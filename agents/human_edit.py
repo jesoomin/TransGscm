@@ -30,6 +30,9 @@ from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT_DIR = _PROJECT_ROOT / "tracking" / "generated-snapshots"
+# 리뷰를 거친 산출물을 두는 곳. `pilot/`은 사람이 "승인하고 저장"을 눌러야만 파일이 생기는
+# 곳이라(그 보장을 깨면 안 된다), 승인 전 리뷰 결과는 여기에 따로 둔다.
+REVIEWED_DIR = _PROJECT_ROOT / "tracking" / "reviewed"
 
 
 @dataclass
@@ -153,6 +156,25 @@ def measure_all(current_by_screen: dict[str, dict[str, str]],
             for sid, s in screens.items()
         },
     }
+
+
+def save_reviewed(screen_id: str, files: dict[str, str],
+                  reviewed_dir: Path | None = None) -> Path:
+    """리뷰를 마친 산출물을 기록한다. 측정의 «현재 상태» 쪽 입력이 된다."""
+    base = (reviewed_dir or REVIEWED_DIR) / screen_id
+    base.mkdir(parents=True, exist_ok=True)
+    for fname, content in files.items():
+        (base / fname).write_text(content, encoding="utf-8")
+    return base
+
+
+def load_current_files(screen_id: str) -> dict[str, str]:
+    """측정 대상 «현재» 파일을 찾는다 - 리뷰본이 있으면 그걸, 없으면 `pilot/` 저장분을 쓴다."""
+    base = REVIEWED_DIR / screen_id
+    if base.is_dir():
+        return {p.name: p.read_text(encoding="utf-8", errors="replace")
+                for p in base.iterdir() if p.is_file()}
+    return load_pilot_files(screen_id)
 
 
 def load_pilot_files(screen_id: str, pilot_root: Path | None = None) -> dict[str, str]:

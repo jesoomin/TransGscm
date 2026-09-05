@@ -158,8 +158,8 @@ def developer_experience(state: dict) -> dict:
     review_target = review_lines + len(flagged)
     # B-4 사람 수정 라인 비율 (멘토 §H "가장 중요") - 생성 시점 스냅샷이 있어야 측정된다.
     #     스냅샷이 없으면 0%가 아니라 **미측정**이다. "안 고쳤다"와 "못 쟀다"는 다르다.
-    from agents.human_edit import load_pilot_files, measure_all
-    he = measure_all({sid: load_pilot_files(sid) for sid in files})
+    from agents.human_edit import load_current_files, measure_all
+    he = measure_all({sid: load_current_files(sid) for sid in files})
 
     return {
         "human_edit_ratio": he["human_edit_ratio"],
@@ -274,8 +274,8 @@ def build_scorecard(state: dict, bench: dict | None = None) -> dict:
         "detail": {"conversion": conv, "developer_experience": dx, "detection": det},
         "not_covered": [
             "L3 기능 동등성 — 포팅 코드를 실행할 환경이 없어 미측정",
-            "L4 사람 수정 라인 비율 — **측정 수단은 구현됨**(agents/human_edit.py). "
-            "생성 시점 스냅샷 대비 diff로 산출되며, 사람 리뷰가 시작되면 자동으로 채워진다",
+            "L4 사람 수정 라인 비율 — 값은 나왔으나 **AI 리뷰어 1차 리뷰 기준**이다. "
+            "사람 개발자가 업무 로직까지 검토하면 더 높아질 수 있으므로 하한값으로 읽어야 한다",
         ],
     }
 
@@ -325,6 +325,8 @@ def render(sc: dict) -> str:
     if x.get("human_edit_ratio") is not None:
         out.append(f"  사람 수정     {x['human_edit_ratio']:.1%} "
                    f"(측정 {x['human_edit_measured_screens']}화면 / 미측정 {x['human_edit_unmeasured_screens']}화면)")
+        out.append("                ※ 리뷰 주체를 함께 봐야 한다 — 현재 값은 "
+                   "**AI 리뷰어 1차 리뷰** 기준이며 사람 개발자 리뷰는 더 많이 손댈 수 있다(하한값)")
     else:
         out.append(f"  사람 수정     미측정 — 생성 시점 스냅샷 없음 "
                    f"(대상 {x['human_edit_unmeasured_screens']}화면). 저장 시 스냅샷이 남아야 측정됨")
