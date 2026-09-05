@@ -36,6 +36,14 @@ public class DataSet implements IDataSet {
     @Override
     public IRecordSet getRecordSet(String name) { return recordsets.get(name); }
 
+    private String resultCode;
+
+    @Override
+    public void setOkResultMessage(String code, String[] args) { this.resultCode = code; }
+
+    @Override
+    public String harnessResultCode() { return resultCode; }
+
     /** 하네스가 결과를 비교할 때 쓰는 접근자 - 원본 API에는 없다. */
     public Map<String, IRecordSet> harnessRecordsets() { return recordsets; }
 }

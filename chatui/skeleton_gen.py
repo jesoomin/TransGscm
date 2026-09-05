@@ -498,6 +498,11 @@ def generate_skeletons(
             "import org.springframework.http.ResponseEntity;",
             "import org.springframework.web.bind.annotation.*;",
             "",
+            # Api는 `service` 필드로 Service를 참조하는데 둘이 다른 패키지(Controller/service)라
+            # import가 반드시 있어야 컴파일된다. Store import와 정확히 같은 누락이었고, Api
+            # 계층까지 실행 비교를 확장하면서 javac가 잡아냈다.
+            f"import {base_pkg}.service.{prefix}Service;",
+            "",
         ]
         if simple_delegations:
             lines.append(f"import {base_pkg}.dto.*;")

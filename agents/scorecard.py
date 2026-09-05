@@ -190,7 +190,10 @@ def functional_equivalence(equiv: dict | None) -> dict:
         return {"measured": False}
     total = equiv.get("screens_total") or 0
     executed = equiv.get("screens_executed") or 0
-    return {
+    layers = equiv.get("by_layer") or {}
+    svc = layers.get("SERVICE") or {}
+    api = layers.get("API") or {}
+    out = {
         "measured": True,
         "match_rate": equiv.get("match_rate"),
         "cases": equiv.get("cases"),
@@ -198,7 +201,18 @@ def functional_equivalence(equiv: dict | None) -> dict:
         "coverage": round(executed / total, 4) if total else None,
         "screens_executed": executed,
         "screens_total": total,
+        # 계층을 합치면 "F는 100%인데 Api는 0%"가 평균 뒤로 숨는다. 실제로 그런 상태라서
+        # 두 계층을 각각 배점 항목으로 세운다 - 합계 하나만 보면 결함을 못 본다.
+        "service_match_rate": svc.get("match_rate"),
+        "service_cases": svc.get("cases"),
+        "service_matched": svc.get("matched"),
+        "service_screens": svc.get("screens"),
+        "api_match_rate": api.get("match_rate"),
+        "api_cases": api.get("cases"),
+        "api_matched": api.get("matched"),
+        "api_screens": api.get("screens"),
     }
+    return out
 
 
 def _load_json(path: Path | None) -> dict | None:
@@ -267,7 +281,8 @@ _WEIGHTS = [
     ("C. 탐지 정확성", "원본 결함 재현율", 10, "defect_recall", "detect"),
     ("C. 탐지 정확성", "중복 탐지 F1", 10, "dup_f1_proxy", "detect"),
     # 일치율과 커버리지를 따로 채점한다 - 부분 검증이 전체 검증으로 보이지 않게.
-    ("D. 기능 동등성", "실행 결과 일치율", 15, "match_rate", "equiv"),
+    ("D. 기능 동등성", "F 계층 실행 일치율", 9, "service_match_rate", "equiv"),
+    ("D. 기능 동등성", "Api 계층 실행 일치율", 6, "api_match_rate", "equiv"),
     ("D. 기능 동등성", "동등성 검증 커버리지", 10, "coverage", "equiv"),
 ]
 
@@ -314,7 +329,8 @@ def build_scorecard(state: dict, bench: dict | None = None,
         "detail": {"conversion": conv, "developer_experience": dx, "detection": det,
                    "equivalence": eq},
         "not_covered": [
-            "HTTP/직렬화 계층 — Api~클라이언트 구간은 아직 아무도 검증하지 않았다",
+            "Api~클라이언트 구간(실제 HTTP 왕복·JSON 직렬화) — Api 계층은 메서드 호출로 "
+            "비교했지만 서블릿/Jackson을 거치는 진짜 왕복은 아직 검증하지 않았다",
             "L4 사람 수정 라인 비율 — 값은 나왔으나 **AI 리뷰어 1차 리뷰 기준**이다. "
             "사람 개발자가 업무 로직까지 검토하면 더 높아질 수 있으므로 하한값으로 읽어야 한다",
         ],
@@ -376,6 +392,17 @@ def render(sc: dict) -> str:
         out.append(f"  기능 동등성   케이스 {e['matched']}/{e['cases']} 일치 "
                    f"· 화면 {e['screens_executed']}/{e['screens_total']} 실행 "
                    f"(나머지는 AS-IS 원본이 컴파일 불가)")
+        if e.get("service_match_rate") is not None:
+            out.append(f"                F 계층(업무 로직)   "
+                       f"{e['service_matched']}/{e['service_cases']} "
+                       f"({e['service_match_rate']:.0%}) · 화면 {e['service_screens']}개")
+        if e.get("api_match_rate") is not None:
+            out.append(f"                Api 계층(HTTP/직렬화) "
+                       f"{e['api_matched']}/{e['api_cases']} "
+                       f"({e['api_match_rate']:.0%}) · 화면 {e['api_screens']}개")
+        else:
+            out.append("                Api 계층(HTTP/직렬화) 미측정 — "
+                       "P 원본이 컴파일되지 않아 비교 대상이 없음")
     out.append("\n[이 점수가 말하지 않는 것]")
     for n in sc["not_covered"]:
         out.append(f"  - {n}")

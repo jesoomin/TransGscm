@@ -75,6 +75,10 @@ _GETRS_RE = re.compile(r'getRecordSet\s*\(\s*"(\w+)"')
 _PUTRS_RE = re.compile(r'putRecordset\s*\(\s*"(\w+)"')
 _D_METHOD_RE = re.compile(r"public\s+IDataSet\s+(d\w+)\s*\(")
 _F_METHOD_RE = re.compile(r"public\s+IDataSet\s+(f\w+)\s*\(")
+_P_METHOD_RE = re.compile(r"public\s+IDataSet\s+(p\w+)\s*\(")
+# `ResponseEntity<Map<String, Object>>`처럼 제네릭이 중첩되므로 `[^>]*`로는 못 잡는다
+# (실제로 이것 때문에 Api 비교가 0건으로 조용히 비어 있었다).
+_API_METHOD_RE = re.compile(r"public\s+ResponseEntity<.+?>\s+(\w+)\s*\(")
 
 
 def _recordset_names(f_src: str) -> list[str]:
@@ -123,32 +127,108 @@ public class {cls} {{
 """
 
 
-def _strip_spring(service_src: str) -> str:
+def _strip_spring(src: str) -> str:
     """Spring/MyBatis 애노테이션과 임포트만 걷어낸다.
 
-    DTO 임포트는 **남긴다** - 규칙 기반으로 생성된 단순 위임 메서드가 `List<XxxDto>`를 쓰기
-    때문에 DTO를 같이 컴파일해야 한다. 처음엔 스텁을 줄이려고 DTO까지 버렸는데, 그러면 그
-    메서드들이 컴파일되지 않아 비교 대상에서 통째로 빠진다(측정 범위가 조용히 좁아진다).
+    DTO 임포트는 **남긴다** - 규칙 기반 위임 메서드가 `List<XxxDto>`를 쓰기 때문에 DTO를 같이
+    컴파일해야 한다. 처음엔 스텁을 줄이려고 DTO까지 버렸는데, 그러면 그 메서드들이 컴파일되지
+    않아 비교 대상에서 통째로 빠진다(측정 범위가 조용히 좁아진다).
+
+    `ResponseEntity`는 지우지 않고 **최소 스텁으로 대체**한다(harness/stub) - Api가 무엇을
+    돌려주는지 봐야 HTTP/직렬화 경계를 비교할 수 있다.
     """
+    drop_prefix = ("import org.springframework.stereotype",
+                   "import org.springframework.beans",
+                   "import org.springframework.web",
+                   "import org.mybatis")
+    drop_exact = {"@Service", "@Autowired", "@Repository", "@RestController"}
+    drop_start = ("@RequestMapping", "@PostMapping", "@GetMapping",
+                  "@PutMapping", "@DeleteMapping")
     out = []
-    for line in service_src.splitlines():
+    for line in src.splitlines():
         s = line.strip()
-        if s.startswith("import org.springframework") or s.startswith("import org.mybatis"):
+        if s.startswith(drop_prefix):
             continue
-        if s in ("@Service", "@Autowired", "@Repository"):
+        if s in drop_exact or s.startswith(drop_start):
             continue
-        out.append(line)
+        out.append(line.replace("@RequestBody ", ""))
     return "\n".join(out)
 
 
 def _harness_main(asis_pkg: str, asis_f_cls: str, asis_d_cls: str,
                   tobe_svc_pkg: str, tobe_service: str,
                   tobe_store_pkg: str, tobe_store: str,
-                  methods: list[str]) -> str:
+                  methods: list[str],
+                  asis_p_cls: str = "", tobe_api_pkg: str = "", tobe_api: str = "",
+                  api_methods: list[str] | None = None) -> str:
     calls = "\n".join(
         f'''        runPair("{m}", rows, out);'''
         for m in methods
     )
+    api_methods = api_methods or []
+    # Api 계층(HTTP/직렬화 경계) 비교 - P 메서드와 Api 메서드를 같은 입력으로 부른다.
+    api_calls = "\n".join(
+        f'''        runApiPair("{m}", rows, out);'''
+        for m in api_methods
+    )
+    api_setup = ""
+    api_block = ""
+    if api_methods:
+        api_setup = (
+            f"            ProcessUnit.registerDataUnit({asis_pkg}.{asis_f_cls}.class, asisF);\n"
+            f"            asisP = new {asis_pkg}.{asis_p_cls}();\n"
+            f"            tobeApi = new {tobe_api_pkg}.{tobe_api}();\n"
+            f"            setField(tobeApi, \"service\", tobeSvc);\n"
+        )
+        api_block = f"""
+    static {asis_pkg}.{asis_p_cls} asisP;
+    static {tobe_api_pkg}.{tobe_api} tobeApi;
+
+    /** Api 계층 비교 - P 메서드(AS-IS 진입점) vs Api 메서드(TO-BE 엔드포인트). */
+    static void runApiPair(String method, int rows, List<String> out) {{
+        String asis = safeAsisP(method);
+        String tobe = safeTobeApi(method);
+        out.add("{{\\"layer\\":\\"API\\",\\"method\\":\\"" + method + "\\",\\"rows\\":" + rows
+                + ",\\"asis\\":" + q(asis) + ",\\"tobe\\":" + q(tobe)
+                + ",\\"match\\":" + asis.equals(tobe) + "}}");
+    }}
+
+    static String safeAsisP(String method) {{
+        try {{
+            IDataSet req = new DataSet();
+            req.setField("TGT_CD", "T0");
+            java.lang.reflect.Method m = asisP.getClass().getMethod(
+                method, IDataSet.class, IOnlineContext.class);
+            return render((IDataSet) m.invoke(asisP, req, new OnlineContext()));
+        }} catch (Throwable t) {{
+            return "ERROR:" + rootName(t);
+        }}
+    }}
+
+    static String safeTobeApi(String method) {{
+        try {{
+            Map<String, Object> req = new LinkedHashMap<String, Object>();
+            req.put("TGT_CD", "T0");
+            java.lang.reflect.Method m = tobeApi.getClass().getMethod(method, Map.class);
+            Object r = m.invoke(tobeApi, req);
+            Object body = r == null ? null
+                : r.getClass().getMethod("getBody").invoke(r);
+            return renderMap(body);
+        }} catch (Throwable t) {{
+            return "ERROR:" + rootName(t);
+        }}
+    }}
+
+    static void setField(Object target, String name, Object value) {{
+        try {{
+            java.lang.reflect.Field f = target.getClass().getDeclaredField(name);
+            f.setAccessible(true);
+            f.set(target, value);
+        }} catch (Exception e) {{
+            throw new RuntimeException("필드 주입 실패: " + name + " - " + e, e);
+        }}
+    }}
+"""
     return f"""import java.util.*;
 
 import nexcore.framework.core.data.*;
@@ -169,11 +249,13 @@ public class Harness {{
             asisF = new {asis_pkg}.{asis_f_cls}();
             tobeSvc = new {tobe_svc_pkg}.{tobe_service}();
             setStore(tobeSvc, new {tobe_store_pkg}.{tobe_store}());
-{calls}
+{api_setup}{calls}
+{api_calls}
         }}
         System.out.println("[" + String.join(",", out) + "]");
     }}
 
+{api_block}
     static void setStore(Object svc, Object store) {{
         try {{
             java.lang.reflect.Field f = svc.getClass().getDeclaredField("store");
@@ -235,6 +317,8 @@ public class Harness {{
         for (String k : new TreeSet<String>(f.keySet())) {{
             sb.append(k).append('=').append(String.valueOf(f.get(k))).append(';');
         }}
+        String rc = ds.harnessResultCode();
+        if (rc != null) {{ sb.append("@msg=").append(rc).append(';'); }}
         if (ds instanceof DataSet) {{
             Map<String, IRecordSet> rsm = ((DataSet) ds).harnessRecordsets();
             for (String k : new TreeSet<String>(rsm.keySet())) {{
@@ -271,6 +355,7 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
     """화면 하나에 대해 AS-IS/TO-BE를 실행하고 비교한다."""
     f_path = asis_dir / f"F{screen_id}.java"
     d_path = asis_dir / f"D{screen_id}.java"
+    p_path = asis_dir / f"P{screen_id}.java"
     prefix = screen_id[:1].upper() + screen_id[1:].lower()
     svc_path = tobe_dir / f"{prefix}Service.java"
     store_path = tobe_dir / f"{prefix}Store.java"
@@ -323,17 +408,66 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
         return {"screen_id": screen_id, "status": "SKIPPED",
                 "reason": "AS-IS/TO-BE 양쪽에 공통으로 있는 F 메서드가 없음"}
 
+    # ---- Api(HTTP/직렬화) 계층 준비 -------------------------------------------
+    # F 계층만 비교하면 "P 계층의 오케스트레이션(권한 게이트·빈 결과 메시지)이 옮겨졌는가"를
+    # 영영 못 본다. 실제로 이 세트의 P 메서드는 F를 4~5개 호출하고 분기까지 하는데, 생성된
+    # Api는 위임 1건만 배선한다 - 그 격차를 수치로 드러내려고 이 계층을 따로 비교한다.
+    api_methods: list[str] = []
+    asis_p_cls = tobe_api_pkg = tobe_api_cls = ""
+    api_path = tobe_dir / f"{prefix}Api.java"
+    if p_path.exists() and api_path.exists():
+        p_src = p_path.read_text(encoding="utf-8", errors="replace")
+        api_src = api_path.read_text(encoding="utf-8", errors="replace")
+        tobe_api_pkg = re.search(r"^package\s+([\w.]+);", api_src, re.M).group(1)
+        (src / tobe_api_pkg.replace(".", "/")).mkdir(parents=True, exist_ok=True)
+        (src / asis_pkg.replace(".", "/") / f"P{screen_id}.java").write_text(
+            p_src, encoding="utf-8")
+        (src / tobe_api_pkg.replace(".", "/") / f"{prefix}Api.java").write_text(
+            _strip_spring(api_src), encoding="utf-8")
+        asis_p_cls = f"P{screen_id}"
+        tobe_api_cls = f"{prefix}Api"
+        api_methods = sorted(set(_P_METHOD_RE.findall(p_src))
+                             & set(_API_METHOD_RE.findall(api_src)))
+
     (src / "Harness.java").write_text(
         _harness_main(asis_pkg, f"F{screen_id}", f"D{screen_id}",
                       tobe_svc_pkg, f"{prefix}Service",
-                      tobe_store_pkg, f"{prefix}Store", methods),
+                      tobe_store_pkg, f"{prefix}Store", methods,
+                      asis_p_cls, tobe_api_pkg, tobe_api_cls, api_methods),
         encoding="utf-8")
 
     out = work / "classes"
     out.mkdir(exist_ok=True)
-    java_files = [str(p) for p in src.rglob("*.java")] + [str(p) for p in STUB_DIR.rglob("*.java")]
-    cp = subprocess.run([javac, "-encoding", "UTF-8", "-nowarn", "-d", str(out)] + java_files,
-                        capture_output=True, text=True, errors="replace")
+    stub_files = [str(p) for p in STUB_DIR.rglob("*.java")]
+
+    def _compile(files: list[str]):
+        return subprocess.run([javac, "-encoding", "UTF-8", "-nowarn", "-d", str(out)]
+                              + files + stub_files,
+                              capture_output=True, text=True, errors="replace")
+
+    all_files = [str(p) for p in src.rglob("*.java")]
+    cp = _compile(all_files)
+    api_degraded = ""
+    if cp.returncode != 0 and api_methods:
+        # **우아한 축소**: P/Api가 컴파일되지 않아도 Service 계층 비교까지 잃지 않는다.
+        # 실제로 P 원본이 깨진 화면(주입 결함)에서 Api 계층을 추가하자마자 F 계층 결과까지
+        # 통째로 사라지는 커버리지 회귀가 났다 - 층을 하나 더 보려다 이미 보던 걸 잃으면 안 된다.
+        api_degraded = (cp.stderr or cp.stdout).strip().splitlines()[:3]
+        drop = {str(src / asis_pkg.replace(".", "/") / f"P{screen_id}.java"),
+                str(src / tobe_api_pkg.replace(".", "/") / f"{prefix}Api.java")}
+        for f in list(drop):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+        api_methods = []
+        (src / "Harness.java").write_text(
+            _harness_main(asis_pkg, f"F{screen_id}", f"D{screen_id}",
+                          tobe_svc_pkg, f"{prefix}Service",
+                          tobe_store_pkg, f"{prefix}Store", methods),
+            encoding="utf-8")
+        cp = _compile([str(p) for p in src.rglob("*.java")])
+
     if cp.returncode != 0:
         return {"screen_id": screen_id, "status": "COMPILE_FAIL",
                 "reason": (cp.stderr or cp.stdout).strip().splitlines()[:6],
@@ -350,10 +484,20 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
         return {"screen_id": screen_id, "status": "PARSE_FAIL", "reason": rp.stdout[:400]}
 
     matched = sum(1 for r in results if r["match"])
+    by_layer: dict[str, dict] = {}
+    for r in results:
+        layer = r.get("layer", "SERVICE")
+        b = by_layer.setdefault(layer, {"cases": 0, "matched": 0})
+        b["cases"] += 1
+        b["matched"] += int(r["match"])
+    for b in by_layer.values():
+        b["match_rate"] = round(b["matched"] / b["cases"], 4) if b["cases"] else None
     return {"screen_id": screen_id, "status": "OK", "methods": methods,
+            "api_methods": api_methods,
+            "api_layer_skipped": api_degraded or None,
             "cases": len(results), "matched": matched,
             "match_rate": round(matched / len(results), 4) if results else None,
-            "results": results}
+            "by_layer": by_layer, "results": results}
 
 
 def run(asis_dir: Path, screens: list[str], tobe_root: Path | None = None) -> dict:
@@ -374,17 +518,30 @@ def run(asis_dir: Path, screens: list[str], tobe_root: Path | None = None) -> di
     ok = [s for s in per_screen if s["status"] == "OK"]
     cases = sum(s["cases"] for s in ok)
     matched = sum(s["matched"] for s in ok)
+    # 계층별로 나눠서 집계한다 - 합치면 "Service는 맞는데 Api가 전부 틀린" 상황이 평균에
+    # 묻혀 버린다. 실제로 그 일이 일어나서 이렇게 바꿨다.
+    layers: dict[str, dict] = {}
+    for s in ok:
+        for name, b in (s.get("by_layer") or {}).items():
+            agg = layers.setdefault(name, {"cases": 0, "matched": 0, "screens": 0})
+            agg["cases"] += b["cases"]
+            agg["matched"] += b["matched"]
+            agg["screens"] += 1
+    for b in layers.values():
+        b["match_rate"] = round(b["matched"] / b["cases"], 4) if b["cases"] else None
     return {
         "screens_total": len(screens),
         "screens_executed": len(ok),
         "cases": cases,
         "matched": matched,
+        "by_layer": layers,
         # 실행하지 못한 화면을 분모에 넣지 않는다 - 못 잰 것과 틀린 것은 다르다.
         "match_rate": round(matched / cases, 4) if cases else None,
         "per_screen": per_screen,
         "scope_note": (
             "D 계층(SQL)을 양쪽 동일한 캔드 데이터로 고정하고 F 계층 로직만 비교했습니다. "
-            "SQL 정확성은 agents/diff_test.py가, HTTP/직렬화 계층은 아직 아무도 검증하지 않습니다. "
+            "Api 계층은 P 메서드(AS-IS 진입점) vs Api 메서드(TO-BE 엔드포인트)를 같은 입력으로 비교합니다. "
+            "SQL 정확성은 agents/diff_test.py가 담당하는 별개 층입니다. "
             "캔드 데이터는 합성값이라 실제 운영 데이터 분포를 대표하지 않습니다."
         ),
     }
@@ -406,23 +563,31 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print("=" * 78)
-    print("  L3 기능 동등성 — AS-IS F 로직 vs TO-BE Service (실제 실행)")
+    print("  L3 기능 동등성 — AS-IS(F·P) vs TO-BE(Service·Api) 실제 실행 비교")
     print("=" * 78)
     for s in res["per_screen"]:
         if s["status"] != "OK":
             print(f"  {s['screen_id']:<10} {s['status']:<12} {s.get('reason')}")
             continue
+        per = " · ".join(
+            f"{k} {v['matched']}/{v['cases']}" for k, v in sorted((s.get("by_layer") or {}).items()))
         print(f"  {s['screen_id']:<10} 일치 {s['matched']}/{s['cases']} ({s['match_rate']:.0%})"
-              f"  메서드 {len(s['methods'])}개")
+              f"  [{per}]")
+        if s.get("api_layer_skipped"):
+            print(f"      ! Api 계층 비교 생략(P/Api 컴파일 실패) — Service 계층만 측정")
         for r in s["results"]:
             if not r["match"]:
                 print(f"      X {r['method']} (rows={r['rows']})")
                 print(f"          AS-IS: {r['asis'][:90]}")
                 print(f"          TO-BE: {r['tobe'][:90]}")
     print("-" * 78)
+    label = {"SERVICE": "F 계층(업무 로직)", "API": "Api 계층(HTTP/직렬화)"}
+    for name, b in sorted((res.get("by_layer") or {}).items()):
+        print(f"  {label.get(name, name):<22} {b['matched']:>3}/{b['cases']:<3} "
+              f"({b['match_rate']:.0%})  · 화면 {b['screens']}개")
     if res["match_rate"] is not None:
-        print(f"  전체: 화면 {res['screens_executed']}/{res['screens_total']} 실행 · "
-              f"케이스 {res['matched']}/{res['cases']} 일치 ({res['match_rate']:.1%})")
+        print(f"  {'합계':<22} {res['matched']:>3}/{res['cases']:<3} ({res['match_rate']:.1%})"
+              f"  · 화면 {res['screens_executed']}/{res['screens_total']} 실행")
     print(f"\n  범위: {res['scope_note']}")
     if args.json:
         Path(args.json).write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")

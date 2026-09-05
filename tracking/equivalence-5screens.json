@@ -1,15 +1,29 @@
 {
   "screens_total": 5,
   "screens_executed": 3,
-  "cases": 27,
+  "cases": 36,
   "matched": 27,
-  "match_rate": 1.0,
+  "by_layer": {
+    "SERVICE": {
+      "cases": 27,
+      "matched": 27,
+      "screens": 3,
+      "match_rate": 1.0
+    },
+    "API": {
+      "cases": 9,
+      "matched": 0,
+      "screens": 1,
+      "match_rate": 0.0
+    }
+  },
+  "match_rate": 0.75,
   "per_screen": [
     {
       "screen_id": "PLA087",
       "status": "COMPILE_FAIL",
       "reason": [
-        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA087-0w30k1ok\\src\\gscm\\r\\pm\\prdb\\biz\\FPLA087.java:112: error: cannot find symbol",
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA087-epth9d6o\\src\\gscm\\r\\pm\\prdb\\biz\\FPLA087.java:112: error: cannot find symbol",
         "\t\t\tIRecordSet rs = du.dPLA08710(requestData, onlineCtx).getRecordSet(\"MAIN_LIST\");",
         "\t\t\t                  ^",
         "  symbol:   method dPLA08710(IDataSet,IOnlineContext)",
@@ -30,9 +44,22 @@
         "fPLA089QrySelectDetail",
         "fPLA089QrySelectMainList"
       ],
+      "api_methods": [],
+      "api_layer_skipped": [
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA089-c78n_700\\src\\gscm\\r\\pm\\prdb\\biz\\PPLA089.java:123: error: reached end of file while parsing",
+        "}",
+        " ^"
+      ],
       "cases": 9,
       "matched": 9,
       "match_rate": 1.0,
+      "by_layer": {
+        "SERVICE": {
+          "cases": 9,
+          "matched": 9,
+          "match_rate": 1.0
+        }
+      },
       "results": [
         {
           "method": "fAuthCheck",
@@ -103,7 +130,7 @@
       "screen_id": "PLA093",
       "status": "COMPILE_FAIL",
       "reason": [
-        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA093-zy0_i1vm\\src\\gscm\\r\\pm\\qulb\\biz\\FPLA093.java:130: error: ';' expected",
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA093-7_6fs7p6\\src\\gscm\\r\\pm\\qulb\\biz\\FPLA093.java:130: error: ';' expected",
         "\t\tIDataSet responseData = new DataSet()",
         "\t\t                                     ^",
         "1 error"
@@ -122,9 +149,27 @@
         "fPLA096QrySelectDetail",
         "fPLA096QrySelectMainList"
       ],
-      "cases": 9,
+      "api_methods": [
+        "pPLA09601",
+        "pPLA09602",
+        "pPLA09603"
+      ],
+      "api_layer_skipped": null,
+      "cases": 18,
       "matched": 9,
-      "match_rate": 1.0,
+      "match_rate": 0.5,
+      "by_layer": {
+        "SERVICE": {
+          "cases": 9,
+          "matched": 9,
+          "match_rate": 1.0
+        },
+        "API": {
+          "cases": 9,
+          "matched": 0,
+          "match_rate": 0.0
+        }
+      },
       "results": [
         {
           "method": "fAuthCheck",
@@ -148,6 +193,30 @@
           "match": true
         },
         {
+          "layer": "API",
+          "method": "pPLA09601",
+          "rows": 0,
+          "asis": "@msg=W0024;",
+          "tobe": "AUTH_YN=N;",
+          "match": false
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09602",
+          "rows": 0,
+          "asis": "@msg=I0016;",
+          "tobe": "DETAIL_LIST#0;",
+          "match": false
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09603",
+          "rows": 0,
+          "asis": "@msg=I0016;HIST_LIST#0;",
+          "tobe": "AUTH_LIST#0;CODE_LIST#0;DETAIL_LIST#0;HIST_LIST#0;MAIN_LIST#0;",
+          "match": false
+        },
+        {
           "method": "fAuthCheck",
           "rows": 1,
           "asis": "AUTH_YN=Y;",
@@ -169,6 +238,30 @@
           "match": true
         },
         {
+          "layer": "API",
+          "method": "pPLA09601",
+          "rows": 1,
+          "asis": "@msg=I0016;MAIN_LIST#1;",
+          "tobe": "AUTH_YN=Y;",
+          "match": false
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09602",
+          "rows": 1,
+          "asis": "@msg=I0016;DETAIL_LIST#1;",
+          "tobe": "DETAIL_LIST#1;",
+          "match": false
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09603",
+          "rows": 1,
+          "asis": "@msg=I0016;HIST_LIST#1;",
+          "tobe": "AUTH_LIST#1;CODE_LIST#1;DETAIL_LIST#1;HIST_LIST#1;MAIN_LIST#1;",
+          "match": false
+        },
+        {
           "method": "fAuthCheck",
           "rows": 3,
           "asis": "AUTH_YN=Y;",
@@ -188,6 +281,30 @@
           "asis": "MAIN_LIST#3;",
           "tobe": "MAIN_LIST#3;",
           "match": true
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09601",
+          "rows": 3,
+          "asis": "@msg=I0016;MAIN_LIST#3;",
+          "tobe": "AUTH_YN=Y;",
+          "match": false
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09602",
+          "rows": 3,
+          "asis": "@msg=I0016;DETAIL_LIST#3;",
+          "tobe": "DETAIL_LIST#3;",
+          "match": false
+        },
+        {
+          "layer": "API",
+          "method": "pPLA09603",
+          "rows": 3,
+          "asis": "@msg=I0016;HIST_LIST#3;",
+          "tobe": "AUTH_LIST#3;CODE_LIST#3;DETAIL_LIST#3;HIST_LIST#3;MAIN_LIST#3;",
+          "match": false
         }
       ]
     },
@@ -199,9 +316,22 @@
         "fPLA100QrySelectDetail",
         "fPLA100QrySelectMainList"
       ],
+      "api_methods": [],
+      "api_layer_skipped": [
+        "C:\\Users\\10982\\AppData\\Local\\Temp\\equiv-PLA100-vdoak3vv\\src\\gscm\\r\\pm\\logb\\biz\\PPLA100.java:30: error: cannot find symbol",
+        "\t\t\tFPLA100X fu = (FPLA100X) lookupFunctionUnit(FPLA100X.class);",
+        "\t\t\t^"
+      ],
       "cases": 9,
       "matched": 9,
       "match_rate": 1.0,
+      "by_layer": {
+        "SERVICE": {
+          "cases": 9,
+          "matched": 9,
+          "match_rate": 1.0
+        }
+      },
       "results": [
         {
           "method": "fAuthCheck",
@@ -269,5 +399,5 @@
       ]
     }
   ],
-  "scope_note": "D 계층(SQL)을 양쪽 동일한 캔드 데이터로 고정하고 F 계층 로직만 비교했습니다. SQL 정확성은 agents/diff_test.py가, HTTP/직렬화 계층은 아직 아무도 검증하지 않습니다. 캔드 데이터는 합성값이라 실제 운영 데이터 분포를 대표하지 않습니다."
+  "scope_note": "D 계층(SQL)을 양쪽 동일한 캔드 데이터로 고정하고 F 계층 로직만 비교했습니다. Api 계층은 P 메서드(AS-IS 진입점) vs Api 메서드(TO-BE 엔드포인트)를 같은 입력으로 비교합니다. SQL 정확성은 agents/diff_test.py가 담당하는 별개 층입니다. 캔드 데이터는 합성값이라 실제 운영 데이터 분포를 대표하지 않습니다."
 }
