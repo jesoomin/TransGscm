@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T08:10:55",
+  "generated_at": "2026-09-08T16:07:47",
   "screen_id": "PLA045",
   "ui_id": "U-PPLA045",
   "package": {
@@ -33,8 +33,8 @@
     "D.xsql": {
       "present": true,
       "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\db\\DPLA045.xsql",
-      "lines": 190,
-      "sha256": "c5da7783818ef2375c2357ef9e0d1444bb844f0eb4a6397805410d5521f288b5"
+      "lines": 502,
+      "sha256": "26170c6018a2034801247b715d26b176ee3c6e75e862e142007a55c082abe26f"
     }
   },
   "nctrids": [],
@@ -71,16 +71,25 @@
     }
   ],
   "llm_porting_targets": [
-    "fPLA045QrySelectRevisionList",
-    "fPLA045QrySelectMainList",
-    "fPLA045QrySelectValidationResult"
+    "fPLA045QrySelectMainList"
   ],
   "rule_based_delegations": {
     "fPLA045QryRunProcedure": "dPLA04505"
   },
+  "rule_based_passthrough": {
+    "fPLA045QrySelectRevisionList": "dPLA04501",
+    "fPLA045QrySelectValidationResult": "dPLA04504"
+  },
+  "llm_porting_targets_api": [
+    "pPLA04501",
+    "PPLA04502",
+    "PPLA04503",
+    "PPLA04504"
+  ],
+  "rule_based_api_delegations": [],
   "estimated_llm_calls": {
-    "porting": 3,
-    "porting_skipped_rule_based": 1,
+    "porting": 5,
+    "porting_skipped_rule_based": 3,
     "ai_recommend": 0
   },
   "track": "UNDECIDED",

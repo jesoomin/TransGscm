@@ -138,7 +138,8 @@ def _screen_prefix(filename: str) -> str:
 _MIN_MEANINGFUL_LEN = 80  # 너무 짧은 본문/SQL은 우연히 같아도 의미가 없어 비교에서 뺀다
 
 
-def analyze_pilot_folder(pilot_root: Path) -> CrossAnalysisResult:
+def analyze_pilot_folder(pilot_root: Path,
+                         current_screens: set[str] | None = None) -> CrossAnalysisResult:
     """pilot/ 아래(화면별 폴더 없이 gscm/src/main/... 공유 트리)의 TO-BE 산출물을 전부 훑어
     화면 간 중복 로직/SQL을 찾는다.
 
@@ -159,10 +160,32 @@ def analyze_pilot_folder(pilot_root: Path) -> CrossAnalysisResult:
         for p in api_paths
     })
     result.endpoint_conflicts = conflicts
+
+    # `pilot/`은 **이번에 변환한 화면만 있는 게 아니라 지금까지 승인·저장한 전부**다. 그래서
+    # 충돌 목록에는 예전 버전 생성기가 만든 화면이 섞여 들어온다 - 이걸 구분하지 않고 보고하면
+    # "6화면만 변환했는데 왜 44곳이 충돌하냐"가 된다(실제로 사용자가 그렇게 읽었다).
+    # 이번 배치가 관련된 충돌인지 여부로 문구를 갈라서, 내가 방금 만든 문제와 예전에 저장해둔
+    # 문제를 섞지 않는다.
+    cur = {s.upper() for s in (current_screens or set())}
     for c in conflicts:
-        result.notes.append(
-            f"엔드포인트 충돌: {c.path} 를 {len(c.locations)}곳이 주장합니다 "
-            f"({', '.join(c.locations)}) - Spring 기동 시 중복 매핑으로 실패합니다.")
+        involved = {loc.split(":")[0].upper() for loc in c.locations}
+        mine = sorted(involved & cur) if cur else []
+        others = sorted(involved - set(mine))
+        if cur and not mine:
+            result.notes.append(
+                f"엔드포인트 충돌(이번 배치와 무관): {c.path} 를 {len(c.locations)}곳이 "
+                f"주장합니다 - 전부 **이전에 저장된 화면**({', '.join(others[:6])}"
+                f"{f' 외 {len(others) - 6}개' if len(others) > 6 else ''})이며, "
+                f"엔드포인트 경로 규칙이 바뀌기 전에 생성된 산출물입니다. "
+                f"그 화면들을 다시 변환·저장하면 해소됩니다.")
+        else:
+            detail = f"이번 배치: {', '.join(mine)}" if mine else ""
+            if others:
+                detail += (f"{' / ' if detail else ''}기존 저장분: {', '.join(others[:6])}"
+                           f"{f' 외 {len(others) - 6}개' if len(others) > 6 else ''}")
+            result.notes.append(
+                f"엔드포인트 충돌: {c.path} 를 {len(c.locations)}곳이 주장합니다 "
+                f"({detail}) - Spring 기동 시 중복 매핑으로 실패합니다.")
 
     if len(screens) < 2:
         result.notes.append(

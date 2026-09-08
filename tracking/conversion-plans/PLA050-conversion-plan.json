@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T08:10:55",
+  "generated_at": "2026-09-08T16:07:47",
   "screen_id": "PLA050",
   "ui_id": "U-PPLA050",
   "package": {
@@ -9,8 +9,10 @@
   },
   "fragments": {
     "P.java": {
-      "present": false,
-      "as_is_path": null
+      "present": true,
+      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\PPLA050.java",
+      "lines": 102,
+      "sha256": "eb468bfd51a56138fff340130110620a02abd295c0fd0d4a3f7ad2c46e567fa3"
     },
     "P.bizunit": {
       "present": false,
@@ -38,6 +40,18 @@
   "nctrids": [],
   "expected_outputs": [
     {
+      "file": "Pla050Api.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/Controller/Pla050Api.java",
+      "conversion_method": "RULE_BASED",
+      "note": "P BizUnit 메서드 시그니처 -> REST 엔드포인트"
+    },
+    {
+      "file": "Pla050Dto.java",
+      "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/dto/Pla050Dto.java",
+      "conversion_method": "RULE_BASED",
+      "note": ".BIZUNIT/실사용 getField·putRecordset에서 역추출"
+    },
+    {
       "file": "Pla050Service.java",
       "tobe_path": "gscm/src/main/java/com/skhynix/gscm/r/pm/pla/service/Pla050Service.java",
       "conversion_method": "RULE_BASED_SKELETON + LLM_PORTING",
@@ -57,23 +71,32 @@
     }
   ],
   "llm_porting_targets": [
-    "fAuthCheck",
-    "fPLA050QrySelectMainList",
-    "fPLA050QrySelectDetail"
+    "fAuthCheck"
   ],
   "rule_based_delegations": {
     "fCommonCodeQry": "dCommonCodeQry",
     "fHistoryQry": "dHistoryQry"
   },
+  "rule_based_passthrough": {
+    "fPLA050QrySelectMainList": "dPLA05001",
+    "fPLA050QrySelectDetail": "dPLA05002"
+  },
+  "llm_porting_targets_api": [
+    "pPLA05001",
+    "pPLA05002",
+    "pPLA05003"
+  ],
+  "rule_based_api_delegations": [],
   "estimated_llm_calls": {
-    "porting": 3,
-    "porting_skipped_rule_based": 2,
+    "porting": 4,
+    "porting_skipped_rule_based": 4,
     "ai_recommend": 0
   },
   "track": "UNDECIDED",
   "unsupported_db_verbs": {},
   "track_signals": {
     "as_is_unbalanced_braces": {
+      "P.java": 0,
       "F.java": 0,
       "D.java": 0
     },

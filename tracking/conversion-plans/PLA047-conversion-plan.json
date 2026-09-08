@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T08:10:55",
+  "generated_at": "2026-09-08T16:07:47",
   "screen_id": "PLA047",
   "ui_id": "U-PPLA047",
   "package": {
@@ -15,10 +15,8 @@
       "sha256": "2ec7583ac5f294b8c9ee83ef0920e8355424678982402db6a760f8117a080847"
     },
     "P.bizunit": {
-      "present": true,
-      "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\biz\\PPLA047.bizunit",
-      "lines": 64,
-      "sha256": "ce3de076153e32d900b0c1bc4d4419a8d6e6dab8dcd389ea0eda9e5a019c6cb6"
+      "present": false,
+      "as_is_path": null
     },
     "F.java": {
       "present": true,
@@ -39,11 +37,7 @@
       "sha256": "5d6f58e98ea775749517a0fee6aad67eef9c31747e1b480c72d834d670e6ccb6"
     }
   },
-  "nctrids": [
-    "RPLA04701",
-    "RPLA04702",
-    "RPLA04703"
-  ],
+  "nctrids": [],
   "expected_outputs": [
     {
       "file": "Pla047Api.java",
@@ -83,10 +77,17 @@
     "fPLA047QrySelectRev": "dPLA04701",
     "fPLA047QrySelectRevPeriod": "dPLA04706"
   },
+  "rule_based_passthrough": {},
+  "llm_porting_targets_api": [
+    "pPLA04701",
+    "pPLA04702",
+    "pPLA04703"
+  ],
+  "rule_based_api_delegations": [],
   "estimated_llm_calls": {
-    "porting": 1,
+    "porting": 4,
     "porting_skipped_rule_based": 2,
-    "ai_recommend": 3
+    "ai_recommend": 0
   },
   "track": "UNDECIDED",
   "unsupported_db_verbs": {},
@@ -98,7 +99,7 @@
     },
     "as_is_source_broken": true,
     "f_method_count": 3,
-    "nctrid_count": 3,
+    "nctrid_count": 0,
     "has_xsql": true,
     "has_unsupported_db_verbs": false
   }

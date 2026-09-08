@@ -490,7 +490,11 @@ def _run_stage_6_7_preview(batch_results: list[dict]) -> dict:
             tmp_pilot.mkdir(parents=True, exist_ok=True)
         _write_batch_files_to_dir(batch_results, tmp_pilot)
 
-        cross_result = analyze_pilot_folder(tmp_pilot)
+        # 이번 배치 화면을 알려줘서, 예전에 저장된 화면 때문에 나는 충돌과 구분해 보고하게 한다.
+        cross_result = analyze_pilot_folder(
+            tmp_pilot,
+            current_screens={e["screen_id"] for e in batch_results if e.get("screen_id")},
+        )
         try:
             dup_methods = _db.find_duplicate_methods(min_group_size=2)
         except Exception as e:
@@ -1282,7 +1286,9 @@ if input_mode == "폴더 경로 지정":
                     f"1~5단계 완료(화면별): {len(pipeline_batch_results)}개 화면 중 정적 검증 전부 통과 {ok_n}개 "
                     "— 6~7단계 결과는 아래 참고"
                 )
-                st.caption("화면 ID를 누르면 바로 아래에 소스/검증/스캔/AI추천 상세가 나타납니다.")
+                st.caption("화면 ID를 누르면 바로 아래에 소스/검증/스캔/AI추천 상세가 나타납니다. "
+                           "선택된 화면은 파란색으로 표시됩니다.")
+                current_detail = st.session_state.get("pipeline_detail_screen")
                 for r in pipeline_batch_results:
                     if r["error"]:
                         st.error(f"❌ {r['screen_id']}: {r['error']}")
@@ -1290,8 +1296,17 @@ if input_mode == "폴더 경로 지정":
                     icon = "✅" if r["validation_total"] == r["validation_pass"] else "⚠️"
                     row_cols = st.columns([1, 5])
                     with row_cols[0]:
-                        if st.button(r["screen_id"], key=f"pipeline_detail_btn_{r['screen_id']}"):
-                            st.session_state["pipeline_detail_screen"] = r["screen_id"]
+                        # 지금 보고 있는 화면을 버튼 색으로 표시한다. 이게 없으면 어느 화면의
+                        # 상세를 보고 있는지 목록만 봐서는 알 수 없어서 "안 바뀌었다"고 느낀다.
+                        is_current = r["screen_id"] == current_detail
+                        if st.button(r["screen_id"], key=f"pipeline_detail_btn_{r['screen_id']}",
+                                     type="primary" if is_current else "secondary"):
+                            if not is_current:
+                                st.session_state["pipeline_detail_screen"] = r["screen_id"]
+                                # 명시적 재실행. 없으면 상세 영역의 st.tabs가 이전 선택 상태를
+                                # 그대로 들고 있어서, 내용은 바뀌었는데 **보고 있던 탭이 그대로**라
+                                # 화면이 안 바뀐 것처럼 보인다(실제로 겪은 증상).
+                                st.rerun()
                     with row_cols[1]:
                         saved_label = "저장됨" if r["saved"] else "미저장"
                         st.write(
@@ -1307,6 +1322,11 @@ if input_mode == "폴더 경로 지정":
                     if match and not match["error"]:
                         st.divider()
                         st.subheader(f"📂 {selected_pipeline_screen} 상세 결과")
+                        st.caption(
+                            f"AS-IS `{match.get('package_p1', 'TODO')}.{match.get('package_p2', 'TODO')}` · "
+                            f"산출 {len(match['files'])}종 · "
+                            f"정적 검증 {match['validation_pass']}/{match['validation_total']} 통과"
+                        )
                         for p_method, variant in match["ai_recommendations"].items():
                             st.session_state[f"react_variant_{selected_pipeline_screen}_{p_method}"] = variant
                         _render_batch_screen_detail(
@@ -1529,6 +1549,7 @@ if screen_id:
             f_java_text=buckets["F"].get("java"),
             d_java_text=buckets["D"].get("java"),
             p_bizunit_text=buckets["P"].get("bizunit"),
+            d_xsql_text=buckets["D"].get("xsql"),
             common_registry=common_registry,
         )
 

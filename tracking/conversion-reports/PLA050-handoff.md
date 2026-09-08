@@ -1,33 +1,54 @@
 # PLA050 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-05T08:13:40
+- 생성 시각: 2026-09-08T16:11:11
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
-- 생성된 파일: 3개 (Pla050Mapper.xml, Pla050Service.java, Pla050Store.java)
-- 사람이 반드시 처리해야 할 항목: **0건**, 확인 권장: 1건
+- 생성된 파일: 5개 (Pla050Api.java, Pla050Dto.java, Pla050Mapper.xml, Pla050Service.java, Pla050Store.java)
+- 사람이 반드시 처리해야 할 항목: **3건**, 확인 권장: 6건
 
 > 이 문서는 파이프라인이 이미 만든 결과(계획서·생성 이슈·정적 검증·품질 스캔)를 사람이 읽을 순서로 재구성한 것입니다. 자동 변환 결과는 **사람 리뷰 없이 커밋/배포하지 않습니다.**
 
 ## 🔴 반드시 사람이 처리해야 할 것 (BLOCKER)
 
-없습니다.
+- **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05001`) — pPLA05001가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05002`) — pPLA05002가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05003`) — pPLA05003가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
 
 ## 🟡 확인이 필요한 것 (WARNING)
 
+- **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA05001`) — pPLA05001는 순수 위임이 아닙니다(F 메서드를 2개 호출(fAuthCheck, fPLA050QrySelectMainList); 권한 게이트(AUTH_YN 확인 후 조기 반환); 결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA05002`) — pPLA05002는 순수 위임이 아닙니다(결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(DETAIL_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA05003`) — pPLA05003는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(HIST_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
+  - 발견: 골격 생성(skeleton_gen)
 - **REMAPRESULTS_DROPPED** — remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요
   - 발견: Mapper 변환(converters)
   - 조치: remapResults 속성은 MyBatis에 대응이 없어 제거했습니다. 동작 차이가 없는지 확인하세요.
+- **DTO_FIELD_EXTRACT_INCOMPLETE** (메서드 `pPLA05001`) — pPLA05001: fAuthCheck에서 개별 getField 호출을 찾지 못했습니다 (getFieldMap()으로 통째로 넘기는 구조일 수 있음) - 요청 필드를 수동으로 확인하세요.
+  - 발견: DTO 생성(skeleton_gen)
+  - 조치: 요청/응답 필드를 자동으로 못 뽑아 DTO에 TODO가 남아 있습니다(F가 getFieldMap()으로 통째로 넘기는 구조 등). 원본에서 실제 사용 필드를 확인해 채우세요 - 추측으로 채우지 마세요.
+- **DTO_FIELD_EXTRACT_INCOMPLETE** (메서드 `pPLA05003`) — pPLA05003: fHistoryQry에서 개별 getField 호출을 찾지 못했습니다 (getFieldMap()으로 통째로 넘기는 구조일 수 있음) - 요청 필드를 수동으로 확인하세요.
+  - 발견: DTO 생성(skeleton_gen)
+  - 조치: 요청/응답 필드를 자동으로 못 뽑아 DTO에 TODO가 남아 있습니다(F가 getFieldMap()으로 통째로 넘기는 구조 등). 원본에서 실제 사용 필드를 확인해 채우세요 - 추측으로 채우지 마세요.
 
 <details><summary>참고 항목 (INFO)</summary>
 
-- **MISSING_INPUT_FILE** — P(Java) 파일이 없어 Api 골격을 생성하지 않았습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 해당 계층 원본 파일이 없어 산출물을 만들지 않았습니다. 원본 확보 여부를 확인하세요.
 - **CDATA_SIMPLIFIED** — 특수문자(&/</>)가 없어 불필요했던 CDATA 블록 5개를 일반 텍스트로 정리했습니다. 특수문자가 있어 실제로 필요한 CDATA 0개는 MyBatis가 CDATA를 그대로 지원하므로 그대로 유지했습니다(엔티티 이스케이프로 억지 변환하지 않음).
   - 발견: Mapper 변환(converters)
   - 조치: CDATA 처리를 단순화했습니다. SQL 의미가 바뀌지 않았는지 확인하세요.
+- **COMMON_STATEMENT_EXTRACTED** — <select id="S901">는 화면 간 공통 SQL로 확정돼 있어 이 Mapper에서 제외했습니다 - 공통 Mapper 한 곳에서 관리합니다(config/common-methods.json).
+  - 발견: Mapper 변환(converters)
+- **COMMON_STATEMENT_EXTRACTED** — <select id="S902">는 화면 간 공통 SQL로 확정돼 있어 이 Mapper에서 제외했습니다 - 공통 Mapper 한 곳에서 관리합니다(config/common-methods.json).
+  - 발견: Mapper 변환(converters)
 - **FETCH_SIZE_DROPPED** — fetchSize 속성은 MyBatis 변환 시 제거했습니다 - 필요하면 <select>에 수동으로 다시 넣으세요.
   - 발견: Mapper 변환(converters)
   - 조치: fetchSize 속성을 제거했습니다. 성능이 중요하면 MyBatis 설정으로 다시 지정하세요.
+- **ORIGINAL_BUG** (메서드 `fAuthCheck`, 48행) — 48행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 IRecordSet.getRecordCount()만 전제하므로 반환 구조가 비정형인 경우 처리 기준이 정의되어 있지 않다. 포팅에서는 숫자형 건수로 해석 가능하면 그 값을 사용한다.
+  - 발견: 품질·취약점 스캔(Pla050Service.java)
+  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 
 </details>
 
@@ -35,6 +56,8 @@
 
 | 파일 | TO-BE 경로 | 변환 방식 |
 |---|---|---|
+| Pla050Api.java | `gscm/src/main/java/com/skhynix/gscm/r/pm/pla/Controller/Pla050Api.java` | RULE_BASED |
+| Pla050Dto.java | `gscm/src/main/java/com/skhynix/gscm/r/pm/pla/dto/Pla050Dto.java` | RULE_BASED |
 | Pla050Service.java | `gscm/src/main/java/com/skhynix/gscm/r/pm/pla/service/Pla050Service.java` | RULE_BASED_SKELETON + LLM_PORTING |
 | Pla050Store.java | `gscm/src/main/java/com/skhynix/gscm/r/pm/pla/store/Pla050Store.java` | RULE_BASED |
 | Pla050Mapper.xml | `gscm/src/main/resources/mapper/r/pm/pla/Pla050Mapper.xml` | RULE_BASED |
@@ -44,5 +67,3 @@
 생성 코드 첫 줄의 `// AI 변경 요약:` 주석에 무엇을 어떻게 옮겼는지 적혀 있습니다.
 
 - `fAuthCheck`
-- `fPLA050QrySelectMainList`
-- `fPLA050QrySelectDetail`

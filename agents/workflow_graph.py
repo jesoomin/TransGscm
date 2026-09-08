@@ -309,6 +309,7 @@ def _convert_screen(
     skel = generate_skeletons(
         screen_id=screen_id, package_p1=package_p1, package_p2=package_p2,
         p_java_text=p_java, f_java_text=f_java, d_java_text=d_java, p_bizunit_text=p_bizunit,
+        d_xsql_text=d_xsql,
         common_registry=common_registry,
     )
     files = dict(skel.files)

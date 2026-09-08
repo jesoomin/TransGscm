@@ -1,9 +1,9 @@
 # PLA047 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-05T08:13:40
+- 생성 시각: 2026-09-08T16:11:11
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla047Api.java, Pla047Dto.java, Pla047Mapper.xml, Pla047Service.java, Pla047Store.java)
-- 사람이 반드시 처리해야 할 항목: **0건**, 확인 권장: 19건
+- 사람이 반드시 처리해야 할 항목: **3건**, 확인 권장: 22건
 
 > 이 문서는 파이프라인이 이미 만든 결과(계획서·생성 이슈·정적 검증·품질 스캔)를 사람이 읽을 순서로 재구성한 것입니다. 자동 변환 결과는 **사람 리뷰 없이 커밋/배포하지 않습니다.**
 
@@ -13,10 +13,21 @@
 
 ## 🔴 반드시 사람이 처리해야 할 것 (BLOCKER)
 
-없습니다.
+- **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04701`) — pPLA04701가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04702`) — pPLA04702가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04703`) — pPLA04703가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
 
 ## 🟡 확인이 필요한 것 (WARNING)
 
+- **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04701`) — pPLA04701는 순수 위임이 아닙니다(결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(DATETIME_MAP, MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04702`) — pPLA04702는 순수 위임이 아닙니다(결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(REV_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04703`) — pPLA04703는 순수 위임이 아닙니다(결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
+  - 발견: 골격 생성(skeleton_gen)
 - **REMAPRESULTS_DROPPED** — remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요
   - 발견: Mapper 변환(converters)
   - 조치: remapResults 속성은 MyBatis에 대응이 없어 제거했습니다. 동작 차이가 없는지 확인하세요.
@@ -35,43 +46,43 @@
 - **SQL_INJECTION_RISK** (5046행) — ${NETDIE_WHERE}가 3곳(5046, 5047, 5053행)에서 발견됨: 조건절(WHERE/AND/OR/LIKE)에서 값이 SQL 텍스트에 직접 섞입니다 - 외부 입력 경로를 타면 실제 인젝션으로 이어질 수 있습니다. 가능하면 #{NETDIE_WHERE}(파라미터 바인딩)로 바꿀 수 있는지 우선 검토하세요.
   - 발견: 품질·취약점 스캔(Pla047Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 242행) — 242행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 236행) — 236행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 426행) — 426행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 413행) — 413행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+  - 발견: 품질·취약점 스캔(Pla047Service.java)
+  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 414행) — 414행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+  - 발견: 품질·취약점 스캔(Pla047Service.java)
+  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 416행) — 416행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+  - 발견: 품질·취약점 스캔(Pla047Service.java)
+  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 417행) — 417행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+  - 발견: 품질·취약점 스캔(Pla047Service.java)
+  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 420행) — 420행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+  - 발견: 품질·취약점 스캔(Pla047Service.java)
+  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 421행) — 421행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
 - **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 427행) — 427행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 429행) — 429행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 428행) — 428행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
 - **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 430행) — 430행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 433행) — 433행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 431행) — 431행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
 - **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 434행) — 434행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 440행) — 440행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
-  - 발견: 품질·취약점 스캔(Pla047Service.java)
-  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 441행) — 441행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
-  - 발견: 품질·취약점 스캔(Pla047Service.java)
-  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 443행) — 443행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
-  - 발견: 품질·취약점 스캔(Pla047Service.java)
-  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 444행) — 444행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
-  - 발견: 품질·취약점 스캔(Pla047Service.java)
-  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 447행) — 447행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
-  - 발견: 품질·취약점 스캔(Pla047Service.java)
-  - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
-- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 448행) — 448행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
+- **DYNAMIC_SQL_STRING_CONCAT** (메서드 `fPLA047QrySelectMainList`, 435행) — 435행: 문자열 연결로 SQL 조각을 조립하고 있다 - 값이 외부 입력에서 오는 경로가 있다면 SQL 인젝션 위험, 아니어도 유지보수 시 실수 유발 가능. 바인드 변수로 대체할 수 있는지 검토할 것.
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 문자열 연결로 SQL을 조립합니다. 바인드 변수로 대체 가능한지 검토하세요.
 
@@ -683,43 +694,43 @@
 - **SQL_INJECTION_RISK** (5564행) — ${COO_PROF_RATE_PROD}가 1곳(5564행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla047Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 287행) — 287행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 280행) — 280행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 296행) — 296행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 289행) — 289행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 305행) — 305행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 298행) — 298행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 314행) — 314행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 307행) — 307행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 323행) — 323행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 316행) — 316행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 332행) — 332행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 325행) — 325행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 341행) — 341행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 334행) — 334행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 제네릭 타입명이 object 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 437행) — 437행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - for 블록 종료 구문이 ')'로 되어 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 424행) — 424행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - for 블록 종료 구문이 `)` 로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 499행) — 499행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - system 소문자 사용으로 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 486행) — 486행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - `system.out.println` 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 505행) — 505행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 동일 이름 변수 sCooProfRateEq1를 String과 String[]로 중복 선언하여 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 492행) — 492행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 동일한 지역변수명 `sCooProfRateEq1`를 String과 String[]로 중복 선언하여 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 524행) — 524행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - system 소문자 사용으로 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 511행) — 511행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - `system.out.println` 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 548행) — 548행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - system 소문자 사용으로 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 535행) — 535행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - `system.out.println` 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 572행) — 572행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - system 소문자 사용으로 컴파일 오류
+- **ORIGINAL_BUG** (메서드 `fPLA047QrySelectMainList`, 559행) — 559행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - `system.out.println` 소문자로 되어 컴파일 에러 발생
   - 발견: 품질·취약점 스캔(Pla047Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 

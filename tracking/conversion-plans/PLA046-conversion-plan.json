@@ -1,6 +1,6 @@
 {
   "plan_version": 1,
-  "generated_at": "2026-09-05T08:10:55",
+  "generated_at": "2026-09-08T16:07:47",
   "screen_id": "PLA046",
   "ui_id": "U-PPLA046",
   "package": {
@@ -33,8 +33,8 @@
     "D.xsql": {
       "present": true,
       "as_is_path": "C:\\project\\gscm\\workspace\\dev-rp-online\\src\\java\\gscm\\r\\pm\\pla\\plab\\db\\DPLA046.xsql",
-      "lines": 84,
-      "sha256": "f28714598c8c933e2666eb10dd3011c1ca7f116344d23c44496cb26769a90aa0"
+      "lines": 1223,
+      "sha256": "4138c9ac1f588830a58e3ced5aaa64544f1ea85cd1f1dbd54a861e53bab54217"
     }
   },
   "nctrids": [],
@@ -71,29 +71,52 @@
     }
   ],
   "llm_porting_targets": [
-    "fPLA046QrySelectMainList",
-    "fPLA046QrySelectExrList",
-    "fPLA046QrySelectCopyPlanRevision",
-    "fPLA046erpMbcRpVerRevisionList",
-    "fPLA046QrySelectYieldRevisionList",
     "fPLA046QryInsertMainList",
-    "fPLA046QrySelectMemo",
     "fPLA046QryUpdateMemo",
     "fPLA046QryBatchRun",
-    "fPLA046QrySelectDetailCreateInfo",
     "fPLA046QryUpdateInfo",
-    "fPLA046QrySelectSomVersion",
     "fPLA046QryCallProc",
     "fPLA046QryUpdateRlsYn",
     "fPLA046QryPlnRevReleasedCheck",
     "fPLA046QryUpdateFinalConfirm",
-    "fPLA046QrySelectrecentlyWeek",
     "fPLA046QryCreateReportBatchRun"
   ],
   "rule_based_delegations": {},
+  "rule_based_passthrough": {
+    "fPLA046QrySelectMainList": "dPLA04601",
+    "fPLA046QrySelectExrList": "dPLA04602",
+    "fPLA046QrySelectCopyPlanRevision": "dPLA04603",
+    "fPLA046erpMbcRpVerRevisionList": "dPLA04604",
+    "fPLA046QrySelectYieldRevisionList": "dPLA04605",
+    "fPLA046QrySelectMemo": "dPLA04608",
+    "fPLA046QrySelectDetailCreateInfo": "dPLA04612",
+    "fPLA046QrySelectSomVersion": "dPLA04615",
+    "fPLA046QrySelectrecentlyWeek": "dPLA04623"
+  },
+  "llm_porting_targets_api": [
+    "pPLA04601",
+    "pPLA04602",
+    "pPLA04603",
+    "pPLA04604",
+    "pPLA04605",
+    "pPLA04606",
+    "pPLA04607",
+    "pPLA04609",
+    "pPLA04610",
+    "pPLA04612",
+    "pPLA04613",
+    "pPLA04614",
+    "pPLA04616",
+    "pPLA04617"
+  ],
+  "rule_based_api_delegations": [
+    "pPLA04608",
+    "pPLA04611",
+    "pPLA04615"
+  ],
   "estimated_llm_calls": {
-    "porting": 18,
-    "porting_skipped_rule_based": 0,
+    "porting": 23,
+    "porting_skipped_rule_based": 12,
     "ai_recommend": 0
   },
   "track": "UNDECIDED",

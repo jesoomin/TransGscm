@@ -227,9 +227,45 @@ def find_bare_calls(method_body: str, candidate_names: list[str]) -> list[str]:
     return found
 
 
+_XSQL_STMT_TAG_RE = re.compile(r'<(select|insert|update|delete)\s+id="(\w+)"', re.I)
+
+
+def extract_xsql_stmt_kinds(d_xsql_text: str | None) -> dict[str, str]:
+    """{statement id: XSQL 태그 종류} - 예: {"S001": "select", "U001": "update"}.
+
+    **왜 Java의 verb가 아니라 XSQL 태그를 보는가**: 이 코드베이스는 UPDATE/DELETE 문도
+    `dbInsert("U001", ...)`로 호출한다(DPLA046 실측: dbInsert가 U001/D001을 부른다). Java 쪽
+    verb를 믿고 MyBatis 호출을 정하면 UPDATE에 insert()를 걸게 된다. 무엇을 실행하는지는
+    SQL을 담은 XSQL 태그가 확정한다.
+    """
+    if not d_xsql_text:
+        return {}
+    return {sid: tag.lower() for tag, sid in _XSQL_STMT_TAG_RE.findall(d_xsql_text)}
+
+
+# MyBatis SqlSession의 호출 이름. 조회만 결과를 돌려주고 나머지는 영향 행 수(int)다.
+_MYBATIS_CALL = {
+    "select": "selectOne",
+    "insert": "insert",
+    "update": "update",
+    "delete": "delete",
+}
+
+
 def extract_d_stmt_ids(d_java_text: str) -> dict[str, str]:
-    """D BizUnit 소스에서 {D 메서드명: dbSelect("S00N", ...)에 쓴 원본 statement id} 매핑을 뽑는다."""
-    return dict(re.findall(r'(\w+)\s*\([^)]*?\)\s*\{\s*[^}]*?dbSelect\("(\w+)"', d_java_text, re.DOTALL))
+    """D BizUnit 소스에서 {D 메서드명: 그 메서드가 부르는 원본 statement id} 매핑을 뽑는다.
+
+    예전엔 `dbSelect`만 봤다 - 조회 전용 원본만 갖고 있었기 때문이다. CRUD 화면이 실제로
+    들어오면서(DPLA046) dbInsert/dbUpdate/dbDelete가 부르는 statement가 전부 매핑에서 빠졌고,
+    그 결과 Mapper의 id가 원본 그대로 남고 Store는 `TODO_확인필요_...`를 참조했다.
+    verb를 가리지 않고 **첫 번째 db* 호출의 statement id**를 쓴다(메서드 하나가 여러 개를
+    부르는 경우는 extract_d_db_calls가 따로 전부 보고한다).
+    """
+    out: dict[str, str] = {}
+    for method, calls in extract_d_db_calls(d_java_text).items():
+        if calls:
+            out[method] = calls[0][1]
+    return out
 
 
 # `dbSelect("S001", ...)` / `dbInsert("S010", ...)` 같은 호출에서 verb와 statement id를 같이 뽑는다.
@@ -543,6 +579,7 @@ def generate_skeletons(
     d_java_text: str | None,
     p_bizunit_text: str | None,
     common_registry: dict | None = None,
+    d_xsql_text: str | None = None,
 ) -> SkeletonResult:
     result = SkeletonResult()
     prefix = to_prefix(screen_id)
@@ -899,6 +936,8 @@ def generate_skeletons(
         # Mapper.xml의 <select id="S00N">은 converters.finalize_mapper_document()가 이 D 메서드명
         # 자체로 다시 붙이므로(예: S001 -> dPLA04701), Store도 처음부터 D 메서드명으로 참조한다.
         stmt_ids = extract_d_stmt_ids(d_java_text)
+        # 무엇을 실행하는지는 XSQL 태그가 정한다(dbInsert가 UPDATE를 부르기도 한다).
+        stmt_kinds = extract_xsql_stmt_kinds(d_xsql_text)
         result.stmt_id_to_method = {old_id: method for method, old_id in stmt_ids.items()}
         namespace = f"{base_pkg}.store.{prefix}Store"
         lines = [
@@ -954,20 +993,45 @@ def generate_skeletons(
                 continue
             stmt_id = method if method in stmt_ids else ""
             mapper_ref = f"NS + \"{stmt_id}\"" if stmt_id else f'NS + "TODO_확인필요_{method}"'
-            if method in bad_verbs:
+            # 원본 statement id -> XSQL 태그. 모르면 조회로 가정하지 않고 아래에서 드러낸다.
+            raw_stmt_id = extract_d_stmt_ids(d_java_text).get(method)
+            kind = stmt_kinds.get(raw_stmt_id or "", "")
+            if kind and kind != "select":
+                # DML은 결과가 영향 행 수(int)다 - Map을 돌려주는 시그니처를 쓰면 컴파일은 되지만
+                # 런타임에 값이 안 맞는다. 시그니처부터 맞춘다.
+                call = _MYBATIS_CALL[kind]
+                lines += [
+                    f"    /** 원본 XSQL의 <{kind}> - MyBatis {call}()는 영향 행 수를 돌려준다. */",
+                    f"    public int {method}(Map<String, Object> params) {{",
+                    f"        return sqlSession.{call}({mapper_ref}, params);",
+                    f"    }}",
+                    "",
+                ]
+                result.methods.append({
+                    "layer": "D", "method_name": method, "method_name_tobe": method,
+                    "body_hash": method_body_hash(d_bodies.get(method, "")),
+                    "body_hash_norm": method_body_hash_norm(d_bodies.get(method, ""), screen_id),
+                    "conversion_method": "RULE_BASED_SKELETON",
+                    "mapper_stmt_id": stmt_id or None,
+                })
+                continue
+
+            if not kind and method in bad_verbs:
+                # XSQL을 못 봐서 종류를 확정할 수 없는데 Java verb는 dbSelect가 아니다 -
+                # 추측으로 selectOne을 찍지 않고 사람에게 넘긴다.
                 verbs = ", ".join(f"db{v}" for v in bad_verbs[method])
                 lines.append(
-                    f"    // TODO(미지원 verb: {verbs}): 이 변환기는 dbSelect만 다룬다 - 아래 selectOne 호출은"
+                    f"    // TODO(종류 미확정: {verbs}): XSQL을 함께 주지 않아 이 statement가"
                 )
                 lines.append(
-                    f"    // 맞지 않으니 사람이 insert/update/delete에 맞는 MyBatis 호출로 직접 고쳐야 한다."
+                    f"    // select/insert/update/delete 중 무엇인지 확정할 수 없어 조회로 생성했다."
                 )
                 result.issues.append(ConversionIssue(
                     issue_type="UNSUPPORTED_DB_VERB", severity="BLOCKER",
                     message=(
-                        f"{method}가 {verbs}를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 "
-                        "selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, "
-                        "Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다."
+                        f"{method}가 {verbs}를 사용하는데 XSQL이 없어 statement 종류를 확정하지 "
+                        "못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. "
+                        "XSQL을 함께 넣으면 자동으로 맞춰집니다."
                     ),
                     method_name=method,
                 ))

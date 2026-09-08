@@ -105,7 +105,7 @@ _COMPARISON_OPS = {
 }
 
 
-def _replace_comparison_tags(text: str) -> str:
+def _replace_comparison_tags(text: str, issues: list[ConversionIssue]) -> str:
     for tag, op in _COMPARISON_OPS.items():
         open_re = re.compile(rf'<{tag}\s+property="([A-Za-z0-9_.]+)"\s+compareValue="([^"]*)"\s*>')
 
@@ -124,8 +124,29 @@ def _replace_comparison_tags(text: str) -> str:
 
         before = text
         text = open_re.sub(_sub, text)
-        if before != text:
-            text = re.sub(rf"</{tag}>", "</if>", text)
+        if before == text:
+            continue
+        # **여는 태그가 하나라도 안 바뀌었으면 닫는 태그도 건드리지 않는다.**
+        # 예전엔 "하나라도 바뀌었으면" 곧바로 `</tag>`를 전부 `</if>`로 치환했다. 그래서 같은
+        # 파일 안에 변환된 태그와 안 된 태그가 섞이면 **여는 건 <isEqual>인데 닫는 건 </if>**가
+        # 되어 XML이 깨졌다(DPLA046 실측: XML_PARSE_ERROR). 변환 실패보다 나쁜 결과다 -
+        # 안 고치면 사람이 원본을 보고 고치면 되지만, 깨뜨리면 무엇이 원본이었는지도 잃는다.
+        leftover = re.search(rf"<{tag}\b", text)
+        if leftover:
+            line_no = text.count("\n", 0, leftover.start()) + 1
+            issues.append(ConversionIssue(
+                issue_type="PARTIAL_TAG_CONVERSION",
+                severity="WARNING",
+                line_no=line_no,
+                message=(
+                    f"{line_no}행: <{tag}>가 일부만 변환 가능한 형태여서 **이 태그 전체를 원본 그대로 "
+                    f"두었습니다**(닫는 태그도 안 바꿈 - 섞이면 XML이 깨집니다). 남은 <{tag}>를 "
+                    f"수동으로 <if>로 옮기세요."
+                ),
+            ))
+            text = before
+            continue
+        text = re.sub(rf"</{tag}>", "</if>", text)
     return text
 
 
@@ -162,6 +183,22 @@ def _replace_simple_empty_tags(text: str, issues: list[ConversionIssue]) -> str:
         text,
     )
     text = re.sub(r"</isEmpty>", "</if>", text)
+
+    # prepend 없이 property 하나만 쓴 형태. isEmpty에는 규칙이 있었는데 **정반대인 isNotEmpty에는
+    # 없어서** 그대로 남아 있었다(DPLA046에서 11회 사용). iBatis의 isNotEmpty는 "null도 아니고
+    # 빈 문자열도 아님"이라 MyBatis <if>로 1:1 대응된다 - 추측이 아니라 정의가 같다.
+    # prepend가 붙은 형태는 위에서 경고만 내고 그대로 두므로 여기 정규식이 가로채지 않는다.
+    before = text
+    text = re.sub(
+        r'<isNotEmpty\s+property="([A-Za-z0-9_.]+)"\s*>',
+        r'<if test="\1 != null and \1 != \'\'">',
+        text,
+    )
+    if before != text and not re.search(r"<isNotEmpty\b", text):
+        # 위 비교 태그와 같은 이유로, 전부 변환됐을 때만 닫는 태그를 바꾼다.
+        text = re.sub(r"</isNotEmpty>", "</if>", text)
+    elif before != text:
+        text = before  # 일부만 바뀌는 상황이면 손대지 않는다(XML을 깨뜨리지 않기 위해)
     return text
 
 
@@ -323,6 +360,31 @@ def _strip_cdata(text: str, issues: list[ConversionIssue]) -> str:
     return result
 
 
+# 이 변환기가 다루는 iBatis 동적 태그. 속성 표기 정규화(_normalize_tag_attrs)와 "남아있는
+# 태그" 경고가 같은 목록을 봐야 둘이 어긋나지 않는다.
+_IBATIS_TAGS = (
+    "isEqual|isNotEqual|isGreaterThan|isGreaterEqual|isLessThan|isLessEqual"
+    "|isNull|isNotNull|isEmpty|isNotEmpty|iterate|dynamic"
+)
+_TAG_DECL_RE = re.compile(rf"<(?:{_IBATIS_TAGS})\b[^>]*>")
+_ATTR_SPACING_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"')
+
+
+def _normalize_tag_attrs(text: str) -> str:
+    """iBatis 태그 **선언부 안에서만** `속성 = "값"`을 `속성="값"`으로 정규화한다.
+
+    **왜 필요한가**: 아래 변환 규칙들이 전부 `property="..."`처럼 등호에 공백이 없는 형태만
+    매칭한다. 그런데 실제 원본(DPLA046.xsql)은 `compareValue = "Y"`처럼 띄어 쓴다 - XML
+    스펙상 완전히 유효한 표기다. 규칙 8개의 정규식을 각각 고치는 대신, 들어올 때 한 번
+    정규화한다.
+
+    **SQL 본문은 절대 건드리지 않는다.** `<isEqual ...>` 같은 태그 선언 `<...>` 안쪽만 바꾸므로
+    `WHERE COL = 'Y'` 같은 SQL 텍스트의 공백은 그대로 남는다 - 이 변환기의 대원칙(SQL 자체는
+    건드리지 않는다)을 지키기 위해 범위를 이렇게 좁혔다.
+    """
+    return _TAG_DECL_RE.sub(lambda m: _ATTR_SPACING_RE.sub(r'\1="', m.group(0)), text)
+
+
 _KNOWN_REMAINING_TAGS = [
     "isEqual",
     "isNotEqual",
@@ -339,6 +401,24 @@ _KNOWN_REMAINING_TAGS = [
 ]
 
 
+def _unterminated_attr_hint(text: str) -> str:
+    """안 닫힌 속성 따옴표를 찾아 구체적인 위치를 덧붙인다(없으면 빈 문자열).
+
+    XML 파서 메시지("not well-formed")만으로는 사람이 원본의 어디를 봐야 할지 알 수 없다.
+    실제 원본에서 가장 흔했던 형태 하나만 정확히 짚는다 - 없는 원인을 추측해 붙이지 않는다.
+    """
+    hits = []
+    for m in _UNTERMINATED_ATTR_RE.finditer(text):
+        line_no = text.count("\n", 0, m.start()) + 1
+        hits.append(f'{line_no}행 <{m.group(1)} {m.group(2)}="{m.group(3)}...')
+    if not hits:
+        return ""
+    return ("\n  ↳ 원본에 **닫는 따옴표가 빠진 속성**이 "
+            f"{len(hits)}건 있습니다: {'; '.join(hits[:3])}"
+            f"{f' 외 {len(hits) - 3}건' if len(hits) > 3 else ''}. "
+            "이 부분을 먼저 고쳐야 나머지 검증이 의미를 갖습니다.")
+
+
 def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
     """XSQL(iBatis) 문자열 하나(<sql>/<select> 블록 등)를 MyBatis 문법으로 변환한다.
 
@@ -347,8 +427,10 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
     issues: list[ConversionIssue] = []
     text = xsql_text
 
+    # 규칙들이 전부 `속성="값"`(공백 없음) 형태만 매칭하므로 먼저 표기를 통일한다.
+    text = _normalize_tag_attrs(text)
     text = _replace_isnotempty_iterate(text)
-    text = _replace_comparison_tags(text)
+    text = _replace_comparison_tags(text, issues)
     text = _replace_null_tags(text)
     text = _replace_simple_empty_tags(text, issues)
     text = _replace_dynamic_tags(text)
@@ -396,6 +478,7 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
             message=(
                 f"변환 결과가 유효한 XML이 아닙니다: {xml_error}. 원본 XSQL 자체의 태그 짝이 안 맞을 수 있습니다 "
                 f"(문법 치환 규칙 문제가 아니라 원본 데이터 문제일 가능성이 높음) - 원본과 대조해서 확인하세요."
+                + _unterminated_attr_hint(text)
             ),
         ))
 
@@ -429,6 +512,18 @@ _SELECT_OPEN_RE = re.compile(
     r'<select\s+id="(?P<id>\w+)"\s+parameterType="(?P<ptype>[^"]*)"\s+resultType="(?P<rtype>[^"]*)"'
     r'(?:\s+fetchSize="\d+")?\s*>'
 )
+
+# DML(<insert>/<update>/<delete>)은 resultType이 없다. 조회 전용 가정으로 만들어져 있던 이
+# 변환기가 CRUD 화면(DPLA046: insert 7·update 5·delete 1)을 만나면서 필요해졌다 - 그전까진
+# 이 태그들의 id가 원본 그대로(I001/U001/D001) 남아 Store가 참조하는 이름과 어긋났다.
+_DML_OPEN_RE = re.compile(
+    r'<(?P<tag>insert|update|delete)\s+id="(?P<id>\w+)"'
+    r'(?P<rest>(?:\s+[A-Za-z_][\w.]*="[^"]*")*)\s*>'
+)
+
+# `<insert id="I005 parameterClass="map">`처럼 값의 닫는 따옴표가 빠진 형태. XML 파서는
+# "not well-formed"라고만 말해서 원인을 짚기 어려운데, 실제 원본에 3건 있었다(DPLA046).
+_UNTERMINATED_ATTR_RE = re.compile(r'<(\w+)\s+(\w+)="([^"\n]*?)\s+\w+="')
 
 
 def finalize_mapper_document(
@@ -514,6 +609,29 @@ def finalize_mapper_document(
         return f'<select id="{new_id}" parameterType="{param_type}" resultType="{result_type}">'
 
     text = _SELECT_OPEN_RE.sub(_select_sub, text)
+
+    def _dml_sub(m: re.Match) -> str:
+        """DML은 id만 D 메서드명으로 맞추고 나머지 속성은 원본 그대로 둔다.
+
+        조회와 달리 resultType을 만들어 붙이지 않는다 - MyBatis에서 insert/update/delete는
+        영향 행 수(int)를 돌려주므로 결과 타입을 선언할 자리가 없다.
+        """
+        old_id = m.group("id")
+        method = stmt_id_to_method.get(old_id)
+        if not method:
+            issues.append(ConversionIssue(
+                issue_type="STMT_ID_MAP_MISSING", severity="WARNING",
+                message=(
+                    f'<{m.group("tag")} id="{old_id}">를 D BizUnit의 db*("{old_id}", ...) 호출과 '
+                    "매칭하지 못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요."
+                ),
+            ))
+            return m.group(0)
+        rest = m.group("rest")
+        rest = re.sub(r'\s+parameterType="map"', f' parameterType="map"', rest)
+        return f'<{m.group("tag")} id="{method}"{rest}>'
+
+    text = _DML_OPEN_RE.sub(_dml_sub, text)
     if had_fetch_size:
         issues.append(ConversionIssue(
             issue_type="FETCH_SIZE_DROPPED", severity="INFO",
