@@ -1,42 +1,42 @@
 {
   "measured_screens": 5,
   "unmeasured_screens": 0,
-  "generated_lines": 1986,
+  "generated_lines": 2007,
   "edited_lines": 4,
   "human_edit_ratio": 0.002,
   "per_screen": {
     "PLA087": {
       "measured": true,
       "ratio": 0.0,
-      "generated_lines": 423,
+      "generated_lines": 446,
       "edited_lines": 0,
       "note": ""
     },
     "PLA089": {
       "measured": true,
       "ratio": 0.0,
-      "generated_lines": 410,
+      "generated_lines": 408,
       "edited_lines": 0,
       "note": ""
     },
     "PLA093": {
       "measured": true,
       "ratio": 0.0,
-      "generated_lines": 428,
+      "generated_lines": 429,
       "edited_lines": 0,
       "note": ""
     },
     "PLA096": {
       "measured": true,
-      "ratio": 0.010958904109589041,
-      "generated_lines": 365,
+      "ratio": 0.01092896174863388,
+      "generated_lines": 366,
       "edited_lines": 4,
       "note": ""
     },
     "PLA100": {
       "measured": true,
       "ratio": 0.0,
-      "generated_lines": 360,
+      "generated_lines": 358,
       "edited_lines": 0,
       "note": ""
     }

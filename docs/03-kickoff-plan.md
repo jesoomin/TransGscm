@@ -600,6 +600,51 @@ LangGraph StateGraph가 있었지만 `run_screen_conversion()`이 `.invoke()`(�
   실행: `python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더> [--json 경로]`.
   결과 스냅샷은 `tracking/benchmark-081-110.json`.
 
+- **조회 전용 가정 해소 — DML(등록/수정/삭제) 지원 구현(2026-09-08)** — 위 2026-09-04 항목에서
+  "샘플이 하나도 없어 규칙을 만들지 않고 미지원을 드러내기만 한다"고 적어뒀던 항목이다. **막고
+  있던 조건(샘플 없음)이 사라져서 구현했다.** 사용자가 `C:/project/gscm/workspace`의 PLA045~050을
+  변환하면서 실제 CRUD 화면이 들어왔다 - `DPLA046`은 `<insert>` 7·`<update>` 5·`<delete>` 1·
+  프로시저 3을 갖고 있다.
+
+  **핵심 판단 — 실행 종류는 Java가 아니라 XSQL 태그가 정한다.** 이 코드베이스는 UPDATE/DELETE
+  문도 `dbInsert("U001", ...)`/`dbInsert("D001", ...)`로 호출한다(DPLA046 실측). Java 쪽 verb를
+  믿고 MyBatis 호출을 정했다면 UPDATE에 `insert()`를 걸었을 것이다. `skeleton_gen`에
+  `extract_xsql_stmt_kinds()`를 추가해 XSQL 태그(`<update>`)를 기준으로 판정하고,
+  `generate_skeletons()`가 `d_xsql_text`를 받도록 시그니처를 넓혔다(파이프라인·단일 화면 UI
+  양쪽 호출부 모두 배선). DML은 MyBatis가 영향 행 수를 돌려주므로 반환 타입을 `int`로 낸다.
+  `extract_d_stmt_ids()`도 dbSelect 전용에서 전 verb로 넓혀 DML statement id가 D 메서드명으로
+  매핑되게 했고, `converters.finalize_mapper_document()`가 `<insert>/<update>/<delete>` id도
+  `<select>`와 똑같이 정리한다. **실측(DPLA046)**: Store가 selectOne 17·insert 4·update 4·
+  delete 1로 갈렸고 `TODO_확인필요` 참조가 0건, Mapper statement id는 26개 중 20개가 매핑됐다.
+  **프로시저 3건은 여전히 미지원**으로 남겨 기존 `UNSUPPORTED_DB_VERB` 경로가 그대로 잡는다 -
+  확인된 변환 규칙이 없어 추측으로 만들지 않았다.
+
+- **변환기 결함 3건 + 보고 결함 1건 수정(2026-09-08)** — 위 6화면을 돌리면서 드러났다. 세 번째
+  소스 트리를 처음 써본 것이 계기다.
+  1. **속성 표기**: 모든 태그 규칙이 `property="x"`(등호에 공백 없음)만 매칭했는데 새 원본은
+     `compareValue = "Y"`로 쓴다(XML상 유효). 규칙 8개를 각각 고치지 않고, 들어올 때 한 번
+     `_normalize_tag_attrs()`로 표기를 통일한다 - **태그 선언 `<...>` 안쪽만** 바꿔서 SQL
+     본문의 공백은 건드리지 않는다.
+  2. **반쪽 변환이 XML을 깨뜨림**: 닫는 태그 치환이 "하나라도 변환됐으면" 실행돼서, 여는
+     `<isEqual>`은 남고 닫는 건 `</if>`가 되는 상태가 나왔다(파싱 불가). **태그 쌍은 전부
+     바꾸거나 전부 그대로 둔다**로 바꾸고 `PARTIAL_TAG_CONVERSION` 경고를 남긴다 - 못 고치는
+     것보다 망가뜨리는 게 나쁘다는 판단이다.
+  3. **`<isNotEmpty property="X">` 규칙 부재**: 정반대인 `isEmpty`에는 규칙이 있는데 이쪽만
+     빠져 있었다(새 원본에서 11회 사용). 의미가 1:1 대응해서 추가.
+  4. **원본 결함 진단**: 남은 파싱 오류는 원본 결함(`<insert id="I005 parameterClass="map">` -
+     닫는 따옴표 누락, 3건)이었다. 파서는 `not well-formed`만 말해서 위치를 알 수 없으므로
+     이 형태를 따로 탐지해 줄 번호를 짚어준다.
+  5. **보고 범위 오해**: 6화면만 변환했는데 "엔드포인트 44곳 충돌"이 떴다. `pilot/`이 지금까지
+     승인·저장한 **전부**를 담고 있고 그중 44개가 경로 규칙 수정 전 산출물이라서다(이번 배치
+     6화면끼리는 0건). `analyze_pilot_folder(current_screens=...)`로 이번 배치와 기존 저장분을
+     구분해 보고한다 - 수치는 맞았지만 읽는 사람이 자기 문제로 오해하게 만드는 보고였다.
+  6. **UI**: 화면 ID 클릭 시 `st.rerun()`이 없어 `st.tabs`가 이전 탭 선택을 유지했다 - 내용은
+     바뀌는데 보고 있던 탭이 그대로라 "안 바뀐다"로 보였다. 재실행 + 선택 화면 강조 + 상세
+     헤더 캡션을 추가.
+
+  **검증**: 6화면 전부 남은 iBatis 태그 0개, 배치 내부 엔드포인트 충돌 0건, L3 하네스 회귀 없음
+  (F 48/48 · Api 페이로드 9/9), pytest·컴파일 스윕 통과.
+
 ## Phase 3 — 파일럿 20~30화면 (자체 벤치마크 구축 겸함)
 - [ ] 전체 화면을 컴포넌트 구성 + transaction 개수 + 그리드 유무 기준으로 구조적 클러스터링
 - [ ] 유형별 대표 화면 4~5개씩, 총 20~30개 선정 (단순조회/그리드, 조회+상세+CRUD, 복합화면·리포트·특수로직)

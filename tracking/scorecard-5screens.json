@@ -20,8 +20,8 @@
       "axis": "B. 사용자 체감",
       "item": "리뷰 대상 축소율",
       "weight": 11,
-      "value": 0.873,
-      "score": 9.6,
+      "value": 0.8759,
+      "score": 9.63,
       "status": "측정"
     },
     {
@@ -88,7 +88,7 @@
       "unmeasured": 0
     },
     "B. 사용자 체감": {
-      "earned": 19.79,
+      "earned": 19.82,
       "available": 25.0,
       "unmeasured": 0
     },
@@ -103,7 +103,7 @@
       "unmeasured": 0
     }
   },
-  "earned": 80.86,
+  "earned": 80.89,
   "available": 100.0,
   "normalized_100": 80.9,
   "unmeasured_weight": 0.0,
@@ -125,12 +125,12 @@
       "human_edit_measured_screens": 5,
       "human_edit_unmeasured_screens": 0,
       "review_acceptance": 0.998,
-      "generated_lines": 1960,
-      "llm_ported_lines": 247,
-      "flagged_lines": 2,
-      "review_target_lines": 249,
-      "review_ratio": 0.127,
-      "review_reduction": 0.873,
+      "generated_lines": 1966,
+      "llm_ported_lines": 240,
+      "flagged_lines": 4,
+      "review_target_lines": 244,
+      "review_ratio": 0.1241,
+      "review_reduction": 0.8759,
       "llm_calls": 25,
       "rule_handled": 21,
       "deterministic_ratio": 0.4565,
