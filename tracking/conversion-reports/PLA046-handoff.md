@@ -1,9 +1,9 @@
 # PLA046 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-08T16:11:11
+- 생성 시각: 2026-09-09T13:01:44
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla046Api.java, Pla046Dto.java, Pla046Mapper.xml, Pla046Service.java, Pla046Store.java)
-- 사람이 반드시 처리해야 할 항목: **28건**, 확인 권장: 39건
+- 사람이 반드시 처리해야 할 항목: **19건**, 확인 권장: 39건
 
 > 이 문서는 파이프라인이 이미 만든 결과(계획서·생성 이슈·정적 검증·품질 스캔)를 사람이 읽을 순서로 재구성한 것입니다. 자동 변환 결과는 **사람 리뷰 없이 커밋/배포하지 않습니다.**
 
@@ -53,55 +53,29 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
   - 발견: 골격 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04616`) — pPLA04616가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
   - 발견: 골격 생성(skeleton_gen)
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04607`) — dPLA04607가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04616`) — dPLA04616가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04609`) — dPLA04609가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04618`) — dPLA04618가 dbInsert를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04610`) — dPLA04610가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04619`) — dPLA04619가 dbInsert를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04611`) — dPLA04611가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04626`) — dPLA04626가 dbInsert를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04613`) — dPLA04613가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04624`) — dPLA04624가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04614`) — dPLA04614가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04625`) — dPLA04625가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04616`) — dPLA04616가 dbExecuteProcedure를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04617`) — dPLA04617가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04618`) — dPLA04618가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04619`) — dPLA04619가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04626`) — dPLA04626가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04620`) — dPLA04620가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04622`) — dPLA04622가 dbInsert를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04624`) — dPLA04624가 dbExecuteProcedure를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04625`) — dPLA04625가 dbExecuteProcedure를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
-  - 발견: 골격 생성(skeleton_gen)
-  - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
-- **XML_PARSE_ERROR** (451행) — 변환 결과가 유효한 XML이 아닙니다: mismatched tag: line 451, column 4. 원본 XSQL 자체의 태그 짝이 안 맞을 수 있습니다 (문법 치환 규칙 문제가 아니라 원본 데이터 문제일 가능성이 높음) - 원본과 대조해서 확인하세요.
+- **XML_PARSE_ERROR** (902행) — 변환 결과가 유효한 XML이 아닙니다: not well-formed (invalid token): line 902, column 33. 원본 XSQL 자체의 태그 짝이 안 맞을 수 있습니다 (문법 치환 규칙 문제가 아니라 원본 데이터 문제일 가능성이 높음) - 원본과 대조해서 확인하세요.
+  ↳ 원본에 **닫는 따옴표가 빠진 속성**이 3건 있습니다: 902행 <insert id="I005...; 933행 <insert id="I006...; 1032행 <insert id="I007.... 이 부분을 먼저 고쳐야 나머지 검증이 의미를 갖습니다.
   - 발견: Mapper 변환(converters)
   - 조치: XML이 유효하지 않습니다. 원본 XSQL의 태그 짝(예: `<isNotEqual>`이 `</isEqual>`로 닫힘)을 먼저 고쳐야 변환 결과도 유효해집니다.
-- **XML_PARSE_ERROR** (451행) — 유효한 XML이 아닙니다: mismatched tag: line 451, column 4
+- **XML_PARSE_ERROR** (902행) — 유효한 XML이 아닙니다: not well-formed (invalid token): line 902, column 33
   - 발견: 정적 검증(Pla046Mapper.xml)
   - 조치: XML이 유효하지 않습니다. 원본 XSQL의 태그 짝(예: `<isNotEqual>`이 `</isEqual>`로 닫힘)을 먼저 고쳐야 변환 결과도 유효해집니다.
 
@@ -135,16 +109,16 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
   - 발견: 골격 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04617`) — pPLA04617는 순수 위임이 아닙니다(레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
   - 발견: 골격 생성(skeleton_gen)
-- **UNSUPPORTED_TAG** (449행) — 449행: <isEqual> 태그가 변환 후에도 남아있습니다(첫 등장 위치만 표시) - 자동 규칙이 이 화면의 실제 사용 패턴과 다를 수 있으니 원본과 대조해서 수동 확인하세요.
-  - 발견: Mapper 변환(converters)
-  - 조치: 이 변환기가 규칙을 갖고 있지 않은 iBatis 태그입니다. MyBatis 문법으로 직접 옮기세요.
-- **UNSUPPORTED_TAG** (59행) — 59행: <isNotEmpty> 태그가 변환 후에도 남아있습니다(첫 등장 위치만 표시) - 자동 규칙이 이 화면의 실제 사용 패턴과 다를 수 있으니 원본과 대조해서 수동 확인하세요.
-  - 발견: Mapper 변환(converters)
-  - 조치: 이 변환기가 규칙을 갖고 있지 않은 iBatis 태그입니다. MyBatis 문법으로 직접 옮기세요.
 - **REMAPRESULTS_DROPPED** — remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요
   - 발견: Mapper 변환(converters)
   - 조치: remapResults 속성은 MyBatis에 대응이 없어 제거했습니다. 동작 차이가 없는지 확인하세요.
+- **STMT_ID_MAP_MISSING** — <select id="S099">를 D BizUnit의 dbSelect("S099", ...) 호출과 매칭하지 못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요.
+  - 발견: Mapper 변환(converters)
+  - 조치: statement id를 D 메서드명으로 바꾸지 못했습니다. Store가 참조하는 id와 Mapper.xml id를 직접 맞추세요.
 - **STMT_ID_MAP_MISSING** — <select id="S010">를 D BizUnit의 dbSelect("S010", ...) 호출과 매칭하지 못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요.
+  - 발견: Mapper 변환(converters)
+  - 조치: statement id를 D 메서드명으로 바꾸지 못했습니다. Store가 참조하는 id와 Mapper.xml id를 직접 맞추세요.
+- **STMT_ID_MAP_MISSING** — <update id="U003">를 D BizUnit의 db*("U003", ...) 호출과 매칭하지 못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요.
   - 발견: Mapper 변환(converters)
   - 조치: statement id를 D 메서드명으로 바꾸지 못했습니다. Store가 참조하는 id와 Mapper.xml id를 직접 맞추세요.
 - **DTO_FIELD_EXTRACT_INCOMPLETE** (메서드 `pPLA04601`) — pPLA04601: fPLA046QrySelectMainList에서 개별 getField 호출을 찾지 못했습니다 (getFieldMap()으로 통째로 넘기는 구조일 수 있음) - 요청 필드를 수동으로 확인하세요.
@@ -222,7 +196,7 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 - **SQL_INJECTION_RISK** (818행) — ${RSL_CNT}가 1곳(818행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla046Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateInfo`, 216행) — 216행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - EXR_PLN_YM 이 문자열 리터럴이 아니라 미선언 변수로 사용되어 원본 그대로 옮기면 컴파일 에러가 발생한다.
+- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateInfo`, 214행) — 214행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - EXR_PLN_YM 이 문자열 상수가 아니라 미선언 변수로 사용되어 컴파일 에러가 발생함. 원본 그대로 유지.
   - 발견: 품질·취약점 스캔(Pla046Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 

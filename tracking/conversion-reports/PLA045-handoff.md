@@ -1,6 +1,6 @@
 # PLA045 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-08T16:11:11
+- 생성 시각: 2026-09-09T13:01:44
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla045Api.java, Pla045Dto.java, Pla045Mapper.xml, Pla045Service.java, Pla045Store.java)
 - 사람이 반드시 처리해야 할 항목: **2건**, 확인 권장: 9건
@@ -19,7 +19,7 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `PPLA04502`) — PPLA04502가 반환하는 결과 메시지 코드(W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
   - 발견: 골격 생성(skeleton_gen)
-- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04505`) — dPLA04505가 dbExecuteProcedure를 사용합니다 - 이 변환기는 dbSelect만 지원해서 Store 코드를 selectOne으로 생성했습니다(맞지 않음). 원본을 보고 사람이 직접 고쳐야 하며, Mapper.xml의 해당 statement도 <select>가 아닐 수 있습니다.
+- **UNSUPPORTED_DB_VERB** (메서드 `dPLA04505`) — dPLA04505가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
   - 발견: 골격 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
 
@@ -60,16 +60,19 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 - **SQL_INJECTION_RISK** (194행) — ${SUM}가 1곳(194행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla045Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 56행) — 56행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본이 sSum이 아니라 미선언 변수 sSUM을 사용함
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 60행) — 60행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 sSum을 누적하면서 requestData.putField("SUM", sSUM); 으로 대소문자가 다른 미선언 변수 sSUM을 사용함. 원본 그대로 유지.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 58행) — 58행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 닫는 괄호가 누락된 문법 오류였음
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 62행) — 62행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 arrQuaterColMap을 List<Map<String, String>>로 선언해 놓고 HashMap을 대입함(타입 불일치). 원본 그대로 유지.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 59행) — 59행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본에 quaterColList 선언이 없음
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 64행) — 64행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 아래 put 구문 괄호가 닫히지 않아 컴파일 에러가 있음. 원본 그대로 유지.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 61행) — 61행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본에 quaterColList 선언이 없음
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 66행) — 66행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 quaterColList가 선언되지 않았는데 사용함. 원본 그대로 유지.
+  - 발견: 품질·취약점 스캔(Pla045Service.java)
+  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 69행) — 69행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 quaterColList 미선언 상태로 requestData.putField("arrQuaterList", quaterColList); 수행함. 원본 그대로 유지.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 
