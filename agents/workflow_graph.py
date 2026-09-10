@@ -1143,7 +1143,7 @@ def repair_gate_node(state: PipelineState) -> dict:
     round_used = state.get("repair_round", 0)
     max_repair = state.get("max_repair_retries", 2)
 
-    log.stage(5, 8, "REFLECT", f"자기 수정 게이트 — 회차 {round_used}/{max_repair} 사용")
+    log.stage(5, 8, "REFLECT", f"자가 교정 게이트 — 회차 {round_used}/{max_repair} 사용")
     if not targets:
         log.reflect("수리 불필요 → 다음 단계로 진행",
                     "LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 "
@@ -1442,7 +1442,7 @@ def run_pipeline_part_a(
             ("생성 파일", f"{sum(len(f) for f in final_state.get('files', {}).values())}종"),
             ("LLM 포팅 호출", f"{llm_planned}건 (규칙 기반으로 회피 {rule_skipped}건"
                             + (f", 규칙 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
-            ("자기 수정 회차", f"{final_state.get('repair_round', 0)}회"),
+            ("자가 교정 회차", f"{final_state.get('repair_round', 0)}회"),
             ("잔여 BLOCKER", f"{n_block}건"),
             ("동작 일치", eq_line),
             ("반영 여부", "미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨"),
