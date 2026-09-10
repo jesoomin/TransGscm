@@ -15,7 +15,7 @@
 **정직성 규칙**
 - 측정하지 못한 항목은 0점이 아니라 **`미측정`으로 빼고 분모에서도 제외**한다. 못 잰 것을
   0점으로 깎으면 "낮은 점수"가 되고, 만점으로 치면 거짓이 된다. 둘 다 하지 않는다.
-- 기능 동등성(L3)과 사람 수정 라인 비율(L4)은 여전히 **미측정**이다. 이 점수는 L1~L2 층과
+- 동작 일치과 사람 수정 라인 비율(L4)은 여전히 **미측정**이다. 이 점수는 L1~L2 층과
   그 대리 지표에 대한 것이지 "전환이 기능적으로 맞다"는 뜻이 아니다.
 
 사용:
@@ -136,7 +136,7 @@ def developer_experience(state: dict) -> dict:
                 if line_no:
                     flagged.add((screen_id, fname, line_no))
 
-    # B-2 결정론 처리 비중: 포팅 대상 중 규칙으로 처리해 LLM을 아예 안 부른 비율
+    # B-2 규칙 처리 비중: 포팅 대상 중 규칙으로 처리해 LLM을 아예 안 부른 비율
     llm = rule = 0
     for plan in plans.values():
         est = plan.get("estimated_llm_calls", {})
@@ -180,7 +180,7 @@ def developer_experience(state: dict) -> dict:
 
 
 def functional_equivalence(equiv: dict | None) -> dict:
-    """D. 기능 동등성 — AS-IS/TO-BE를 실제로 실행해 비교한 결과(agents/equivalence_test.py).
+    """D. 동작 일치 — AS-IS/TO-BE를 실제로 실행해 비교한 결과(agents/equivalence_test.py).
 
     **일치율과 커버리지를 따로 잡는다.** 실행된 케이스만으로 100%가 나와도, 실행하지 못한 화면이
     있으면 "전부 검증됐다"가 아니다. 한 수치로 합치면 부분 검증이 전체 검증처럼 보인다 - 이
@@ -271,7 +271,7 @@ def detection_accuracy(bench: dict | None) -> dict:
 # 점수 집계
 # ---------------------------------------------------------------------------
 
-# 배점 재조정(2026-09-05): L3(기능 동등성)를 실제로 측정할 수 있게 되면서 D축을 신설했다.
+# 배점 재조정(2026-09-05): L3(동작 일치)를 실제로 측정할 수 있게 되면서 D축을 신설했다.
 # A 40->30, B 30->25, C 30->20으로 낮추고 D에 25를 준다 - 이 프로젝트의 핵심 가설 H3이 "정적
 # 검증만으로는 정확성을 보증할 수 없다"였고 AlphaTrans도 문법 96% vs 기능 25%를 보고한 만큼,
 # "동작이 같은가"는 "컴파일되는가"보다 무게가 커야 한다. 탐지 정확성은 부수 가치라 가장 많이 낮췄다.
@@ -280,16 +280,16 @@ _WEIGHTS = [
     ("A. 전환 성공률", "산출물 생성률", 12, "outputs_rate", "conversion"),
     ("A. 전환 성공률", "정적 검증 통과율", 18, "static_pass_rate", "conversion"),
     ("B. 사용자 체감", "리뷰 대상 축소율", 11, "review_reduction", "dx"),
-    ("B. 사용자 체감", "결정론 처리 비중", 7, "deterministic_ratio", "dx"),
+    ("B. 사용자 체감", "규칙 처리 비중", 7, "deterministic_ratio", "dx"),
     # 멘토 §H가 "가장 중요"라 한 지표라 B축에서 가장 큰 배점을 준다. 스냅샷이 없으면 미측정으로
     # 빠지고 분모에서도 제외된다 - 지금은 사람 리뷰가 시작되지 않아 대개 미측정이다.
     ("B. 사용자 체감", "사람 수정 수용률", 7, "review_acceptance", "dx"),
     ("C. 탐지 정확성", "원본 결함 재현율", 10, "defect_recall", "detect"),
     ("C. 탐지 정확성", "중복 탐지 F1", 10, "dup_f1_proxy", "detect"),
     # 일치율과 커버리지를 따로 채점한다 - 부분 검증이 전체 검증으로 보이지 않게.
-    ("D. 기능 동등성", "F 계층 실행 일치율", 9, "service_match_rate", "equiv"),
-    ("D. 기능 동등성", "Api 계층 실행 일치율", 6, "api_match_rate", "equiv"),
-    ("D. 기능 동등성", "동등성 검증 커버리지", 10, "coverage", "equiv"),
+    ("D. 동작 일치", "업무 로직(F) 일치율", 9, "service_match_rate", "equiv"),
+    ("D. 동작 일치", "화면 요청(Api) 일치율", 6, "api_match_rate", "equiv"),
+    ("D. 동작 일치", "일치 검증 범위", 10, "coverage", "equiv"),
 ]
 
 
@@ -401,7 +401,7 @@ def render(sc: dict) -> str:
                    f"(대상 {x['human_edit_unmeasured_screens']}화면). 저장 시 스냅샷이 남아야 측정됨")
     e = d.get("equivalence", {})
     if e.get("measured"):
-        out.append(f"  기능 동등성   케이스 {e['matched']}/{e['cases']} 일치 "
+        out.append(f"  동작 일치   케이스 {e['matched']}/{e['cases']} 일치 "
                    f"· 화면 {e['screens_executed']}/{e['screens_total']} 실행 "
                    f"(나머지는 AS-IS 원본이 컴파일 불가)")
         if e.get("service_match_rate") is not None:

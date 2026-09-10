@@ -1257,11 +1257,11 @@ if input_mode == "폴더 경로 지정":
                 1: "1단계 규칙기반 변환 (LLM 미사용)",
                 2: "2단계 LLM 포팅",
                 3: "정적 검증 (규칙기반)",
-                # 4단계(기능 동등성 검증)는 2026-09-10 신설 - agents/workflow_graph.py의
+                # 4단계(동작 일치 검증)는 2026-09-10 신설 - agents/workflow_graph.py의
                 # equivalence_check_all 노드가 파이프라인 안에서 항상 자동으로 돈다(전에는
                 # `python -m agents.equivalence_test`로 사람이 따로 돌리는 opt-in 스크립트였다).
                 # 뒤 단계 번호가 전부 하나씩 밀렸다.
-                4: "기능 동등성 검증 (L3, AS-IS/TO-BE 실행 비교)",
+                4: "동작 일치 검증 (L3, AS-IS/TO-BE 실행 비교)",
                 5: "품질·취약점 스캔 (규칙기반)",
                 6: "AI 추천 변환 소스",
                 7: "전체 화면 교차 분석 + 영향도 분석 (임시 사본)",
@@ -1358,12 +1358,12 @@ if input_mode == "폴더 경로 지정":
                                 extra = " — 완료 (포팅 대상 없음)"
                             _render_stage_line(stage_placeholders[2], 2, "✅", extra)
                             _render_stage_line(stage_placeholders[3], 3, "✅", f" — 완료 (전체 {total_screens}개 화면)")
-                            # 4단계(기능 동등성 검증) 진행 중 - 이 사이에 수리 루프(repair_gate/
+                            # 4단계(동작 일치 검증) 진행 중 - 이 사이에 수리 루프(repair_gate/
                             # repair_candidate/select_repair)가 여러 라운드 돌 수도 있지만 그건 3단계
                             # 재검증의 연장이라 여기 표시를 다시 흔들지 않는다(validate_all이 다시
                             # 불리면 이 elif가 또 실행돼 3단계 완료 표시를 갱신할 뿐이다).
                             _render_stage_line(stage_placeholders[4], 4, "🔄", " — 진행 중 (javac/java 컴파일)")
-                            pipeline_status.update(label="🤖 4단계: 기능 동등성 검증 중... (javac/java 컴파일)")
+                            pipeline_status.update(label="🤖 4단계: 동작 일치 검증 중... (javac/java 컴파일)")
                         elif node_name == "equivalence_check_all":
                             eq = partial.get("equivalence_result") or {}
                             if eq.get("skipped") or "error" in eq:

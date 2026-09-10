@@ -1,9 +1,9 @@
-"""L3 기능 동등성 측정 — AS-IS F 로직과 TO-BE Service를 **실제로 실행해서** 결과를 비교한다.
+"""L3 동작 일치 측정 — AS-IS F 로직과 TO-BE Service를 **실제로 실행해서** 결과를 비교한다.
 
 **왜 여태 못 쟀나, 그리고 무엇이 바뀌었나.**
 
 이 프로젝트는 줄곧 "포팅된 Service를 실행할 수단이 없다(Spring Boot를 못 띄운다)"는 이유로
-L3(기능 동등성)를 미측정으로 뒀다. 그런데 그 전제를 다시 따져보니 틀렸다 — 필요한 건 애플리케이션
+L3(동작 일치)를 미측정으로 뒀다. 그런데 그 전제를 다시 따져보니 틀렸다 — 필요한 건 애플리케이션
 기동이 아니라 **F 계층 메서드를 호출할 수 있는 최소 환경**이고, 그건 만들 수 있었다:
 
   - AS-IS가 실제로 쓰는 NEXCORE API 표면은 **10개 남짓의 닫힌 집합**이다(실측: IDataSet의
@@ -613,7 +613,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print("=" * 78)
-    print("  L3 기능 동등성 — AS-IS(F·P) vs TO-BE(Service·Api) 실제 실행 비교")
+    print("  L3 동작 일치 — AS-IS(F·P) vs TO-BE(Service·Api) 실제 실행 비교")
     print("=" * 78)
     for s in res["per_screen"]:
         if s["status"] != "OK":

@@ -1174,7 +1174,7 @@ def route_after_repair_gate(state: PipelineState):
 
 
 def equivalence_check_all_node(state: PipelineState) -> dict:
-    """Stage 6: AS-IS/TO-BE를 실제로 실행해 F/Api 계층 기능 동등성을 비교한다(L3,
+    """Stage 6: AS-IS/TO-BE를 실제로 실행해 F/Api 계층 동작 일치을 비교한다(L3,
     `agents/equivalence_test.py`).
 
     **승격 배경(2026-09-10, 사용자 요청)**: 그동안 이 하네스는 사람이 CLI로 따로 돌리는 연구용
@@ -1201,7 +1201,7 @@ def equivalence_check_all_node(state: PipelineState) -> dict:
 
     from agents import equivalence_test
 
-    log.stage(6, 8, "TOOL", "기능 동등성 검증(L3) — AS-IS/TO-BE를 실제로 실행해 비교")
+    log.stage(6, 8, "TOOL", "동작 일치 검증 — AS-IS/TO-BE를 실제로 실행해 비교")
     screens_data = state.get("screens", {})
     files_by_screen = state.get("files", {})
 
@@ -1230,21 +1230,21 @@ def equivalence_check_all_node(state: PipelineState) -> dict:
 
         if not screen_ids:
             log.observe("동등성 검증 대상 없음", "P/F/D java가 모두 있는 화면이 없음 - 건너뜀")
-            log.end_stage("기능 동등성 검증 건너뜀 — 대상 화면 0건")
+            log.end_stage("동작 일치 검증 건너뜀 — 대상 화면 0건")
             return {"equivalence_result": {"skipped": True, "reason": "대상 화면 없음"}}
 
         try:
             result = equivalence_test.run(asis_dir, screen_ids, tobe_root)
         except Exception as e:  # noqa: BLE001 - 자동 단계라 여기서 죽으면 이후 단계가 전부 막힌다
-            log.block("기능 동등성 검증 실행 실패", str(e)[:300])
-            log.end_stage("기능 동등성 검증 실패 — WARNING으로 기록하고 계속 진행")
+            log.block("동작 일치 검증 실행 실패", str(e)[:300])
+            log.end_stage("동작 일치 검증 실패 — WARNING으로 기록하고 계속 진행")
             return {"equivalence_result": {"error": str(e)}}
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
     if "error" in result:
-        log.block("기능 동등성 검증 실행 불가", result["error"])
-        log.end_stage("기능 동등성 검증 미실행")
+        log.block("동작 일치 검증 실행 불가", result["error"])
+        log.end_stage("동작 일치 검증 미실행")
     else:
         rate = result.get("match_rate")
         rate_text = f"{rate * 100:.1f}%" if rate is not None else "측정 불가(케이스 0건)"
@@ -1252,7 +1252,7 @@ def equivalence_check_all_node(state: PipelineState) -> dict:
             f"동등성 검증 결과 — {result.get('screens_executed', 0)}/{result.get('screens_total', 0)}"
             f"화면 실행, {result.get('matched', 0)}/{result.get('cases', 0)}케이스 일치 ({rate_text})"
         )
-        log.end_stage(f"기능 동등성 검증 완료 — 화면 {result.get('screens_total', 0)}건")
+        log.end_stage(f"동작 일치 검증 완료 — 화면 {result.get('screens_total', 0)}건")
     return {"equivalence_result": result}
 
 
@@ -1441,10 +1441,10 @@ def run_pipeline_part_a(
             ("처리 화면", f"{len(final_state.get('files', {}))}건"),
             ("생성 파일", f"{sum(len(f) for f in final_state.get('files', {}).values())}종"),
             ("LLM 포팅 호출", f"{llm_planned}건 (규칙 기반으로 회피 {rule_skipped}건"
-                            + (f", 결정론 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
+                            + (f", 규칙 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
             ("자기 수정 라운드", f"{final_state.get('repair_round', 0)}회"),
             ("잔여 BLOCKER", f"{n_block}건"),
-            ("기능 동등성(L3)", eq_line),
+            ("동작 일치", eq_line),
             ("반영 여부", "미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨"),
         ])
     return final_state
