@@ -183,10 +183,14 @@ def build_screen_plan(
         for layer, key, name in _FRAGMENTS
         if key == "java" and buckets.get(layer, {}).get(key)
     }
-    # 이 변환기가 못 다루는 D 계층 verb(dbInsert/dbUpdate 등)를 **변환 전에** 드러낸다 - 지금까지
-    # 확보한 원본이 전부 조회 전용이라 검증된 적 없는 경로라서, 계획서에서 미리 경고해야 사람이
-    # "이 화면은 자동 변환을 믿으면 안 된다"를 착수 전에 알 수 있다.
-    unsupported_verbs = unsupported_db_verbs(buckets.get("D", {}).get("java"))
+    # 이 변환기가 못 다루는 D 계층 verb를 **변환 전에** 드러낸다 - XSQL 태그가 실제로 확정해주는
+    # insert/update/delete(2026-09-08 DML 지원 추가분)는 verb 이름과 무관하게 지원으로 보고,
+    # dbExecuteProcedure처럼 대응하는 XSQL 태그가 아예 없는 경우만 남긴다. d_xsql_text 없이 java만
+    # 넘기면 verb 이름만으로 판단해 실제로는 지원되는 것도 미지원으로 잘못 나온다(DPLA046 실측 -
+    # I005/I006/I007이 XSQL엔 <insert>로 정의돼 있는데 이 화이트리스트만 보고 놓쳤었다).
+    unsupported_verbs = unsupported_db_verbs(
+        buckets.get("D", {}).get("java"), buckets.get("D", {}).get("xsql")
+    )
 
     return {
         "plan_version": PLAN_VERSION,

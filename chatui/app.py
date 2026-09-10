@@ -39,6 +39,7 @@ from skeleton_gen import (  # noqa: E402
     extract_dto_fields,
     extract_method_bodies,
     extract_methods,
+    extract_secondary_stmt_owners,
     generate_dto,
     generate_skeletons,
     splice_ported_method,
@@ -49,6 +50,14 @@ from skeleton_gen import (  # noqa: E402
 from validators import validate_screen  # noqa: E402
 from quality_scanner import run_review, llm_review  # noqa: E402
 from react_variant import recommend_react_variant  # noqa: E402
+from d_orchestration_variant import (  # noqa: E402
+    find_multi_statement_d_methods,
+    recommend_d_orchestration_split,
+)
+from cardinality_fix_variant import (  # noqa: E402
+    find_cardinality_mismatches,
+    recommend_cardinality_fix,
+)
 from agents.common_methods import load_registry as load_common_registry  # noqa: E402
 from agents.source_scan import (  # noqa: E402
     FILENAME_RE,
@@ -439,7 +448,7 @@ def _write_batch_files_to_dir(batch_results: list[dict], pilot_root: Path) -> No
     """batch_results의 화면별 파일을 pilot_root 아래 실제 저장 경로와 동일한 상대경로로 쓴다.
 
     `_run_batch_save()`가 실제 `pilot/`에 쓸 때 쓰는 것과 똑같은 `tobe_relpath()` 규칙이다 -
-    다만 여기서는 사람이 승인하기 전에 6~7단계를 미리 돌려보기 위한 임시 사본(pilot_root)에
+    다만 여기서는 사람이 승인하기 전에 7~8단계를 미리 돌려보기 위한 임시 사본(pilot_root)에
     쓰는 것뿐이라, 이 함수는 실제 `pilot/` 폴더에는 손대지 않는다.
     """
     for entry in batch_results:
@@ -454,9 +463,12 @@ def _write_batch_files_to_dir(batch_results: list[dict], pilot_root: Path) -> No
 
 
 def _run_stage_6_7_preview(batch_results: list[dict]) -> dict:
-    """승인·저장 전(1~5단계가 끝난 직후)에 6단계(교차분석+영향도분석)·7단계(Maven 빌드)를 미리
-    실행한다 - 사용자가 "6~7단계까지 파이프라인에 포함하고, 그 다음에 사람이 승인·저장한다"는
+    """승인·저장 전(1~6단계가 끝난 직후)에 7단계(교차분석+영향도분석)·8단계(Maven 빌드)를 미리
+    실행한다 - 사용자가 "이 두 단계까지 파이프라인에 포함하고, 그 다음에 사람이 승인·저장한다"는
     순서를 요청해서(2026-09-02) 원래 저장 이후(Part B)에 있던 이 두 단계를 저장 이전으로 옮겼다.
+    함수명은 만들 당시 번호(6~7단계) 그대로 남겨뒀다 - 2026-09-10 equivalence_check_all 신설로
+    실제 번호는 7~8단계가 됐지만, 여러 곳에서 이 이름으로 참조하고 있어 개명은 별도로 하지 않았다
+    (동작은 그대로, 문서 텍스트만 정확히 갱신).
 
     `cross_analysis.analyze_pilot_folder()`/`validators.check_maven_build()` 둘 다 디스크의
     `pilot/` 트리를 직접 읽는 함수라(로직은 안 바꿈), 아직 저장하지 않은 이번 배치를 대상으로
@@ -614,6 +626,127 @@ def _render_ai_recommendation(screen_id: str, prefix: str, files: dict, buckets:
                                 st.code(recommended, language=lang, line_numbers=True)
                 if variant.rationale:
                     st.markdown(f"**추천 이유**: {variant.rationale}")
+        st.divider()
+
+
+def _render_d_orchestration_recommendation(screen_id: str, buckets: dict | None) -> None:
+    """D 계층 다중 statement 재구성 - AI 추천(2026-09-09, 사용자 제안).
+
+    `extract_secondary_stmt_owners()`가 찾아내는 "D 메서드 하나가 statement를 2개 이상
+    순서대로/조건부로 실행"하는 패턴을 규칙 기반으로 자동 완성하지 않기로 했었는데
+    (docs/03-kickoff-plan.md 2026-09-09 - 조건부 분기가 섞인 사례가 있어서), 대신 기존
+    AI 추천(react_variant.py)과 같은 opt-in·검토필수 패턴으로 제공한다. Store 분할은
+    LLM 없이 규칙 기반(`build_split_store_methods`)이고, F/Service 오케스트레이션만 LLM
+    1회로 만든다 - 결과에 알려지지 않은 Store 호출이 있으면 BLOCKER로 막는다.
+    """
+    if not buckets or not buckets.get("D", {}).get("java"):
+        st.info("D(Java) 파일이 없어 확인할 수 없습니다.")
+        return
+
+    d_java = buckets["D"]["java"]
+    d_xsql = buckets.get("D", {}).get("xsql")
+    candidates = find_multi_statement_d_methods(d_java)
+    if not candidates:
+        st.success("이 화면엔 statement를 2개 이상 실행하는 D 메서드가 없습니다 - 추천 대상 없음.")
+        return
+
+    from skeleton_gen import extract_method_bodies, extract_xsql_stmt_kinds
+
+    bodies = extract_method_bodies(d_java)
+    stmt_kinds = extract_xsql_stmt_kinds(d_xsql) if d_xsql else {}
+
+    st.warning(
+        f"D 메서드 {len(candidates)}개가 statement를 2개 이상 순서대로/조건부로 실행합니다 - "
+        "D 계층은 원래 순수 데이터 접근이어야 하는데 여기 오케스트레이션 로직이 섞여 있습니다. "
+        "아래에서 화면당 F(Service)로 옮기는 안을 AI가 제안합니다(opt-in, 채택 전 반드시 검토)."
+    )
+    for d_method, calls in candidates.items():
+        call_desc = ", ".join(f'{verb}("{sid}")' for verb, sid in calls)
+        st.markdown(f"**{d_method}** — 실행 순서: {call_desc}")
+        rec_key = f"d_orch_{screen_id}_{d_method}"
+        if st.button(f"AI 추천받기 — {d_method}", key=f"d_orch_btn_{screen_id}_{d_method}"):
+            with st.spinner("AI 추천을 받는 중..."):
+                st.session_state[rec_key] = recommend_d_orchestration_split(
+                    d_method=d_method, d_java_body=bodies.get(d_method, ""),
+                    calls=calls, stmt_kinds=stmt_kinds,
+                )
+        rec = st.session_state.get(rec_key)
+        if rec:
+            for issue in rec.issues:
+                text = f"[{issue.severity}/{issue.issue_type}] {issue.message}"
+                if issue.severity == "BLOCKER":
+                    st.error(text)
+                elif issue.severity == "WARNING":
+                    st.warning(text)
+                else:
+                    st.info(text)
+            if rec.split_store_methods:
+                st.caption("추천 Store 분할(규칙 기반, LLM 미사용)")
+                st.code(
+                    "\n\n".join(sm.java for sm in rec.split_store_methods),
+                    language="java", line_numbers=True,
+                )
+            if rec.service_method_java:
+                st.caption("추천 Service 오케스트레이션(AI 생성 - 채택 전 검토 필수)")
+                st.code(rec.service_method_java, language="java", line_numbers=True)
+        st.divider()
+
+
+def _render_cardinality_fix_recommendation(screen_id: str, prefix: str, files: dict, buckets: dict | None) -> None:
+    """Store 카디널리티(단건/다건) 불일치 - AI 추천(2026-09-10, 사용자 요청).
+
+    `STORE_CARDINALITY_MISMATCH`(skeleton_gen.py)로 잡힌 D 메서드는 원본이 다건(recordset)으로
+    다루는데 Store가 단건(selectOne)으로 생성돼 있다 - 자동으로 고치지 않기로 한 이유
+    (docs/03-kickoff-plan.md 2026-09-10)는 Store 반환 타입 변경이 Service/Api까지 연쇄되는
+    아키텍처 결정이기 때문. `d_orchestration_variant.py`와 같은 opt-in·검토필수 패턴으로 제공한다 -
+    Store 수정은 규칙 기반(LLM 미사용), Service 적응만 LLM 1회.
+    """
+    if not buckets or not buckets.get("D", {}).get("java"):
+        st.info("D(Java) 파일이 없어 확인할 수 없습니다.")
+        return
+
+    d_java = buckets["D"]["java"]
+    f_java = buckets.get("F", {}).get("java")
+    p_java = buckets.get("P", {}).get("java")
+    d_xsql = buckets.get("D", {}).get("xsql")
+    mismatches = find_cardinality_mismatches(d_java, f_java, p_java, d_xsql)
+    if not mismatches:
+        st.success("이 화면엔 카디널리티(단건/다건) 불일치가 없습니다 - 추천 대상 없음.")
+        return
+
+    st.warning(
+        f"D 메서드 {len(mismatches)}개가 원본에서는 다건(recordset)으로 쓰이는데 Store는 단건"
+        "(`selectOne`)으로 생성돼 있습니다 - 실제로 2행 이상 나오면 런타임에 "
+        "`TooManyResultsException`이 납니다. 아래에서 Store/Service 수정안을 AI가 제안합니다"
+        "(opt-in, 채택 전 반드시 검토)."
+    )
+    service_java = files.get(f"{prefix}Service.java", "")
+    for d_method, stmt_id in mismatches.items():
+        st.markdown(f"**{d_method}** (statement `{stmt_id}`)")
+        rec_key = f"card_fix_{screen_id}_{d_method}"
+        if st.button(f"AI 추천받기 — {d_method}", key=f"card_fix_btn_{screen_id}_{d_method}"):
+            with st.spinner("AI 추천을 받는 중..."):
+                current_service_method = find_current_service_method(service_java, d_method)
+                st.session_state[rec_key] = recommend_cardinality_fix(
+                    d_method=d_method, mapper_stmt_id=stmt_id,
+                    f_java_text=f_java, current_service_method=current_service_method,
+                )
+        rec = st.session_state.get(rec_key)
+        if rec:
+            for issue in rec.issues:
+                text = f"[{issue.severity}/{issue.issue_type}] {issue.message}"
+                if issue.severity == "BLOCKER":
+                    st.error(text)
+                elif issue.severity == "WARNING":
+                    st.warning(text)
+                else:
+                    st.info(text)
+            if rec.store_java:
+                st.caption("추천 Store 수정(규칙 기반, LLM 미사용)")
+                st.code(rec.store_java, language="java", line_numbers=True)
+            if rec.service_java:
+                st.caption("추천 Service 적응(AI 생성 - 채택 전 검토 필수)")
+                st.code(rec.service_java, language="java", line_numbers=True)
         st.divider()
 
 
@@ -880,7 +1013,7 @@ def _render_conversion_plan(plan: dict | None, plan_path: str | None) -> None:
     st.caption(
         f"2단계 포팅 {est.get('porting', 0)}건 - 단순 위임 {est.get('porting_skipped_rule_based', 0)}건은 "
         "규칙 기반으로 생성돼 LLM을 부르지 않습니다. AI 추천은 nctRid당 1회로 "
-        f"{est.get('ai_recommend', 0)}건 예상(5단계를 켠 경우)."
+        f"{est.get('ai_recommend', 0)}건 예상(6단계를 켠 경우)."
     )
     if plan.get("rule_based_delegations"):
         st.caption("단순 위임(규칙 기반 생성): " + ", ".join(
@@ -921,13 +1054,15 @@ def _render_batch_screen_detail(
 
     blocker_n = sum(1 for r in validation_results if not r.passed)
     review_n = sum(len(v) for v in review_findings.values())
-    tab_plan, tab_handoff, tab_files, tab_validation, tab_review, tab_ai, tab_diff = st.tabs([
+    tab_plan, tab_handoff, tab_files, tab_validation, tab_review, tab_ai, tab_dorch, tab_card, tab_diff = st.tabs([
         "📋 변환 계획",
         "📝 인수인계",
         f"📄 소스 ({len(files)}개 파일)",
         f"🔍 정적 검증 ({len(validation_results) - blocker_n}/{len(validation_results)} 통과)",
         f"🛡️ 품질/취약점 스캔 ({review_n}건)",
         "🎨 AI 추천",
+        "🔀 D계층 재구성",
+        "📐 카디널리티 수정",
         "🧪 차등 테스트",
     ])
 
@@ -1008,6 +1143,12 @@ def _render_batch_screen_detail(
     with tab_ai:
         _render_ai_recommendation(screen_id, to_prefix(screen_id), files, buckets)
 
+    with tab_dorch:
+        _render_d_orchestration_recommendation(screen_id, buckets)
+
+    with tab_card:
+        _render_cardinality_fix_recommendation(screen_id, to_prefix(screen_id), files, buckets)
+
     with tab_diff:
         _render_diff_test(screen_id, buckets, package_p1, package_p2)
 
@@ -1031,8 +1172,8 @@ package_p1, package_p2 = "TODO", "TODO"
 
 if input_mode == "폴더 경로 지정":
     st.caption(
-        "폴더를 지정하면 1~7단계가 전부 자동으로 이어서 진행됩니다(진행 상태가 실시간으로 "
-        "표시됩니다) - 6단계(교차분석+영향도분석)·7단계(Maven 빌드)는 아직 저장하지 않은 이번 "
+        "폴더를 지정하면 1~8단계가 전부 자동으로 이어서 진행됩니다(진행 상태가 실시간으로 "
+        "표시됩니다) - 7단계(교차분석+영향도분석)·8단계(Maven 빌드)는 아직 저장하지 않은 이번 "
         "배치를 임시 사본(pilot/ 전체 복사본 + 이번 배치 파일)에 미리 반영해서 확인합니다. "
         "실제 pilot/ 폴더와 DB에는 사람이 결과를 검토하고 '승인하고 저장'을 눌러야만 반영됩니다 "
         "(CLAUDE.md \"사람 리뷰 없는 자동 저장 금지\" 원칙)."
@@ -1059,7 +1200,7 @@ if input_mode == "폴더 경로 지정":
 
             pipeline_target_ids = st.multiselect(
                 "파이프라인 대상 화면", screen_ids, default=screen_ids, key="pipeline_target_ids",
-                help="화면이 많을수록 2단계(LLM 포팅)·5단계(AI 추천) LLM 호출이 늘어납니다 - "
+                help="화면이 많을수록 2단계(LLM 포팅)·6단계(AI 추천) LLM 호출이 늘어납니다 - "
                      "파일럿 단계에서는 몇 개만 골라 돌려보는 걸 권장합니다.",
             )
             if pipeline_target_ids:
@@ -1078,8 +1219,8 @@ if input_mode == "폴더 경로 지정":
             opt_cols = st.columns([2, 1, 1])
             with opt_cols[0]:
                 pipeline_include_ai = st.checkbox(
-                    "5단계(AI 추천) 포함", value=True, key="pipeline_include_ai",
-                    help="끄면 5단계를 건너뛰고 바로 승인 대기로 넘어갑니다 - nctRid 개수만큼 LLM "
+                    "6단계(AI 추천) 포함", value=True, key="pipeline_include_ai",
+                    help="끄면 6단계를 건너뛰고 바로 승인 대기로 넘어갑니다 - nctRid 개수만큼 LLM "
                          "Gateway 호출이 추가되니(약 4초/건) 화면이 많을 때는 꺼도 됩니다.",
                 )
             with opt_cols[1]:
@@ -1116,154 +1257,208 @@ if input_mode == "폴더 경로 지정":
                 1: "1단계 규칙기반 변환 (LLM 미사용)",
                 2: "2단계 LLM 포팅",
                 3: "정적 검증 (규칙기반)",
-                4: "품질·취약점 스캔 (규칙기반)",
-                5: "AI 추천 변환 소스",
-                6: "전체 화면 교차 분석 + 영향도 분석 (임시 사본)",
-                7: "Maven 빌드 검증 (임시 사본)",
+                # 4단계(기능 동등성 검증)는 2026-09-10 신설 - agents/workflow_graph.py의
+                # equivalence_check_all 노드가 파이프라인 안에서 항상 자동으로 돈다(전에는
+                # `python -m agents.equivalence_test`로 사람이 따로 돌리는 opt-in 스크립트였다).
+                # 뒤 단계 번호가 전부 하나씩 밀렸다.
+                4: "기능 동등성 검증 (L3, AS-IS/TO-BE 실행 비교)",
+                5: "품질·취약점 스캔 (규칙기반)",
+                6: "AI 추천 변환 소스",
+                7: "전체 화면 교차 분석 + 영향도 분석 (임시 사본)",
+                8: "Maven 빌드 검증 (임시 사본)",
             }
 
             def _render_stage_line(placeholder, num: int, icon: str, extra: str = "") -> None:
                 placeholder.markdown(f"{icon} **{num}. {_STAGE_LABELS[num]}**{extra}")
 
             if st.button(
-                f"▶️ 파이프라인 시작 (계획 수립 + 1~7단계, {len(pipeline_target_ids)}개 화면)",
+                f"▶️ 파이프라인 시작 (계획 수립 + 1~8단계, {len(pipeline_target_ids)}개 화면)",
                 disabled=not pipeline_target_ids, key="pipeline_start_btn",
             ):
                 from agents.workflow_graph import run_pipeline_part_a
 
-                pipeline_screens = {sid: screens[sid] for sid in pipeline_target_ids}
-                stage_placeholders = {n: st.empty() for n in range(0, 8)}
-                for n in range(0, 8):
-                    _render_stage_line(stage_placeholders[n], n, "⏳", " — 대기")
-                if not pipeline_include_ai:
-                    _render_stage_line(stage_placeholders[5], 5, "⏭️", " — 건너뜀(선택 해제됨)")
+                # st.status()로 감싸서 "에이전트가 단계별로 생각하며 진행하는" 느낌을 준다
+                # (2026-09-10, 사용자 요청) - 안의 화면별 체크리스트(stage_placeholders/
+                # _render_stage_line)는 손대지 않았다(이미 검증된 로직) - 그 바깥에 실행 중
+                # 스피너 + 현재 활동 한 줄을 보여주는 상위 레이어만 추가했다. `.update(label=...)`
+                # 호출은 순수 표시용이라 실패해도 파이프라인 자체에는 영향이 없다.
+                with st.status("🤖 파이프라인 준비 중...", expanded=True, state="running") as pipeline_status:
+                    pipeline_screens = {sid: screens[sid] for sid in pipeline_target_ids}
+                    stage_placeholders = {n: st.empty() for n in range(0, 9)}
+                    for n in range(0, 9):
+                        _render_stage_line(stage_placeholders[n], n, "⏳", " — 대기")
+                    if not pipeline_include_ai:
+                        _render_stage_line(stage_placeholders[6], 6, "⏭️", " — 건너뜀(선택 해제됨)")
 
-                total_screens = len(pipeline_target_ids)
+                    total_screens = len(pipeline_target_ids)
 
-                # 5단계(AI 추천) 대상 건수는 화면의 P/F 원본 텍스트만으로 미리 셀 수 있다(포팅 결과와
-                # 무관 - extract_dto_fields는 원본 P/F/.bizunit 텍스트에서 nctRid별 필드를 뽑는
-                # 결정론적 함수다, chatui/react_variant.py·agents/workflow_graph.py와 동일 호출).
-                # 파이프라인을 시작하기 전에 "총 N건 중 몇 건 남았는지"를 보여주려면 이 총량을
-                # 먼저 알아야 한다 - 재추출이 아니라 진행률 표시용으로 같은 함수를 한 번 더 부르는 것뿐.
-                total_ai = 0
-                if pipeline_include_ai:
-                    for sid in pipeline_target_ids:
-                        buckets = pipeline_screens[sid]
-                        p_java = buckets.get("P", {}).get("java")
-                        if not p_java:
-                            continue
-                        total_ai += len(extract_dto_fields(
-                            p_java, buckets.get("F", {}).get("java"), buckets.get("P", {}).get("bizunit"),
-                        ))
+                    # 6단계(AI 추천) 대상 건수는 화면의 P/F 원본 텍스트만으로 미리 셀 수 있다(포팅 결과와
+                    # 무관 - extract_dto_fields는 원본 P/F/.bizunit 텍스트에서 nctRid별 필드를 뽑는
+                    # 결정론적 함수다, chatui/react_variant.py·agents/workflow_graph.py와 동일 호출).
+                    # 파이프라인을 시작하기 전에 "총 N건 중 몇 건 남았는지"를 보여주려면 이 총량을
+                    # 먼저 알아야 한다 - 재추출이 아니라 진행률 표시용으로 같은 함수를 한 번 더 부르는 것뿐.
+                    total_ai = 0
+                    if pipeline_include_ai:
+                        for sid in pipeline_target_ids:
+                            buckets = pipeline_screens[sid]
+                            p_java = buckets.get("P", {}).get("java")
+                            if not p_java:
+                                continue
+                            total_ai += len(extract_dto_fields(
+                                p_java, buckets.get("F", {}).get("java"), buckets.get("P", {}).get("bizunit"),
+                            ))
 
-                # 2단계(LLM 포팅) 대상 건수는 1단계(convert_all)가 끝나야 알 수 있다 - 화면마다
-                # Service.java가 실제로 생성됐고 F 메서드가 있어야 포팅 대상이 되기 때문(_convert_screen
-                # 참고). convert_all 노드가 끝나는 순간 partial["pending_methods"]로 정확한 총량을 받는다.
-                _counts = {"port": 0, "total_port": None, "ai": 0}
+                    # 2단계(LLM 포팅) 대상 건수는 1단계(convert_all)가 끝나야 알 수 있다 - 화면마다
+                    # Service.java가 실제로 생성됐고 F 메서드가 있어야 포팅 대상이 되기 때문(_convert_screen
+                    # 참고). convert_all 노드가 끝나는 순간 partial["pending_methods"]로 정확한 총량을 받는다.
+                    _counts = {"port": 0, "total_port": None, "ai": 0}
 
-                def _pipeline_progress_cb(node_name: str, partial: dict) -> None:
-                    if node_name == "plan_all":
-                        _written = partial.get("plan_paths", {}) or {}
-                        _ok = [k for k in _written if not k.startswith("_")]
-                        _render_stage_line(
-                            stage_placeholders[0], 0, "✅",
-                            f" — 완료 ({len(_ok)}개 화면 계획 기록)"
-                            + (f" · {_written.get('_error')}" if "_error" in _written else ""),
-                        )
-                        _render_stage_line(stage_placeholders[1], 1, "🔄", " — 진행 중")
-                    elif node_name == "convert_all":
-                        pending = partial.get("pending_methods", {}) or {}
-                        _counts["total_port"] = sum(len(v) for v in pending.values())
-                        _render_stage_line(stage_placeholders[1], 1, "✅", f" — 완료 (전체 {total_screens}개 화면)")
-                        if _counts["total_port"]:
+                    def _pipeline_progress_cb(node_name: str, partial: dict) -> None:
+                        if node_name == "plan_all":
+                            _written = partial.get("plan_paths", {}) or {}
+                            _ok = [k for k in _written if not k.startswith("_")]
                             _render_stage_line(
-                                stage_placeholders[2], 2, "🔄",
-                                f" — 0/{_counts['total_port']}건 진행 중 (남음 {_counts['total_port']}건)",
+                                stage_placeholders[0], 0, "✅",
+                                f" — 완료 ({len(_ok)}개 화면 계획 기록)"
+                                + (f" · {_written.get('_error')}" if "_error" in _written else ""),
                             )
-                        else:
-                            _render_stage_line(stage_placeholders[2], 2, "🔄", " — 포팅 대상 없음")
-                    elif node_name == "port_one_screen_method":
-                        _counts["port"] += 1
-                        total = _counts["total_port"] or _counts["port"]
-                        remaining = max(total - _counts["port"], 0)
-                        _render_stage_line(
-                            stage_placeholders[2], 2, "🔄",
-                            f" — {_counts['port']}/{total}건 진행 중 (남음 {remaining}건)",
-                        )
-                    elif node_name == "validate_all":
-                        total = _counts["total_port"] or 0
-                        if total:
-                            extra = f" — 완료 ({min(_counts['port'], total)}/{total}건)"
-                        else:
-                            extra = " — 완료 (포팅 대상 없음)"
-                        _render_stage_line(stage_placeholders[2], 2, "✅", extra)
-                        _render_stage_line(stage_placeholders[3], 3, "✅", f" — 완료 (전체 {total_screens}개 화면)")
-                        _render_stage_line(stage_placeholders[4], 4, "🔄", " — 진행 중")
-                    elif node_name == "scan_all":
-                        _render_stage_line(stage_placeholders[4], 4, "✅", f" — 완료 (전체 {total_screens}개 화면)")
-                        if pipeline_include_ai:
-                            if total_ai:
+                            _render_stage_line(stage_placeholders[1], 1, "🔄", " — 진행 중")
+                            pipeline_status.update(label="🤖 1단계: 규칙 기반 변환 중...")
+                        elif node_name == "convert_all":
+                            pending = partial.get("pending_methods", {}) or {}
+                            _counts["total_port"] = sum(len(v) for v in pending.values())
+                            _render_stage_line(stage_placeholders[1], 1, "✅", f" — 완료 (전체 {total_screens}개 화면)")
+                            if _counts["total_port"]:
                                 _render_stage_line(
-                                    stage_placeholders[5], 5, "🔄", f" — 0/{total_ai}건 진행 중 (남음 {total_ai}건)",
+                                    stage_placeholders[2], 2, "🔄",
+                                    f" — 0/{_counts['total_port']}건 진행 중 (남음 {_counts['total_port']}건)",
+                                )
+                                pipeline_status.update(
+                                    label=f"🤖 2단계: LLM 포팅 중... (0/{_counts['total_port']}건)"
                                 )
                             else:
-                                _render_stage_line(stage_placeholders[5], 5, "🔄", " — 대상 nctRid 없음")
-                    elif node_name == "ai_recommend_one":
-                        _counts["ai"] += 1
-                        total = total_ai or _counts["ai"]
-                        remaining = max(total - _counts["ai"], 0)
+                                _render_stage_line(stage_placeholders[2], 2, "🔄", " — 포팅 대상 없음")
+                                pipeline_status.update(label="🤖 2단계: 포팅 대상 없음 — 다음 단계로")
+                        elif node_name == "port_one_screen_method":
+                            _counts["port"] += 1
+                            total = _counts["total_port"] or _counts["port"]
+                            remaining = max(total - _counts["port"], 0)
+                            _render_stage_line(
+                                stage_placeholders[2], 2, "🔄",
+                                f" — {_counts['port']}/{total}건 진행 중 (남음 {remaining}건)",
+                            )
+                            pipeline_status.update(
+                                label=f"🤖 2단계: LLM 포팅 중... ({_counts['port']}/{total}건, 남음 {remaining}건)"
+                            )
+                        elif node_name == "validate_all":
+                            total = _counts["total_port"] or 0
+                            if total:
+                                extra = f" — 완료 ({min(_counts['port'], total)}/{total}건)"
+                            else:
+                                extra = " — 완료 (포팅 대상 없음)"
+                            _render_stage_line(stage_placeholders[2], 2, "✅", extra)
+                            _render_stage_line(stage_placeholders[3], 3, "✅", f" — 완료 (전체 {total_screens}개 화면)")
+                            # 4단계(기능 동등성 검증) 진행 중 - 이 사이에 수리 루프(repair_gate/
+                            # repair_candidate/select_repair)가 여러 라운드 돌 수도 있지만 그건 3단계
+                            # 재검증의 연장이라 여기 표시를 다시 흔들지 않는다(validate_all이 다시
+                            # 불리면 이 elif가 또 실행돼 3단계 완료 표시를 갱신할 뿐이다).
+                            _render_stage_line(stage_placeholders[4], 4, "🔄", " — 진행 중 (javac/java 컴파일)")
+                            pipeline_status.update(label="🤖 4단계: 기능 동등성 검증 중... (javac/java 컴파일)")
+                        elif node_name == "equivalence_check_all":
+                            eq = partial.get("equivalence_result") or {}
+                            if eq.get("skipped") or "error" in eq:
+                                extra = " — 완료 (실행 불가: " + (eq.get("reason") or eq.get("error") or "알 수 없음")[:80] + ")"
+                            elif eq.get("cases"):
+                                rate = eq.get("match_rate")
+                                extra = (
+                                    f" — 완료 ({eq.get('screens_executed', 0)}/{eq.get('screens_total', 0)}화면 실행, "
+                                    f"{eq.get('matched', 0)}/{eq.get('cases', 0)}케이스 일치"
+                                    + (f" {rate * 100:.1f}%)" if rate is not None else ")")
+                                )
+                            else:
+                                extra = f" — 완료 (0/{eq.get('screens_total', 0)}화면 실행 - 비교 가능한 케이스 없음)"
+                            _render_stage_line(stage_placeholders[4], 4, "✅", extra)
+                            _render_stage_line(stage_placeholders[5], 5, "🔄", " — 진행 중")
+                            pipeline_status.update(label="🤖 5단계: 품질·취약점 스캔 중...")
+                        elif node_name == "scan_all":
+                            _render_stage_line(stage_placeholders[5], 5, "✅", f" — 완료 (전체 {total_screens}개 화면)")
+                            if pipeline_include_ai:
+                                if total_ai:
+                                    _render_stage_line(
+                                        stage_placeholders[6], 6, "🔄", f" — 0/{total_ai}건 진행 중 (남음 {total_ai}건)",
+                                    )
+                                    pipeline_status.update(label=f"🤖 6단계: AI 추천 생성 중... (0/{total_ai}건)")
+                                else:
+                                    _render_stage_line(stage_placeholders[6], 6, "🔄", " — 대상 nctRid 없음")
+                                    pipeline_status.update(label="🤖 6단계: AI 추천 대상 없음 — 마무리 중")
+                            else:
+                                pipeline_status.update(label="🤖 마무리 중... (교차 분석 준비)")
+                        elif node_name == "ai_recommend_one":
+                            _counts["ai"] += 1
+                            total = total_ai or _counts["ai"]
+                            remaining = max(total - _counts["ai"], 0)
+                            _render_stage_line(
+                                stage_placeholders[6], 6, "🔄",
+                                f" — {_counts['ai']}/{total}건 진행 중 (남음 {remaining}건)",
+                            )
+                            pipeline_status.update(
+                                label=f"🤖 6단계: AI 추천 생성 중... ({_counts['ai']}/{total}건, 남음 {remaining}건)"
+                            )
+
+                    final_state = run_pipeline_part_a(
+                        pipeline_screens, package_map,
+                        include_ai_recommend=pipeline_include_ai, max_retries=pipeline_max_retries,
+                        max_repair_retries=pipeline_max_repair, all_paths=all_paths,
+                        progress_cb=_pipeline_progress_cb,
+                    )
+                    if pipeline_include_ai:
+                        if total_ai:
+                            extra = f" — 완료 ({min(_counts['ai'], total_ai)}/{total_ai}건)"
+                        else:
+                            extra = " — 완료 (대상 nctRid 없음)"
+                        _render_stage_line(stage_placeholders[6], 6, "✅", extra)
+
+                    # 3단계에서 BLOCKER가 나서 LLM에게 다시 고치게 한 라운드가 있었으면 그 사실을
+                    # 남긴다(수리 자체는 repair_gate 노드가 그래프 안에서 처리 - 여기선 표시만).
+                    _repair_rounds = final_state.get("repair_round", 0)
+                    if _repair_rounds:
                         _render_stage_line(
-                            stage_placeholders[5], 5, "🔄",
-                            f" — {_counts['ai']}/{total}건 진행 중 (남음 {remaining}건)",
+                            stage_placeholders[3], 3, "✅",
+                            f" — 완료 (BLOCKER 수리 {_repair_rounds}라운드 수행 후 재검증)",
                         )
 
-                final_state = run_pipeline_part_a(
-                    pipeline_screens, package_map,
-                    include_ai_recommend=pipeline_include_ai, max_retries=pipeline_max_retries,
-                    max_repair_retries=pipeline_max_repair, all_paths=all_paths,
-                    progress_cb=_pipeline_progress_cb,
-                )
-                if pipeline_include_ai:
-                    if total_ai:
-                        extra = f" — 완료 ({min(_counts['ai'], total_ai)}/{total_ai}건)"
-                    else:
-                        extra = " — 완료 (대상 nctRid 없음)"
-                    _render_stage_line(stage_placeholders[5], 5, "✅", extra)
-
-                # 3단계에서 BLOCKER가 나서 LLM에게 다시 고치게 한 라운드가 있었으면 그 사실을
-                # 남긴다(수리 자체는 repair_gate 노드가 그래프 안에서 처리 - 여기선 표시만).
-                _repair_rounds = final_state.get("repair_round", 0)
-                if _repair_rounds:
-                    _render_stage_line(
-                        stage_placeholders[3], 3, "✅",
-                        f" — 완료 (BLOCKER 수리 {_repair_rounds}라운드 수행 후 재검증)",
+                    pipeline_batch_results = _pipeline_state_to_batch_results(
+                        final_state, pipeline_screens, all_paths, package_map,
                     )
 
-                pipeline_batch_results = _pipeline_state_to_batch_results(
-                    final_state, pipeline_screens, all_paths, package_map,
-                )
+                    # 화면별 "미변환 사유 + 수동 처리 가이드"를 파일로 남긴다(멘토 코멘트 §A) - 새로
+                    # 계산하는 값 없이 위 결과를 사람이 읽을 순서로 재구성만 한다.
+                    from agents.handoff_report import write_reports
 
-                # 화면별 "미변환 사유 + 수동 처리 가이드"를 파일로 남긴다(멘토 코멘트 §A) - 새로
-                # 계산하는 값 없이 위 결과를 사람이 읽을 순서로 재구성만 한다.
-                from agents.handoff_report import write_reports
+                    try:
+                        handoff_paths = write_reports(pipeline_batch_results)
+                    except OSError as e:
+                        handoff_paths = {}
+                        st.warning(f"인수인계 문서 기록 실패(변환 결과에는 영향 없음): {e}")
 
-                try:
-                    handoff_paths = write_reports(pipeline_batch_results)
-                except OSError as e:
-                    handoff_paths = {}
-                    st.warning(f"인수인계 문서 기록 실패(변환 결과에는 영향 없음): {e}")
+                    pipeline_status.update(label="🤖 7단계: 전체 화면 교차 분석 중... (임시 사본)")
+                    _render_stage_line(stage_placeholders[7], 7, "🔄", " — 진행 중 (임시 사본 준비 중)")
+                    _render_stage_line(stage_placeholders[8], 8, "⏳", " — 대기")
+                    stage67_preview = _run_stage_6_7_preview(pipeline_batch_results)
+                    _render_stage_line(
+                        stage_placeholders[7], 7, "✅",
+                        f" — 완료 (중복 후보 {len(stage67_preview['cross_result'].duplicate_groups)}건, "
+                        f"DB 기준 중복 함수 {len(stage67_preview['dup_methods'])}건, "
+                        f"영향도 대시보드 {len(stage67_preview['dashboard_rows'])}건)",
+                    )
+                    pipeline_status.update(label="🤖 8단계: Maven 빌드 검증 중... (임시 사본)")
+                    maven_ok = stage67_preview["maven_result"].passed
+                    _render_stage_line(stage_placeholders[8], 8, "✅" if maven_ok else "❌", " — 완료")
 
-                _render_stage_line(stage_placeholders[6], 6, "🔄", " — 진행 중 (임시 사본 준비 중)")
-                _render_stage_line(stage_placeholders[7], 7, "⏳", " — 대기")
-                stage67_preview = _run_stage_6_7_preview(pipeline_batch_results)
-                _render_stage_line(
-                    stage_placeholders[6], 6, "✅",
-                    f" — 완료 (중복 후보 {len(stage67_preview['cross_result'].duplicate_groups)}건, "
-                    f"DB 기준 중복 함수 {len(stage67_preview['dup_methods'])}건, "
-                    f"영향도 대시보드 {len(stage67_preview['dashboard_rows'])}건)",
-                )
-                maven_ok = stage67_preview["maven_result"].passed
-                _render_stage_line(stage_placeholders[7], 7, "✅" if maven_ok else "❌", " — 완료")
+                    pipeline_status.update(
+                        label="✅ 파이프라인 완료 — 아래에서 화면별 결과를 검토하고 저장하세요.",
+                        state="complete", expanded=False,
+                    )
 
                 st.session_state["pipeline_final_state"] = final_state
                 st.session_state["pipeline_screens"] = pipeline_screens
@@ -1283,8 +1478,8 @@ if input_mode == "폴더 경로 지정":
                     if not r["error"] and r["validation_total"] == r["validation_pass"]
                 )
                 st.write(
-                    f"1~5단계 완료(화면별): {len(pipeline_batch_results)}개 화면 중 정적 검증 전부 통과 {ok_n}개 "
-                    "— 6~7단계 결과는 아래 참고"
+                    f"1~6단계 완료(화면별): {len(pipeline_batch_results)}개 화면 중 정적 검증 전부 통과 {ok_n}개 "
+                    "— 7~8단계 결과는 아래 참고"
                 )
                 st.caption("화면 ID를 누르면 바로 아래에 소스/검증/스캔/AI추천 상세가 나타납니다. "
                            "선택된 화면은 파란색으로 표시됩니다.")
@@ -1343,7 +1538,7 @@ if input_mode == "폴더 경로 지정":
                 stage67_preview = st.session_state.get("pipeline_stage67_preview")
                 if stage67_preview:
                     st.divider()
-                    st.markdown("### 6~7단계 결과 (승인 전 미리보기)")
+                    st.markdown("### 7~8단계 결과 (승인 전 미리보기)")
                     st.caption(
                         "실제 pilot/ 폴더는 아직 그대로입니다 - 이번 배치 파일을 pilot/ 임시 사본에 "
                         "겹쳐 써서 미리 확인한 결과입니다. 아래 DB 기준 중복/미사용 함수는 이미 저장된 "
@@ -1567,6 +1762,7 @@ if screen_id:
                 package_p2=package_p2,
                 stmt_id_to_method=skel.stmt_id_to_method,
                 common_statements=set(common_registry.get("statements", [])),
+                secondary_stmt_owners=extract_secondary_stmt_owners(buckets["D"].get("java")),
             )
             mapper_result.mybatis_xml = doc_result.mybatis_xml
             mapper_result.issues.extend(doc_result.issues)
@@ -2010,6 +2206,12 @@ if screen_id:
 
             with st.expander("🎨 AI 추천 (opt-in, 비교용)", expanded=False):
                 _render_ai_recommendation(screen_id, to_prefix(screen_id), files, buckets)
+
+            with st.expander("🔀 D계층 재구성 (opt-in, 검토용)", expanded=False):
+                _render_d_orchestration_recommendation(screen_id, buckets)
+
+            with st.expander("📐 카디널리티 수정 (opt-in, 검토용)", expanded=False):
+                _render_cardinality_fix_recommendation(screen_id, to_prefix(screen_id), files, buckets)
 
             with st.expander("🧪 차등 테스트 (더미 데이터 자동 생성)", expanded=False):
                 _render_diff_test(screen_id, buckets, package_p1, package_p2)

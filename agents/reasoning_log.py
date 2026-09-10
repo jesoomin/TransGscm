@@ -28,6 +28,7 @@ import os
 import sys
 import threading
 import time
+import unicodedata
 
 # ANSI 색상 - 파이프로 넘길 때(리다이렉션)는 자동으로 끈다. Windows 터미널은 최근 버전이 ANSI를
 # 기본 지원하지만, 안 되는 환경도 있어서 GSCM_LOG_COLOR=0으로 강제로 끌 수 있게 뒀다.
@@ -64,7 +65,30 @@ _KINDS = {
     "PASS":     (_C.GREEN,   "PASS"),
     "BLOCK":    (_C.RED,     "BLOCK"),
     "RESULT":   (_C.BOLD,    "RESULT"),
+    "THINK":    (_C.GREEN,   "THINK"),     # 모델이 스스로 밝힌 변경 근거 (모델의 말 그대로)
 }
+
+
+def _wrap(text: str, width: int) -> list[str]:
+    """한글이 섞인 문장을 **터미널 표시 폭** 기준으로 접는다.
+
+    `textwrap`은 공백 없는 한글 덩어리를 못 쪼개고, 글자 수로 자르면 한글이 터미널에서 두 칸을
+    차지해 실제 줄 길이가 두 배가 된다(실측: 76자로 잘랐더니 화면에서는 140칸을 넘어 접혔다).
+    영상에서 줄이 접히면 로그가 못 읽게 되므로 East Asian Width를 반영해 센다.
+    """
+    text = " ".join(text.split())
+    lines: list[str] = []
+    cur, w = "", 0
+    for ch in text:
+        cw = 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+        if w + cw > width and cur:
+            lines.append(cur)
+            cur, w = "", 0
+        cur += ch
+        w += cw
+    if cur:
+        lines.append(cur)
+    return lines or [""]
 
 
 class ReasoningLog:
@@ -83,6 +107,14 @@ class ReasoningLog:
     def enable(self) -> None:
         self._on = True
         self._color = _color_enabled()
+        # Windows 기본 콘솔 코드페이지(cp949)에서는 로그의 박스 문자와 em dash가
+        # UnicodeEncodeError를 내며 파이프라인 전체를 죽인다(실제로 발생). 표시용 로그가
+        # 실행을 멈추게 두지 않는다 - 출력 스트림을 UTF-8로 바꾸고, 그래도 안 되는 글자는
+        # 대체 문자로 흘려보낸다.
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            pass
 
     def disable(self) -> None:
         self._on = False
@@ -181,6 +213,29 @@ class ReasoningLog:
 
     def repair(self, message: str, reason: str = "") -> None:
         self.event("REPAIR", message, reason)
+
+    def think(self, subject: str, said: str, width: int = 76) -> None:
+        """모델이 자기 산출물에 남긴 변경 근거를 그대로 콘솔에 되돌려 출력한다.
+
+        포팅 프롬프트가 `// AI 변경 요약: ...` / `// AI 수정: ...` 한 줄을 **요구**하므로, 이
+        문장은 우리가 지어낸 해설이 아니라 **모델 자신의 말**이다. 그래서 다른 이벤트와 달리
+        따옴표로 감싸 인용임을 표시한다 - 로그의 나머지가 "코드가 내린 결정"인 것과 구분된다.
+        길면 접어서 여러 줄로 낸다(영상에서 가로로 잘리지 않게).
+        """
+        if not self._on or not said:
+            return
+        self._counts["THINK"] = self._counts.get("THINK", 0) + 1
+        color, label = _KINDS["THINK"]
+        tag = self._paint(f"{label:<8}", color)
+        prefix = "│ " if self._in_stage else "  "
+        pad = " " * 9 + prefix + " " + " " * 9
+        wrapped = _wrap(said, width)
+        lines = [f"[{self._elapsed()}] {prefix} {tag} {subject}"]
+        for i, chunk in enumerate(wrapped):
+            mark = "“" if i == 0 else " "
+            tail = "”" if i == len(wrapped) - 1 else ""
+            lines.append(self._paint(f"{pad}{mark}{chunk}{tail}", _C.DIM))
+        self._emit(*lines)
 
     def ok(self, message: str, reason: str = "") -> None:
         self.event("PASS", message, reason)

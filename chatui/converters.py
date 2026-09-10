@@ -179,7 +179,7 @@ def _replace_simple_empty_tags(text: str, issues: list[ConversionIssue]) -> str:
         ))
     text = re.sub(
         r'<isEmpty\s+property="([A-Za-z0-9_.]+)"\s*>',
-        r'<if test="\1 == null or \1 == \'\'">',
+        "<if test='\\1 == null or \\1 == \"\"'>",
         text,
     )
     text = re.sub(r"</isEmpty>", "</if>", text)
@@ -191,7 +191,7 @@ def _replace_simple_empty_tags(text: str, issues: list[ConversionIssue]) -> str:
     before = text
     text = re.sub(
         r'<isNotEmpty\s+property="([A-Za-z0-9_.]+)"\s*>',
-        r'<if test="\1 != null and \1 != \'\'">',
+        "<if test='\\1 != null and \\1 != \"\"'>",
         text,
     )
     if before != text and not re.search(r"<isNotEmpty\b", text):
@@ -429,6 +429,8 @@ def convert_xsql_fragment(xsql_text: str) -> ConversionResult:
 
     # 규칙들이 전부 `속성="값"`(공백 없음) 형태만 매칭하므로 먼저 표기를 통일한다.
     text = _normalize_tag_attrs(text)
+    # 태그 조건 규칙보다 먼저 - 닫는 따옴표 누락은 이후 모든 정규식 매칭 범위를 흔들 수 있다.
+    text = _fix_unterminated_attr_quotes(text, issues)
     text = _replace_isnotempty_iterate(text)
     text = _replace_comparison_tags(text, issues)
     text = _replace_null_tags(text)
@@ -523,7 +525,53 @@ _DML_OPEN_RE = re.compile(
 
 # `<insert id="I005 parameterClass="map">`처럼 값의 닫는 따옴표가 빠진 형태. XML 파서는
 # "not well-formed"라고만 말해서 원인을 짚기 어려운데, 실제 원본에 3건 있었다(DPLA046).
-_UNTERMINATED_ATTR_RE = re.compile(r'<(\w+)\s+(\w+)="([^"\n]*?)\s+\w+="')
+# 그룹4(다음 속성명="`)까지 잡아둬서 _fix_unterminated_attr_quotes()가 따옴표만 채워 넣고
+# 나머지는 그대로 재조립할 수 있게 한다 - 값 자체(그룹3)는 건드리지 않는다.
+_UNTERMINATED_ATTR_RE = re.compile(r'<(\w+)\s+(\w+)="([^"\n]*?)\s+(\w+=")')
+
+
+def repair_unterminated_attr_quotes(text: str) -> str:
+    """닫는 따옴표가 빠진 속성(예: `id="I005 parameterClass="`)을 조용히 교정한다(이슈 기록 없음).
+
+    이 모양은 해석이 모호하지 않다 - XML 속성값 중간에 공백을 두고 `이름="`가 다시 나오는 건
+    다음 속성이 시작된 것 말고는 설명할 방법이 없다(속성값 자체는 절대 바꾸지 않고 빠진
+    닫는 따옴표만 채워 넣는다). PLA047의 DPLA047.xsql에 있던 같은 종류의 원본 결함(태그 짝
+    불일치)도 원본을 고쳐서 해결했던 것과 동일한 원칙 - 원본이 깨져 있어도 스킵하지 않고
+    정정 후 포팅으로 진행한다(CLAUDE.md).
+
+    Mapper 변환(`convert_xsql_fragment`)뿐 아니라 `skeleton_gen.extract_xsql_stmt_kinds()`도
+    같은 원본 텍스트를 독립적으로 정규식 파싱한다 - 이 결함을 여기서만 고치면 Mapper.xml은
+    유효해져도 Store 골격 쪽은 여전히 "I005"를 못 찾아 UNSUPPORTED_DB_VERB로 잘못 보고된다
+    (DPLA046 실측). 그래서 이슈 기록이 필요 없는 순수 텍스트 교정만 따로 떼어 양쪽에서 같이
+    쓴다 - 사람에게 보여줄 이슈는 `_fix_unterminated_attr_quotes()`가 호출부 하나(Mapper 변환)
+    에서만 남긴다(같은 결함을 두 번 보고하지 않기 위함).
+    """
+    return _UNTERMINATED_ATTR_RE.sub(
+        lambda m: f'<{m.group(1)} {m.group(2)}="{m.group(3)}" {m.group(4)}', text
+    )
+
+
+def _fix_unterminated_attr_quotes(text: str, issues: list[ConversionIssue]) -> str:
+    """`repair_unterminated_attr_quotes()`와 같은 교정을 하되, 사람이 볼 이슈를 남긴다.
+
+    이 패턴 밖의 다른 손상은 여전히 _unterminated_attr_hint()가 위치만 짚어 사람에게 넘긴다.
+    """
+
+    def _sub(m: re.Match) -> str:
+        line_no = text.count("\n", 0, m.start()) + 1
+        issues.append(ConversionIssue(
+            issue_type="ORIGINAL_XML_ATTR_QUOTE_FIXED",
+            severity="WARNING",
+            line_no=line_no,
+            message=(
+                f'{line_no}행: 원본 XSQL의 <{m.group(1)} {m.group(2)}="{m.group(3)}...> 속성에 닫는 '
+                f"따옴표가 빠져 있어(원본 결함) 자동으로 채워 넣었습니다 - 값 자체는 바꾸지 않았습니다. "
+                f"의도한 값이 맞는지 원본과 대조해 확인하세요."
+            ),
+        ))
+        return f'<{m.group(1)} {m.group(2)}="{m.group(3)}" {m.group(4)}'
+
+    return _UNTERMINATED_ATTR_RE.sub(_sub, text)
 
 
 def finalize_mapper_document(
@@ -533,6 +581,7 @@ def finalize_mapper_document(
     package_p2: str,
     stmt_id_to_method: dict[str, str],
     common_statements: set[str] | None = None,
+    secondary_stmt_owners: dict[str, str] | None = None,
 ) -> ConversionResult:
     """XSQL 문서 전체를 감싸는 뼈대를 TO-BE 관례로 맞춘다(SQL 본문은 건드리지 않음):
 
@@ -543,6 +592,11 @@ def finalize_mapper_document(
     DOCTYPE 문자열은 실제 mybatis.org 표준 표기가 아니라(root 이름이 mapper가 아니라 sqlMap,
     도메인도 mybatid.org로 오타처럼 보인다) - 하지만 이 프로젝트 Mapper.xml 전체가 이 정확한
     문자열을 관례로 쓰고 있어(사람이 명시적으로 확인) 임의로 "고치지" 않고 그대로 맞춘다.
+
+    `secondary_stmt_owners`(선택, `skeleton_gen.extract_secondary_stmt_owners()`의 결과)는
+    statement id를 D 메서드명으로 못 맞춘 경우의 진단 메시지만 보강한다 - 매핑 자체를 자동으로
+    채우지는 않는다(2026-09-09 판단: 한 D 메서드가 문 여러 개를 순서대로/조건부로 실행하는
+    경우는 업무 판단이 필요해 규칙 기반으로 추측하지 않기로 함, docs/03-kickoff-plan.md 참고).
     """
     prefix = screen_id[:1].upper() + screen_id[1:].lower()
     base_pkg = f"com.skhynix.gscm.r.{package_p1}.{package_p2}"
@@ -586,12 +640,22 @@ def finalize_mapper_document(
         old_id = m.group("id")
         method = stmt_id_to_method.get(old_id)
         if not method:
-            issues.append(ConversionIssue(
-                issue_type="STMT_ID_MAP_MISSING", severity="WARNING",
-                message=(
+            owner = (secondary_stmt_owners or {}).get(old_id)
+            if owner:
+                msg = (
+                    f'<select id="{old_id}">를 D 메서드명으로 자동 매핑하지 못했습니다 - '
+                    f'{owner}가 이 statement를 실제로 부르지만, 그 메서드의 **첫 번째** 호출이 '
+                    f'아니라서(메서드 하나가 문을 2개 이상 순서대로/조건부로 실행) 자동 매핑 '
+                    f'대상에서 빠졌습니다. id를 그대로 두었으니 {owner} 안에서 이 문을 어떻게 '
+                    f'반환값에 반영할지 수동으로 판단하세요.'
+                )
+            else:
+                msg = (
                     f'<select id="{old_id}">를 D BizUnit의 dbSelect("{old_id}", ...) 호출과 매칭하지 '
                     "못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요."
-                ),
+                )
+            issues.append(ConversionIssue(
+                issue_type="STMT_ID_MAP_MISSING", severity="WARNING", message=msg,
             ))
             new_id = old_id
         else:
@@ -619,12 +683,22 @@ def finalize_mapper_document(
         old_id = m.group("id")
         method = stmt_id_to_method.get(old_id)
         if not method:
-            issues.append(ConversionIssue(
-                issue_type="STMT_ID_MAP_MISSING", severity="WARNING",
-                message=(
+            owner = (secondary_stmt_owners or {}).get(old_id)
+            if owner:
+                msg = (
+                    f'<{m.group("tag")} id="{old_id}">를 D 메서드명으로 자동 매핑하지 못했습니다 - '
+                    f'{owner}가 이 statement를 실제로 부르지만, 그 메서드의 **첫 번째** 호출이 '
+                    f'아니라서(메서드 하나가 문을 2개 이상 순서대로/조건부로 실행) 자동 매핑 '
+                    f'대상에서 빠졌습니다. id를 그대로 두었으니 {owner} 안에서 이 문을 어떻게 '
+                    f'반영할지 수동으로 판단하세요.'
+                )
+            else:
+                msg = (
                     f'<{m.group("tag")} id="{old_id}">를 D BizUnit의 db*("{old_id}", ...) 호출과 '
                     "매칭하지 못했습니다 - id를 그대로 두었으니 D 메서드명 기준으로 수동 확인하세요."
-                ),
+                )
+            issues.append(ConversionIssue(
+                issue_type="STMT_ID_MAP_MISSING", severity="WARNING", message=msg,
             ))
             return m.group(0)
         rest = m.group("rest")

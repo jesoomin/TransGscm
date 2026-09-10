@@ -17,7 +17,7 @@ import re
 from rule_port import detect_passthrough_query, render_passthrough_method
 from dataclasses import dataclass, field
 
-from converters import ConversionIssue, dto_name_for_method
+from converters import ConversionIssue, dto_name_for_method, repair_unterminated_attr_quotes
 from java_ast import extract_method_bodies, extract_methods  # noqa: F401 (재수출 - app.py가 여기서 import)
 
 
@@ -237,9 +237,16 @@ def extract_xsql_stmt_kinds(d_xsql_text: str | None) -> dict[str, str]:
     `dbInsert("U001", ...)`로 호출한다(DPLA046 실측: dbInsert가 U001/D001을 부른다). Java 쪽
     verb를 믿고 MyBatis 호출을 정하면 UPDATE에 insert()를 걸게 된다. 무엇을 실행하는지는
     SQL을 담은 XSQL 태그가 확정한다.
+
+    `converters.convert_xsql_fragment()`와 별개로 원본 텍스트를 직접 정규식 파싱하므로, 닫는
+    따옴표가 빠진 속성(`id="I005 parameterClass="` 등, DPLA046 실측 3건)이 있으면 이 함수만
+    "I005"를 못 찾아 해당 D 메서드가 실제로는 지원되는 insert인데도 UNSUPPORTED_DB_VERB로
+    잘못 보고된다 - Mapper 변환 쪽만 고쳐서는 여기가 안 맞춰진다. 그래서 Mapper 변환과 같은
+    교정을 여기서도 적용한다(이슈는 Mapper 쪽에서 한 번만 남기므로 여기선 조용히 고친다).
     """
     if not d_xsql_text:
         return {}
+    d_xsql_text = repair_unterminated_attr_quotes(d_xsql_text)
     return {sid: tag.lower() for tag, sid in _XSQL_STMT_TAG_RE.findall(d_xsql_text)}
 
 
@@ -292,16 +299,99 @@ def extract_d_db_calls(d_java_text: str) -> dict[str, list[tuple[str, str]]]:
     return calls
 
 
-def unsupported_db_verbs(d_java_text: str | None) -> dict[str, list[str]]:
-    """{D 메서드: 이 변환기가 못 다루는 verb 목록}. 전부 dbSelect면 빈 dict."""
+def extract_secondary_stmt_owners(d_java_text: str | None) -> dict[str, str]:
+    """{두 번째 이후 호출의 statement id: 그 D 메서드명}.
+
+    `extract_d_stmt_ids()`는 메서드당 **첫 번째** db* 호출만 Store/Mapper id 매핑에 반영한다.
+    한 D 메서드가 문(statement)을 2개 이상 순서대로 실행하면(실측: PLA045 `dPLA04505`가
+    프로시저 P001 실행 후 조건부로 P002, 마지막에 `dbSelect("S099", ...)`; PLA046 `dPLA04625`가
+    P003 실행 후 `dbSelect("S099", ...)`; PLA046의 한 메서드가 U002 실행 후 U003) 두 번째 이후
+    statement는 Mapper.xml에서 원본 id 그대로 남아 `STMT_ID_MAP_MISSING`으로만 잡히고 "왜"는
+    안 보인다.
+
+    **자동으로 매핑을 완성하지 않는다(2026-09-09 판단, docs/03-kickoff-plan.md 참고)** - 실측
+    사례 중 하나(dPLA04505)는 두 번째 호출 여부가 `if("SUCCESS".equals(...))` 조건에 달려 있어
+    이미 D 계층에 있어서는 안 될 분기 로직이 섞여 있다. 나머지(순차 호출)도 한 Store 메서드가
+    여러 Mapper statement를 어떤 반환값 규칙으로 묶을지는 업무 판단이 필요해 규칙 기반으로
+    추측하지 않는다. 이 함수는 오직 "그 id, 사실 이 D 메서드가 부르고는 있다(자동 매핑 대상이던
+    첫 호출이 아니었을 뿐)"까지만 진단 메시지에 보태 사람이 더 빨리 찾게 하는 용도다.
+    """
     if not d_java_text:
         return {}
+    owners: dict[str, str] = {}
+    for method, calls in extract_d_db_calls(d_java_text).items():
+        for _, sid in calls[1:]:
+            owners.setdefault(sid, method)
+    return owners
+
+
+def unsupported_db_verbs(
+    d_java_text: str | None, d_xsql_text: str | None = None
+) -> dict[str, list[str]]:
+    """{D 메서드: 이 변환기가 못 다루는 verb 목록}. 전부 dbSelect면 빈 dict.
+
+    `SUPPORTED_DB_VERBS`(Select만)는 DML 지원을 XSQL 태그 기반으로 추가하기(2026-09-08) 전
+    기준이라 그대로 두면 Insert/Update/Delete가 실제로는 지원되는 경우에도 전부 미지원으로
+    잘못 보고된다(DPLA046 실측: I005/I006/I007이 XSQL엔 <insert>로 정의돼 있는데도 이 함수가
+    verb 이름 "Insert"만 보고 미지원 처리했다). `d_xsql_text`를 같이 주면
+    `extract_xsql_stmt_kinds()`로 실제 태그를 확인해 XSQL이 확정해주는 statement는 verb 이름과
+    무관하게 지원으로 본다 - `dbExecuteProcedure`처럼 대응하는 XSQL 태그가 아예 없는 경우만
+    여전히 미지원으로 남는다. `d_xsql_text`를 안 주면(예: agents/benchmark.py처럼 파일 하나씩
+    훑어 XSQL을 같이 못 넘기는 경우) 예전과 동일하게 verb 이름만으로 판단한다.
+    """
+    if not d_java_text:
+        return {}
+    stmt_kinds = extract_xsql_stmt_kinds(d_xsql_text) if d_xsql_text else {}
     result: dict[str, list[str]] = {}
     for method, calls in extract_d_db_calls(d_java_text).items():
-        bad = sorted({verb for verb, _ in calls if verb not in SUPPORTED_DB_VERBS})
+        bad = sorted({
+            verb for verb, stmt_id in calls
+            if verb not in SUPPORTED_DB_VERBS and stmt_id not in stmt_kinds
+        })
         if bad:
             result[method] = bad
     return result
+
+
+# D 메서드 호출 결과를 F(또는 P)가 어떻게 소비하는지로 카디널리티(단건/다건)를 판정한다.
+#
+# **처음엔 "getRecordSet(...)로 꺼내면 다건, getField면 단건"으로 잡았는데 틀렸다(실측 정정,
+# PLA047).** NEXCORE는 D 메서드 결과를 부를 때 실제 행 수와 무관하게 항상 `getRecordSet(...)`을
+# 거친다 - 예를 들어 `dPLA04702`(PIVOT_LIST)도 `getRecordSet`으로 꺼내지만, 그 뒤 코드가
+# `rdPivot.get(0, "필드명")`처럼 **고정 인덱스 0만 반복해서 접근**한다(수십 회, 전부 인덱스 0).
+# 반면 `dPLA04701`(REV_LIST)은 꺼낸 변수를 색인 없이 그대로
+# `responseData.putRecordset("REV_LIST", rs)`로 통째로 넘긴다 - 몇 행이 오든 전부 응답에 실어
+# 보내겠다는 뜻이다. 진짜 신호는 "getRecordSet 자체"가 아니라 **꺼낸 변수를 그 뒤에 어떻게
+# 쓰는가**다: 색인 없이 통째로 전달(LIST) vs 고정 인덱스로만 접근(SINGLE).
+_RS_ASSIGN_RE_TEMPLATE = r'(\w+)\s*=\s*\w+\s*\.\s*{0}\s*\([^)]*\)\s*\.\s*getRecordSet\('
+
+
+def infer_d_method_cardinality(caller_java_text: str | None, d_method: str) -> str:
+    """{d_method} 호출 결과가 F/P 계층에서 다건(LIST)으로 쓰이는지 단건(SINGLE)으로 쓰이는지 판정한다.
+
+    반환: "LIST" | "SINGLE" | "UNKNOWN". `caller_java_text`는 이 D 메서드를 호출할 만한 F(또는 P)
+    BizUnit 소스 - **메서드 단위로 나눠 각각 검사한다**(파일 전체를 한 텍스트로 보면 변수명이
+    메서드마다 재사용될 때 다른 메서드의 접근 패턴과 뒤섞인다 - 예: `rs`라는 변수명이 여러 메서드
+    에서 반복 사용됨). 메서드 여러 개가 이 D 메서드를 부르면, 그중 하나라도 통째 전달(LIST) 증거가
+    있으면 LIST로 본다(그 데이터가 다건일 수 있다는 뜻이므로 더 위험한 쪽 신호를 우선한다) - 전부
+    고정 인덱스 접근뿐이면 SINGLE. 두 신호 다 없으면(변수를 못 찾거나 다른 방식으로 씀) 추측하지
+    않고 UNKNOWN.
+    """
+    if not caller_java_text:
+        return "UNKNOWN"
+    escaped = re.escape(d_method)
+    assign_re = re.compile(_RS_ASSIGN_RE_TEMPLATE.format(escaped))
+    found_single = False
+    for body in extract_method_bodies(caller_java_text).values():
+        m = assign_re.search(body)
+        if not m:
+            continue
+        var = re.escape(m.group(1))
+        if re.search(rf'putRecordset\(\s*"[^"]*"\s*,\s*{var}\s*\)', body):
+            return "LIST"
+        if re.search(rf'\b{var}\b\s*\.\s*get\s*\(\s*\d+\s*,', body):
+            found_single = True
+    return "SINGLE" if found_single else "UNKNOWN"
 
 
 # F BizUnit 메서드가 "D 메서드 하나 호출하고 recordset 하나를 그대로 응답에 담아 돌려주는" 순수
@@ -973,7 +1063,7 @@ def generate_skeletons(
         # 지금까지 확보한 원본(PLA047)이 전부 조회 전용이라 이 경로는 **한 번도 검증된 적이 없다** -
         # 그래서 지원을 추측으로 만들지 않고, 생성물에 주석 + BLOCKER 이슈로 이름 붙여 드러낸다
         # (멘토 코멘트 §6의 insert/update/delete 리스크와 같은 자리).
-        bad_verbs = unsupported_db_verbs(d_java_text)
+        bad_verbs = unsupported_db_verbs(d_java_text, d_xsql_text)
         for method in d_methods:
             if method in common_store:
                 lines += [
@@ -989,6 +1079,7 @@ def generate_skeletons(
                     "body_hash": method_body_hash(d_bodies.get(method, "")),
                     "body_hash_norm": method_body_hash_norm(d_bodies.get(method, ""), screen_id),
                     "conversion_method": "COMMON_DELEGATION", "mapper_stmt_id": None,
+                    "store_return_type": "Map<String, Object>",
                 })
                 continue
             stmt_id = method if method in stmt_ids else ""
@@ -1013,6 +1104,7 @@ def generate_skeletons(
                     "body_hash_norm": method_body_hash_norm(d_bodies.get(method, ""), screen_id),
                     "conversion_method": "RULE_BASED_SKELETON",
                     "mapper_stmt_id": stmt_id or None,
+                    "store_return_type": "int",
                 })
                 continue
 
@@ -1035,6 +1127,33 @@ def generate_skeletons(
                     ),
                     method_name=method,
                 ))
+            # `selectOne`은 원본이 단건으로 다루는 statement에만 맞다 - F/P가 이 D 메서드를
+            # getRecordSet(...)(다건)으로 받고 있으면 원본이 이미 여러 행을 전제한다는 뜻이고,
+            # 그런데도 selectOne을 쓰면 실제로 2행 이상 나오는 순간 런타임에
+            # TooManyResultsException이 난다(정적 검증/컴파일 어느 쪽도 못 잡는다 - 실측:
+            # PLA047 dPLA04701의 원본 XSQL S001이 WHERE에 유일키 조건이 없고 ORDER BY까지 있는
+            # 다건 조회인데 F는 `du.dPLA04701(...).getRecordSet("REV_LIST")`로 다건으로 받는다).
+            # 이 변환기는 아직 selectOne 자체를 selectList로 바꾸지 않는다(Store/Service/Api
+            # 시그니처를 Map->List로 연쇄 변경해야 하는 더 큰 작업 - 별도 판단 필요) - 지금은 이
+            # 불일치를 놓치지 않고 사람에게 넘기는 것까지만 한다.
+            cardinality = infer_d_method_cardinality(f"{f_java_text or ''}\n{p_java_text or ''}", method)
+            if cardinality == "LIST":
+                lines.append(
+                    f"    // TODO(카디널리티 불일치): 원본은 이 statement를 getRecordSet(다건)으로 "
+                    f"받는데 selectOne(단건)으로 생성됨 - 2행 이상 나오면 런타임 예외"
+                )
+                result.issues.append(ConversionIssue(
+                    issue_type="STORE_CARDINALITY_MISMATCH", severity="BLOCKER",
+                    message=(
+                        f"{method}: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 "
+                        "다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - "
+                        "실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. "
+                        "Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + "
+                        "selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 "
+                        "연쇄적으로 바뀝니다)."
+                    ),
+                    method_name=method,
+                ))
             lines += [
                 f"    public Map<String, Object> {method}(Map<String, Object> params) {{",
                 f"        return sqlSession.selectOne({mapper_ref}, params);",
@@ -1047,6 +1166,7 @@ def generate_skeletons(
                 "body_hash_norm": method_body_hash_norm(d_bodies.get(method, ""), screen_id),
                 "conversion_method": "RULE_BASED_SKELETON",
                 "mapper_stmt_id": stmt_id or None,
+                "store_return_type": "Map<String, Object>",
             })
         lines.append("}")
         result.files[f"{prefix}Store.java"] = "\n".join(lines)

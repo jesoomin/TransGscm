@@ -42,8 +42,11 @@ chatui/quality_scanner.py의 기존 함수를 그대로 호출하는 얇은 래�
 """
 from __future__ import annotations
 
+import json
 import operator
+import re
 import sys
+import time
 from pathlib import Path
 from typing import Annotated, TypedDict
 
@@ -57,6 +60,7 @@ from converters import convert_xsql_fragment, finalize_mapper_document  # noqa: 
 from java_ast import extract_tobe_method_bodies  # noqa: E402
 from skeleton_gen import (  # noqa: E402
     extract_method_bodies,
+    extract_secondary_stmt_owners,
     generate_dto,
     generate_skeletons,
     splice_ported_method,
@@ -119,8 +123,8 @@ _VALUE_TYPE_NOTE = (
 )
 
 
-def _callee_note(callees: list[str] | None, holder: str = "store") -> str:
-    """이 메서드가 원본에서 실제로 호출하는 하위 계층 메서드 목록을 포팅 프롬프트에 명시한다.
+def _callee_note(callees: list[dict] | None, holder: str = "store") -> str:
+    """이 메서드가 원본에서 실제로 호출하는 하위 계층 메서드의 **계약**을 포팅 프롬프트에 명시한다.
 
     `holder`는 TO-BE에서 그 메서드들을 들고 있는 필드 이름이다 - F→D 포팅이면 `store`,
     P→Api 포팅이면 `service`. 계층이 늘면서 "store로 고정"이 틀린 지시가 됐다.
@@ -129,17 +133,57 @@ def _callee_note(callees: list[str] | None, holder: str = "store") -> str:
     넘기는 것과 같은 발상이다 - LLM이 D 메서드 이름을 추측하게 두지 않고, 이미 결정론적으로
     생성된 Store 메서드 이름을 그대로 쓰도록 강제해서 "존재하지 않는 메서드를 호출하는" 실수
     (validators.py의 UNRESOLVED_STORE_CALL)를 애초에 줄인다.
+
+    **JSON 계약 객체로 확장(2026-09-10, 외부 리뷰 반영)** - 이전엔 이름만 텍스트로 나열했는데,
+    콜리마다 "이미 확정된 사실"을 구조화된 계약으로 명시하면 LLM이 그 사실을 바꿔 말하기 어렵다.
+    `callees`는 D 계층이면 `{"name": str, "cardinality_mismatch": bool, "return_type": str}`,
+    F 계층(P→Api 포팅)이면 `{"name": str}` dict 목록이다.
+
+    `cardinality_mismatch`는 skeleton_gen.py가 Store 골격 생성 시점에 이미 판정해 `skel_issues`에
+    `STORE_CARDINALITY_MISMATCH`로 남긴 결론을 그대로 읽어온 것(여기서 다시 판정하지 않음 -
+    단일 진실 공급원). 원본이 이 statement를 다건(recordset)으로 다루는데 Store는 단건
+    (`Map<String,Object>`, `selectOne`)으로 생성된 경우만 True다 - DML(insert/update/delete)
+    콜리는 Store가 이미 `int`를 반환하므로 애초에 이 판정 대상이 아니다(처음 버전은 F/P 소스의
+    getRecordSet 사용만 보고 이걸 구분 못 해 DML 콜리에도 "Store가 Map을 반환한다"는 틀린 문구를
+    넣을 뻔했다 - 실측 중 발견해 skel_issues 조회로 바꿔 해소).
+
+    `return_type`은 실제로 생성된 Store 메서드의 반환 타입(`int` 또는 `Map<String, Object>`)이다
+    - 이것도 안 주면 LLM이 DML 콜리(반환은 영향 행 수 int)를 select처럼 Map으로 추측하다 컴파일
+    에러를 내고 수리 루프를 한 바퀴 낭비할 수 있다(2026-09-10, "DML에도 카디널리티 위험이 있는지"
+    점검 중 발견 - 실제 위험 자체는 select 전용이었지만 반환 타입 미명시는 별개의 실질 개선점).
     """
     if not callees:
         return ""
-    call_forms = ", ".join(f"{holder}.{c}(...)" for c in callees)
+    names = [c["name"] for c in callees]
+    call_forms = ", ".join(f"{holder}.{n}(...)" for n in names)
     layer_name = "F 계층" if holder == "service" else "D 계층"
     class_name = "Service" if holder == "service" else "Store"
+    contract_json = json.dumps(
+        [
+            {"name": c["name"], "return_type": c["return_type"]} if "return_type" in c
+            else {"name": c["name"]}
+            for c in callees
+        ],
+        ensure_ascii=False,
+    )
+    mismatched = [c["name"] for c in callees if c.get("cardinality_mismatch")]
+    mismatch_note = ""
+    if mismatched:
+        mismatch_note = (
+            f"\n\n**카디널리티 주의**: {', '.join(mismatched)}는 원본에서 다건(recordset)으로 "
+            f"다루는데 지금 {class_name} 골격은 단건(`Map<String,Object>`, `selectOne`)으로 생성돼 "
+            "있습니다(별도로 이미 보고된 결함 - `STORE_CARDINALITY_MISMATCH`, 이 메서드 포팅으로 "
+            f"고치는 대상이 아닙니다). {holder}가 실제로는 Map을 반환하니 그 시그니처 그대로 받되, "
+            "원본이 다건을 전제로 한 로직(순회·개수 판정 등)이 있다면 임의로 봉합하지 말고 "
+            "`// FIXME(카디널리티 불일치, 사람 확인 필요)` 주석을 남겨라."
+        )
     return (
-        f"\n\n**호출 대상 참고**: 이 메서드는 원본에서 {layer_name} 메서드 {', '.join(callees)}를 "
-        f"호출한다. {class_name} 계층에는 이미 이 이름 그대로 메서드가 만들어져 있으니, 포팅한 "
-        f"코드에서도 정확히 이 이름으로 {call_forms} 형태로 호출해라(새로 이름을 짓거나 존재하지 "
-        "않는 메서드를 부르지 마라)."
+        f"\n\n**호출 대상 계약(변경 불가)**: 이 메서드는 원본에서 {layer_name} 메서드 "
+        f"{', '.join(names)}를 호출한다. {class_name} 계층에는 이미 이 이름 그대로 메서드가 "
+        f"만들어져 있으니, 포팅한 코드에서도 정확히 이 이름으로 {call_forms} 형태로 호출해라"
+        "(새로 이름을 짓거나 존재하지 않는 메서드를 부르지 마라). 계약 원문(JSON):\n"
+        f"```json\n{contract_json}\n```"
+        + mismatch_note
     )
 
 
@@ -150,7 +194,7 @@ _RATIONALE_NOTE = (
 )
 
 
-def _port_prompt(method: str, body: str, callees: list[str] | None = None) -> str:
+def _port_prompt(method: str, body: str, callees: list[dict] | None = None) -> str:
     return (
         f"다음은 NEXCORE(BizUnit) F(Function) 계층 Java 메서드 {method}의 본문이다. "
         "이 로직(계산/분기/문자열 처리 등)을 하나도 빠짐없이 그대로 유지하면서, "
@@ -177,7 +221,7 @@ _MESSAGE_CONVENTION_NOTE = (
 )
 
 
-def _api_port_prompt(method: str, body: str, callees: list[str] | None = None) -> str:
+def _api_port_prompt(method: str, body: str, callees: list[dict] | None = None) -> str:
     """P(Presentation) BizUnit 메서드를 Api(Controller) 메서드로 옮기는 프롬프트.
 
     F 계층과 프롬프트를 나눈 이유: P가 하는 일이 다르다. F는 계산/분기와 Store 호출이지만 P는
@@ -321,6 +365,7 @@ def _convert_screen(
             mapper_result.mybatis_xml, screen_id=screen_id, package_p1=package_p1, package_p2=package_p2,
             stmt_id_to_method=skel.stmt_id_to_method,
             common_statements=set(common_registry.get("statements", [])),
+            secondary_stmt_owners=extract_secondary_stmt_owners(d_java),
         )
         files[f"{to_prefix(screen_id)}Mapper.xml"] = doc_result.mybatis_xml
         mapper_issues = list(mapper_result.issues) + list(doc_result.issues)
@@ -521,7 +566,8 @@ def run_screen_conversion(
 
 
 # =====================================================================================
-# 폴더 전체(여러 화면) 파이프라인 - Part A: 1~5단계, 저장 전까지 (2026-09-02)
+# 폴더 전체(여러 화면) 파이프라인 - Part A: 1~6단계, 저장 전까지 (2026-09-02, 2026-09-10 갱신 -
+# equivalence_check_all 신설로 5단계였던 게 6단계가 됨)
 #
 # 위 ScreenState/build_graph()는 화면 1개 단위라 그대로 두고(호환 유지), 여기서는 화면 여러 개를
 # 한 그래프 실행 안에서 "단계별로" 진행한다: 폴더에 화면이 50개면 1단계(convert_all)가 50개를
@@ -530,10 +576,13 @@ def run_screen_conversion(
 # 맞춘 구조. 노드 함수 자체는 위 화면 1개용 헬퍼(_convert_screen 등)와 chatui의 기존 함수를
 # 그대로 재사용한다 - 로직 재구현 없음.
 #
-# 6단계(교차분석)·7단계(Maven)는 여기 없다 - 둘 다 디스크에 저장된 pilot/ 트리를 직접 읽는
-# 함수라(chatui/cross_analysis.py, chatui/validators.py) 사람이 승인해서 저장한 뒤에만 실행
-# 가능하다(CLAUDE.md "사람 리뷰 없는 자동 저장/배포 금지"). 그 두 단계는 app.py가 저장 이후
-# 별도로(Part B) 직접 호출한다 - LangGraph 그래프로 감쌀 필요가 없는 단발 호출이라서.
+# 7단계(교차분석)·8단계(Maven)는 여기 없다 - 둘 다 디스크에 저장된 pilot/ 트리를 직접 읽는
+# 함수라(chatui/cross_analysis.py, chatui/validators.py) LangGraph 그래프로 감쌀 필요가 없는
+# 단발 호출이다. **주의(2026-09-10 정정)**: 이 문단이 오래 "저장 이후(Part B)에 실행"이라고
+# 적어뒀는데, 그건 2026-09-02 최초 설계였고 같은 날 안에 사용자 요청으로 저장 **이전**(승인
+# 게이트 앞)의 임시 사본 미리보기로 옮겨졌다(chatui/app.py의 `_run_stage_6_7_preview` - 실제
+# pilot/은 안 건드리고 임시 복사본에 이번 배치를 겹쳐써서 미리 확인). 코드는 그 이동을 반영해
+# 진작 맞았는데 이 주석만 몇 달째 옛 설계를 설명하고 있었다 - 실제 동작은 app.py 쪽 함수를 볼 것.
 # =====================================================================================
 
 
@@ -598,7 +647,10 @@ class PipelineState(TypedDict, total=False):
     repair_candidates: Annotated[list[tuple[str, str, str, str]], _replace_list]
     repair_candidates_n: int
 
-    # Stage 5 (ai_recommend_one: Send 병렬 (화면, nctRid) 단위)
+    # Stage 6 (equivalence_check_all: 단일 노드, agents/equivalence_test.py를 임시 사본에서 실행)
+    equivalence_result: dict  # agents.equivalence_test.run()의 반환값 그대로(오류 시 {"error": str})
+
+    # Stage 8 (ai_recommend_one: Send 병렬 (화면, nctRid) 단위)
     ai_recommend_results: Annotated[list[tuple[str, str, object]], operator.add]  # (screen_id, p_method, ReactVariantResult)
 
 
@@ -615,7 +667,7 @@ def plan_all_node(state: PipelineState) -> dict:
     from agents.conversion_plan import build_plans, write_plans
 
     screens = state.get("screens", {})
-    log.stage(1, 7, "PLAN", f"변환 계획 수립 — 대상 화면 {len(screens)}건 (LLM 미사용, 정적 분석)")
+    log.stage(1, 8, "PLAN", f"변환 계획 수립 — 대상 화면 {len(screens)}건 (LLM 미사용, 정적 분석)")
 
     plans = build_plans(screens, state.get("package_map", {}), state.get("all_paths", {}))
 
@@ -658,6 +710,13 @@ def plan_all_node(state: PipelineState) -> dict:
     denom = total_llm + total_rule
     saved = f"{total_rule}/{denom}건({total_rule * 100 // denom}%)을 규칙으로 처리 → LLM 호출 회피" if denom else "포팅 대상 없음"
     log.plan(f"LLM 호출 예산 확정: {total_llm}건", saved)
+    # 계획이 "이후 어떤 도구를 왜 부를지"까지 확정한다는 걸 드러낸다. 아래 단계들은 이 표에
+    # 적힌 대로만 부르고, 여기 없는 도구를 모델이 스스로 고르는 일은 없다(고정 파이프라인).
+    log.plan(
+        "도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다",
+        f"변환기 {total_rule + total_llm}건 대상 → 규칙 변환기 {total_rule}건(LLM 미사용) · "
+        f"LLM Gateway {total_llm}건 · 검증기 전건 · 수리 루프는 검증 실패 시에만",
+    )
 
     try:
         plan_paths = write_plans(plans)
@@ -682,7 +741,7 @@ def convert_all_node(state: PipelineState) -> dict:
     skel_methods: dict[str, list] = {}
     skel_method_calls: dict[str, list] = {}
 
-    log.stage(2, 7, "TOOL", f"규칙 기반 변환 — 화면 {len(screens)}건 (LLM 미사용)")
+    log.stage(2, 8, "TOOL", f"규칙 기반 변환 — 화면 {len(screens)}건 (LLM 미사용)")
     for screen_id, buckets in screens.items():
         package_p1, package_p2 = package_map.get(screen_id, ("TODO", "TODO"))
         result = _convert_screen(
@@ -738,20 +797,52 @@ def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: Pipel
         target = _port_target(state, screen_id, method)
         layer = "P" if target.endswith("Api.java") else "F"
         src_key = (screen_id, layer)
+        src_java = screens.get(screen_id, {}).get(layer, {}).get("java") or ""
         if src_key not in body_cache:
-            src_java = screens.get(screen_id, {}).get(layer, {}).get("java") or ""
             body_cache[src_key] = extract_method_bodies(src_java)
         callee_layer = "F" if layer == "P" else "D"
-        callees = [
+        callee_names = [
             c["callee_method"] for c in skel_calls.get(screen_id, [])
             if c.get("caller_layer") == layer and c.get("caller_method") == method
             and c.get("callee_layer") == callee_layer
         ]
         holder = "Service" if layer == "P" else "Store"
+        # 카디널리티 불일치는 D 계층 콜리에만 의미가 있다(Store가 selectOne/selectList 중 무엇을
+        # 써야 하는지) - F 계층 콜리(Service 메서드)는 statement 기반이 아니라 이 개념이 없다.
+        # 여기서 다시 판정하지 않고 skeleton_gen.py가 골격 생성 시점에 이미 내린 결론
+        # (skel_issues의 STORE_CARDINALITY_MISMATCH)을 그대로 읽는다 - DML(insert/update/delete)
+        # 콜리는 애초에 그 판정 대상이 아니므로(Store가 이미 int를 반환) 자동으로 걸러진다.
+        if callee_layer == "D":
+            mismatched_methods = {
+                issue.method_name
+                for issue in state.get("skel_issues", {}).get(screen_id, [])
+                if issue.issue_type == "STORE_CARDINALITY_MISMATCH"
+            }
+            # Store 반환 타입(int vs Map<String,Object>)도 계약에 실어 보낸다 - 안 주면 LLM이
+            # DML 콜리를 select처럼 Map으로 추측하다 컴파일 에러 -> 수리 루프 낭비로 이어질 수
+            # 있다(2026-09-10, DML 카디널리티 위험 점검 중 발견 - 실제 위험 자체는 select에만
+            # 있었지만 반환 타입 미명시는 별개의 실질적 개선점이었다).
+            return_types = {
+                m["method_name"]: m.get("store_return_type", "Map<String, Object>")
+                for m in state.get("skel_methods", {}).get(screen_id, [])
+                if m.get("layer") == "D"
+            }
+            callees = [
+                {
+                    "name": n,
+                    "cardinality_mismatch": n in mismatched_methods,
+                    "return_type": return_types.get(n, "Map<String, Object>"),
+                }
+                for n in callee_names
+            ]
+        else:
+            callees = [{"name": n} for n in callee_names]
         if callees:
+            flagged = [c["name"] for c in callees if c.get("cardinality_mismatch")]
             log.context(
-                f"{screen_id}.{method} ← 피호출자 계약 {len(callees)}건 주입: {', '.join(callees)}",
-                f"콜그래프에서 뽑은 실제 {holder} 메서드명 — LLM이 이름을 추측하지 않게 고정 "
+                f"{screen_id}.{method} ← 피호출자 계약 {len(callees)}건 주입: {', '.join(c['name'] for c in callees)}"
+                + (f" (카디널리티 불일치: {', '.join(flagged)})" if flagged else ""),
+                f"콜그래프에서 뽑은 실제 {holder} 메서드명 — LLM이 이름을 추측하지 않게 고정"
                 "(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)",
             )
         else:
@@ -767,11 +858,39 @@ def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: Pipel
 def route_after_convert_all(state: PipelineState):
     pairs = [(sid, m) for sid, methods in state.get("pending_methods", {}).items() for m in methods]
     if not pairs:
-        log.stage(3, 7, "DECIDE", "LLM 포팅 건너뜀 — 규칙 기반으로 전부 처리됨")
+        log.stage(3, 8, "DECIDE", "LLM 포팅 건너뜀 — 규칙 기반으로 전부 처리됨")
         log.end_stage("LLM 호출 0건")
         return "validate_all"
-    log.stage(3, 7, "TOOL", f"LLM 포팅 — {len(pairs)}건 병렬 디스패치 (fan-out)")
+    log.stage(3, 8, "TOOL", f"LLM 포팅 — {len(pairs)}건 병렬 디스패치 (fan-out)")
+    log.plan(
+        f"1단계 계획이 지목한 {len(pairs)}건에만 LLM Gateway를 호출한다",
+        "대상은 계획 단계에서 이미 확정됐다 — 모델이 무엇을 부를지 스스로 고르지 않는다",
+    )
     return _dispatch_ports_all(pairs, state)
+
+
+_AI_RATIONALE_RE = re.compile(
+    r"//\s*AI\s*(?:변경\s*요약|수정)\s*:\s*(.+)"
+)
+
+
+def _extract_ai_rationale(code: str) -> str:
+    """모델이 남긴 `// AI 변경 요약:` / `// AI 수정:` 한 줄을 뽑는다.
+
+    포팅·수리 프롬프트가 이 주석을 **요구**하므로 있으면 모델 자신의 설명이고, 없으면 빈
+    문자열을 준다 - 없을 때 대신 문장을 지어내지 않는다(로그 전체의 원칙).
+    FIXME/TODO 주석은 "사람이 봐야 할 것"을 모델이 스스로 표시한 것이라 함께 싣는다.
+    """
+    out: list[str] = []
+    for line in code.splitlines():
+        m = _AI_RATIONALE_RE.search(line)
+        if m:
+            out.append(m.group(1).strip())
+            continue
+        s = line.strip()
+        if s.startswith("//") and ("FIXME" in s or "TODO" in s):
+            out.append(s.lstrip("/ ").strip())
+    return " / ".join(out[:3])
 
 
 def port_one_screen_method_node(state: dict) -> dict:
@@ -796,10 +915,17 @@ def port_one_screen_method_node(state: dict) -> dict:
     kind = "수리 재생성" if repair_error else "최초 포팅"
     log.tool("LLM Gateway", f"{screen_id}.{method}",
              f"{kind} · 프롬프트 {len(prompt):,}자" + (f" · 오류 피드백 주입: {repair_error[:80]}" if repair_error else ""))
+    t0 = time.time()
     try:
         raw = chat(messages=[{"role": "user", "content": prompt}])
-        log.ok(f"{screen_id}.{method} 응답 수신 ({len(raw):,}자)")
-        return {"port_results": [(screen_id, method, strip_code_fence(raw))]}
+        code = strip_code_fence(raw)
+        log.ok(f"{screen_id}.{method} 응답 수신 ({len(raw):,}자 · {time.time() - t0:.1f}초)")
+        # 프롬프트가 "본문 첫 줄에 // AI 변경 요약: 을 남겨라"를 요구하므로, 이 문장은 모델이
+        # 스스로 밝힌 근거다. 지어내지 않고 그대로 되돌려 출력해 판단 과정이 보이게 한다.
+        said = _extract_ai_rationale(code)
+        if said:
+            log.think(f"{screen_id}.{method} — 모델이 밝힌 근거", said)
+        return {"port_results": [(screen_id, method, code)]}
     except Exception as e:  # LLM Gateway 타임아웃/네트워크 오류 등 - 코드 자체의 버그가 아니다
         log.block(f"{screen_id}.{method} LLM 호출 실패", str(e))
         return {"port_errors": [(screen_id, method, str(e))]}
@@ -848,7 +974,7 @@ def validate_all_node(state: PipelineState) -> dict:
     """Stage 3: 화면마다 validate_screen()을 그대로 호출한다(로직 변경 없음)."""
     round_no = state.get("repair_round", 0)
     suffix = f" (수리 {round_no}라운드 후 재검증)" if round_no else ""
-    log.stage(4, 7, "VALIDATE", f"정적 검증{suffix} — 변환기와 분리된 검증기")
+    log.stage(4, 8, "VALIDATE", f"정적 검증{suffix} — 변환기와 분리된 검증기")
     results = {}
     n_block = n_warn = 0
     for screen_id, screen_files in state.get("files", {}).items():
@@ -943,7 +1069,11 @@ def repair_candidate_node(state: dict) -> dict:
     log.tool("LLM Gateway", f"{screen_id}.{method}", f"수리 후보 [{label}] · 프롬프트 {len(prompt):,}자")
     try:
         raw = chat(messages=[{"role": "user", "content": prompt}])
-        return {"repair_candidates": [(screen_id, method, label, strip_code_fence(raw))]}
+        cand = strip_code_fence(raw)
+        said = _extract_ai_rationale(cand)
+        if said:
+            log.think(f"{screen_id}.{method} 후보[{label}] — 모델이 밝힌 수정 근거", said)
+        return {"repair_candidates": [(screen_id, method, label, cand)]}
     except Exception as e:
         log.block(f"{screen_id}.{method} 후보[{label}] 생성 실패", str(e))
         return {"port_errors": [(screen_id, method, str(e))]}
@@ -1013,7 +1143,7 @@ def repair_gate_node(state: PipelineState) -> dict:
     round_used = state.get("repair_round", 0)
     max_repair = state.get("max_repair_retries", 2)
 
-    log.stage(5, 7, "REFLECT", f"자기 수정 게이트 — 라운드 {round_used}/{max_repair} 사용")
+    log.stage(5, 8, "REFLECT", f"자기 수정 게이트 — 라운드 {round_used}/{max_repair} 사용")
     if not targets:
         log.reflect("수리 불필요 → 다음 단계로 진행",
                     "LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 "
@@ -1039,13 +1169,96 @@ def repair_gate_node(state: PipelineState) -> dict:
 def route_after_repair_gate(state: PipelineState):
     targets = state.get("repair_targets") or []
     if not targets:
-        return "scan_all"
+        return "equivalence_check_all"
     return _dispatch_repairs(targets, state)
 
 
+def equivalence_check_all_node(state: PipelineState) -> dict:
+    """Stage 6: AS-IS/TO-BE를 실제로 실행해 F/Api 계층 기능 동등성을 비교한다(L3,
+    `agents/equivalence_test.py`).
+
+    **승격 배경(2026-09-10, 사용자 요청)**: 그동안 이 하네스는 사람이 CLI로 따로 돌리는 연구용
+    스크립트였다(`python -m agents.equivalence_test`) - 파이프라인 어디에도 안 물려 있었다.
+    "차등/동등성 테스트를 메인 파이프라인 필수 단계로 승격"하되, `agents/diff_test.py`(SQL 계층)는
+    실제 Oracle DB 접속이 있어야 해서 이번엔 제외하고, **DB 없이 javac/java만으로 도는
+    equivalence_test.py만** 자동화 대상으로 좁혔다(이미 확인된 실행 환경 제약 - CLAUDE.md
+    "로컬 개발 환경" 참고).
+
+    `run_screen()`은 `asis_dir / F{screen}.java`처럼 **평평한** 디렉터리 이름 규칙을 기대하고
+    실제 파일을 읽어 컴파일하므로, `chatui/app.py`의 `_run_stage_6_7_preview()`와 같은 격리
+    패턴(임시 디렉터리에 이번 배치의 AS-IS 원본 + 생성 결과를 써서 실행하고, `finally`에서 항상
+    삭제)을 그대로 따른다 - 저장 전(승인 게이트 이전)에도 실행 가능하고 실제 `pilot/`은 전혀
+    건드리지 않는다.
+
+    **안전장치**: `equivalence_test.run()` 내부 예외(예: 원본에 `package` 선언이 없는 등 예상 밖
+    입력)가 파이프라인 전체를 중단시키지 않도록 이 노드에서 감싼다 - opt-in 연구 스크립트였을
+    때는 실패하면 사람이 다시 돌리면 됐지만, 이제는 항상 자동으로 도는 단계라 여기서 죽으면
+    이후 단계(품질 스캔·AI 추천·저장)가 전부 막힌다. 실패해도 WARNING으로만 기록하고 다음
+    단계로 넘어간다.
+    """
+    import shutil
+    import tempfile
+
+    from agents import equivalence_test
+
+    log.stage(6, 8, "TOOL", "기능 동등성 검증(L3) — AS-IS/TO-BE를 실제로 실행해 비교")
+    screens_data = state.get("screens", {})
+    files_by_screen = state.get("files", {})
+
+    work = Path(tempfile.mkdtemp(prefix="equiv_pipeline_"))
+    try:
+        asis_dir = work / "asis"
+        tobe_root = work / "tobe"
+        asis_dir.mkdir(parents=True, exist_ok=True)
+        screen_ids: list[str] = []
+        for screen_id, screen_files in files_by_screen.items():
+            layer = screens_data.get(screen_id, {})
+            f_java = layer.get("F", {}).get("java")
+            d_java = layer.get("D", {}).get("java")
+            p_java = layer.get("P", {}).get("java")
+            if not (f_java and d_java and p_java):
+                continue
+            (asis_dir / f"F{screen_id}.java").write_text(f_java, encoding="utf-8")
+            (asis_dir / f"D{screen_id}.java").write_text(d_java, encoding="utf-8")
+            (asis_dir / f"P{screen_id}.java").write_text(p_java, encoding="utf-8")
+            screen_tobe_dir = tobe_root / screen_id
+            screen_tobe_dir.mkdir(parents=True, exist_ok=True)
+            for fname, content in screen_files.items():
+                if fname.endswith(".java"):
+                    (screen_tobe_dir / fname).write_text(content, encoding="utf-8")
+            screen_ids.append(screen_id)
+
+        if not screen_ids:
+            log.observe("동등성 검증 대상 없음", "P/F/D java가 모두 있는 화면이 없음 - 건너뜀")
+            log.end_stage("기능 동등성 검증 건너뜀 — 대상 화면 0건")
+            return {"equivalence_result": {"skipped": True, "reason": "대상 화면 없음"}}
+
+        try:
+            result = equivalence_test.run(asis_dir, screen_ids, tobe_root)
+        except Exception as e:  # noqa: BLE001 - 자동 단계라 여기서 죽으면 이후 단계가 전부 막힌다
+            log.block("기능 동등성 검증 실행 실패", str(e)[:300])
+            log.end_stage("기능 동등성 검증 실패 — WARNING으로 기록하고 계속 진행")
+            return {"equivalence_result": {"error": str(e)}}
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+    if "error" in result:
+        log.block("기능 동등성 검증 실행 불가", result["error"])
+        log.end_stage("기능 동등성 검증 미실행")
+    else:
+        rate = result.get("match_rate")
+        rate_text = f"{rate * 100:.1f}%" if rate is not None else "측정 불가(케이스 0건)"
+        (log.ok if rate == 1.0 else log.block)(
+            f"동등성 검증 결과 — {result.get('screens_executed', 0)}/{result.get('screens_total', 0)}"
+            f"화면 실행, {result.get('matched', 0)}/{result.get('cases', 0)}케이스 일치 ({rate_text})"
+        )
+        log.end_stage(f"기능 동등성 검증 완료 — 화면 {result.get('screens_total', 0)}건")
+    return {"equivalence_result": result}
+
+
 def scan_all_node(state: PipelineState) -> dict:
-    """Stage 4: 화면마다 run_review()를 그대로 호출한다(로직 변경 없음)."""
-    log.stage(6, 7, "TOOL", "품질·취약점 스캔 — 검증기와 분리된 스캐너")
+    """Stage 7: 화면마다 run_review()를 그대로 호출한다(로직 변경 없음)."""
+    log.stage(7, 8, "TOOL", "품질·취약점 스캔 — 검증기와 분리된 스캐너")
     results = {}
     n = 0
     for screen_id, screen_files in state.get("files", {}).items():
@@ -1083,15 +1296,15 @@ def _dispatch_ai_recommend_all(state: PipelineState) -> list[Send]:
 
 def route_after_scan_all(state: PipelineState):
     if not state.get("include_ai_recommend", True):
-        log.stage(7, 7, "DECIDE", "AI 추천 건너뜀 (opt-in 미선택)")
+        log.stage(8, 8, "DECIDE", "AI 추천 건너뜀 (opt-in 미선택)")
         log.end_stage("파이프라인 완료 — 사람 승인 대기")
         return END
     sends = _dispatch_ai_recommend_all(state)
     if not sends:
-        log.stage(7, 7, "DECIDE", "AI 추천 대상 없음")
+        log.stage(8, 8, "DECIDE", "AI 추천 대상 없음")
         log.end_stage("파이프라인 완료 — 사람 승인 대기")
         return END
-    log.stage(7, 7, "TOOL", f"AI 추천 — {len(sends)}건 병렬 디스패치 (nctRid 단위, opt-in)")
+    log.stage(8, 8, "TOOL", f"AI 추천 — {len(sends)}건 병렬 디스패치 (nctRid 단위, opt-in)")
     return sends
 
 
@@ -1118,6 +1331,7 @@ def build_pipeline_graph():
     builder.add_node("repair_gate", repair_gate_node)
     builder.add_node("repair_candidate", repair_candidate_node)
     builder.add_node("select_repair", select_repair_node)
+    builder.add_node("equivalence_check_all", equivalence_check_all_node)
     builder.add_node("scan_all", scan_all_node)
     builder.add_node("ai_recommend_one", ai_recommend_one_node)
 
@@ -1131,7 +1345,10 @@ def build_pipeline_graph():
     # 되돌아가 오류만 고치게 하고, 그 결과는 splice_all -> validate_all로 다시 흘러 재검증된다
     # (2026-09-04 추가, MatchFixAgent/ACToR식 검증-수리 루프 - docs/06-mentor-feedback.md §D).
     builder.add_edge("validate_all", "repair_gate")
-    builder.add_conditional_edges("repair_gate", route_after_repair_gate, ["repair_candidate", "scan_all"])
+    builder.add_conditional_edges(
+        "repair_gate", route_after_repair_gate, ["repair_candidate", "equivalence_check_all"]
+    )
+    builder.add_edge("equivalence_check_all", "scan_all")
     # 수리 후보는 splice_all이 아니라 select_repair로 모인다 - 여러 후보를 그대로 겹쳐 쓰면
     # 서로를 덮어쓰기 때문에, 채점해서 하나만 고른 뒤 반영해야 한다.
     builder.add_edge("repair_candidate", "select_repair")
@@ -1151,21 +1368,6 @@ def get_pipeline_graph():
     return _PIPELINE_GRAPH
 
 
-# Stage 번호(1~5) <-> 실제 LangGraph 노드 이름 매핑 - app.py의 st.status() 스테퍼가 "지금 몇 번째
-# 단계인지"를 노드 이름만 보고 알 수 있게 한다. port_one_screen_method/ai_recommend_one은 화면×
-# 메서드/nctRid 단위로 여러 번 실행되므로 진행 카운터("N/M 완료")로 따로 집계한다(app.py 쪽 책임).
-STAGE_BY_NODE = {
-    "plan_all": (0, "변환 계획 수립"),
-    "convert_all": (1, "1단계 규칙기반 변환"),
-    "port_one_screen_method": (2, "2단계 LLM 포팅"),
-    "splice_all": (2, "2단계 LLM 포팅"),
-    "validate_all": (3, "정적 검증"),
-    "repair_gate": (3, "정적 검증(수리 판단)"),
-    "scan_all": (4, "품질·취약점 스캔"),
-    "ai_recommend_one": (5, "AI 추천 변환 소스"),
-}
-
-
 def run_pipeline_part_a(
     screens: dict[str, dict],
     package_map: dict[str, tuple[str, str]],
@@ -1176,13 +1378,17 @@ def run_pipeline_part_a(
     all_paths: dict[str, dict] | None = None,
     progress_cb=None,
 ) -> PipelineState:
-    """폴더 안 화면 전체를 1~5단계까지 LangGraph로 진행한다(저장 안 함 - 사람 승인 후 app.py가
-    별도로 저장 + Part B(6~7단계)를 실행한다).
+    """폴더 안 화면 전체를 1~6단계까지 LangGraph로 진행한다(저장 안 함 - 사람 승인 후 app.py가
+    별도로 저장 + Part B(7~8단계)를 실행한다).
 
     progress_cb(node_name, partial_update)가 있으면 그래프가 노드를 하나 끝낼 때마다 호출된다 -
-    app.py가 이걸로 st.status() 스테퍼를 실시간 갱신한다(STAGE_BY_NODE로 노드명 -> 단계 번호 매핑).
-    반환값은 LangGraph가 리듀서로 정확히 합친 최종 state 전체다("values" 스트림 모드의 마지막
-    항목을 그대로 씀 - 수동으로 다시 합치지 않는다, 리듀서 로직을 직접 흉내내면 실수하기 쉬움).
+    app.py의 `_pipeline_progress_cb`가 노드 이름을 직접 분기해서 st.status() 스테퍼를 실시간
+    갱신한다(이전엔 `STAGE_BY_NODE`라는 노드명->단계번호 매핑 dict가 여기 따로 있었는데, app.py는
+    처음부터 그걸 안 쓰고 자체 if/elif로 구현돼 있었다 - 아무 데도 안 읽히는 죽은 코드이자, 단계
+    번호도 새 노드(equivalence_check_all) 추가 후 낡아 있었다. 2026-09-10 삭제 - 실제 매핑은
+    app.py 쪽 하나에만 있다). 반환값은 LangGraph가 리듀서로 정확히 합친 최종 state 전체다
+    ("values" 스트림 모드의 마지막 항목을 그대로 씀 - 수동으로 다시 합치지 않는다, 리듀서 로직을
+    직접 흉내내면 실수하기 쉬움).
 
     max_repair_retries: 정적 검증에서 BLOCKER가 난 "LLM이 포팅한 메서드"를 다시 LLM에게 보여주고
     고치게 하는 라운드 수 상한(repair_gate_node 참고, 2026-09-04 추가) - 화면당이 아니라 그래프
@@ -1219,6 +1425,18 @@ def run_pipeline_part_a(
         rule_skipped = sum(e.get("porting_skipped_rule_based", 0) for e in est)
         llm_planned = sum(e.get("porting", 0) for e in est)
         denom = llm_planned + rule_skipped
+        eq = final_state.get("equivalence_result") or {}
+        if eq.get("skipped") or "error" in eq:
+            eq_line = "미실행 — " + (eq.get("reason") or eq.get("error") or "알 수 없는 사유")
+        elif eq.get("cases"):
+            rate = eq.get("match_rate")
+            eq_line = (
+                f"{eq.get('screens_executed', 0)}/{eq.get('screens_total', 0)}화면 실행 · "
+                f"{eq.get('matched', 0)}/{eq.get('cases', 0)}케이스 일치"
+                + (f" ({rate * 100:.1f}%)" if rate is not None else "")
+            )
+        else:
+            eq_line = f"0/{eq.get('screens_total', 0)}화면 실행 — 비교 가능한 케이스 없음(원본 컴파일 실패 등)"
         log.summary([
             ("처리 화면", f"{len(final_state.get('files', {}))}건"),
             ("생성 파일", f"{sum(len(f) for f in final_state.get('files', {}).values())}종"),
@@ -1226,6 +1444,7 @@ def run_pipeline_part_a(
                             + (f", 결정론 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
             ("자기 수정 라운드", f"{final_state.get('repair_round', 0)}회"),
             ("잔여 BLOCKER", f"{n_block}건"),
+            ("기능 동등성(L3)", eq_line),
             ("반영 여부", "미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨"),
         ])
     return final_state
