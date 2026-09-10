@@ -1228,15 +1228,15 @@ if input_mode == "폴더 경로 지정":
                     "호출 실패 재시도", min_value=0, max_value=5, value=2,
                     key="pipeline_max_retries",
                     help="2단계에서 LLM Gateway 호출 자체가 실패한(타임아웃/네트워크) 메서드를 "
-                         "다시 시도하는 라운드 수입니다.",
+                         "다시 시도하는 회차 수입니다.",
                 )
             with opt_cols[2]:
                 pipeline_max_repair = st.number_input(
-                    "오류 수리 라운드", min_value=0, max_value=5, value=2,
+                    "오류 수리 회차", min_value=0, max_value=5, value=2,
                     key="pipeline_max_repair",
                     help="3단계 정적 검증에서 BLOCKER가 난 'LLM이 포팅한' 메서드를 오류 메시지와 "
-                         "함께 다시 LLM에 보내 고치게 하는 라운드 수입니다(0이면 수리 안 함). "
-                         "라운드마다 수리 대상 메서드 수만큼 LLM 호출이 추가됩니다.",
+                         "함께 다시 LLM에 보내 고치게 하는 회차 수입니다(0이면 수리 안 함). "
+                         "회차마다 수리 대상 메서드 수만큼 LLM 호출이 추가됩니다.",
                 )
 
             package_map: dict[str, tuple[str, str]] = {}
@@ -1359,7 +1359,7 @@ if input_mode == "폴더 경로 지정":
                             _render_stage_line(stage_placeholders[2], 2, "✅", extra)
                             _render_stage_line(stage_placeholders[3], 3, "✅", f" — 완료 (전체 {total_screens}개 화면)")
                             # 4단계(동작 일치 검증) 진행 중 - 이 사이에 수리 루프(repair_gate/
-                            # repair_candidate/select_repair)가 여러 라운드 돌 수도 있지만 그건 3단계
+                            # repair_candidate/select_repair)가 여러 회차 돌 수도 있지만 그건 3단계
                             # 재검증의 연장이라 여기 표시를 다시 흔들지 않는다(validate_all이 다시
                             # 불리면 이 elif가 또 실행돼 3단계 완료 표시를 갱신할 뿐이다).
                             _render_stage_line(stage_placeholders[4], 4, "🔄", " — 진행 중 (javac/java 컴파일)")
@@ -1418,13 +1418,13 @@ if input_mode == "폴더 경로 지정":
                             extra = " — 완료 (대상 nctRid 없음)"
                         _render_stage_line(stage_placeholders[6], 6, "✅", extra)
 
-                    # 3단계에서 BLOCKER가 나서 LLM에게 다시 고치게 한 라운드가 있었으면 그 사실을
+                    # 3단계에서 BLOCKER가 나서 LLM에게 다시 고치게 한 회차가 있었으면 그 사실을
                     # 남긴다(수리 자체는 repair_gate 노드가 그래프 안에서 처리 - 여기선 표시만).
                     _repair_rounds = final_state.get("repair_round", 0)
                     if _repair_rounds:
                         _render_stage_line(
                             stage_placeholders[3], 3, "✅",
-                            f" — 완료 (BLOCKER 수리 {_repair_rounds}라운드 수행 후 재검증)",
+                            f" — 완료 (BLOCKER 수리 {_repair_rounds}회차 수행 후 재검증)",
                         )
 
                     pipeline_batch_results = _pipeline_state_to_batch_results(

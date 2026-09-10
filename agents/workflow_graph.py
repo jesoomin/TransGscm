@@ -11,7 +11,7 @@ chatui/quality_scanner.py의 기존 함수를 그대로 호출하는 얇은 래�
 그래프 구조 (상태 기반 병렬 제어 + 피드백 루프):
 
     convert --(F 메서드 없음)--------------------------> validate -> scan -> END
-       L--(F 메서드 있음: Send로 메서드별 병렬 디스패치)--/
+       L--(F 메서드 있음: Send로 메서드별 병렬 배분)--/
                     v
             port_one_method (병렬, LLM Gateway 호출)
                     v
@@ -305,7 +305,7 @@ def _repair_prompt(method: str, current_code: str, error_message: str,
         "메서드 본문 첫 줄에 `// AI 수정: <무엇을 왜 고쳤는지 한 줄>` 주석을 추가해라.\n\n"
         # 최초 포팅에는 콜리 계약(_callee_note)을 주는데 수리에는 안 줬다 - 그래서 "없는 Store
         # 메서드를 부른다"는 오류를 받아도 LLM이 **실재하는 이름을 알 방법이 없어** 고칠 수가
-        # 없었다(실측: PLA087의 주입 결함 dPLA08710을 2라운드 다 쓰고도 못 고침). 실재하는
+        # 없었다(실측: PLA087의 주입 결함 dPLA08710을 2회차 다 쓰고도 못 고침). 실재하는
         # 메서드 목록은 이미 생성된 Store에서 그대로 읽은 사실이라 추측을 주는 게 아니다.
         + (
             f"참고 - `{holder}`에 실제로 정의된 메서드는 이것뿐이다: "
@@ -321,7 +321,7 @@ def _repair_prompt(method: str, current_code: str, error_message: str,
 
 
 def _dispatch_ports(methods: list[str], state: ScreenState) -> list[Send]:
-    """대상 메서드 목록을 각각 독립된 port_one_method 실행으로 병렬 디스패치한다."""
+    """대상 메서드 목록을 각각 독립된 port_one_method 실행으로 병렬 배분한다."""
     f_java = state.get("f_java") or ""
     bodies = extract_method_bodies(f_java)
     return [
@@ -386,7 +386,7 @@ def _convert_screen(
     # (`return store.dXXX(dto);`)로 생성돼 PORT_START/PORT_END 스텁이 없다 - 그런 메서드에 LLM을
     # 돌려봐야 splice_ported_method가 마커를 못 찾아 결과를 버린다. 게다가 버려지니 영원히
     # ported_methods에 안 들어가서 route_after_splice_all이 "아직 안 된 메서드"로 보고 재시도
-    # 라운드마다 다시 호출했다(PLA047 실측: 유효 1건에 호출 5건, 80% 낭비). 생성기가 스스로 남긴
+    # 회차마다 다시 호출했다(PLA047 실측: 유효 1건에 호출 5건, 80% 낭비). 생성기가 스스로 남긴
     # conversion_method 기록을 그대로 신뢰한다 - 여기서 detect_simple_delegation을 다시 부르면
     # 두 판정이 어긋날 수 있다.
     # 포팅 대상은 F(Service)만이 아니다 - P가 권한 게이트·결과 메시지·레코드셋 선별을 들고
@@ -459,8 +459,8 @@ def splice_node(state: ScreenState) -> dict:
     """병렬 포팅 결과를 한 곳(Service.java)에 순서 상관없이 모아 이어붙이는 수렴 지점.
 
     splice_ported_method는 PORT_START/PORT_END 마커를 못 찾으면 원본을 그대로 돌려주는
-    멱등(idempotent) 함수라(chatui/skeleton_gen.py), 이전 라운드에서 이미 스플라이스된 결과가
-    port_results에 누적돼 다시 섞여 들어와도(reducer 특성상 라운드 간 초기화가 안 됨) 안전하게
+    멱등(idempotent) 함수라(chatui/skeleton_gen.py), 이전 회차에서 이미 스플라이스된 결과가
+    port_results에 누적돼 다시 섞여 들어와도(reducer 특성상 회차 간 초기화가 안 됨) 안전하게
     아무 일도 하지 않는다 - 새로 성공한 것만 실제로 반영된다.
     """
     prefix = to_prefix(state["screen_id"])
@@ -481,7 +481,7 @@ def splice_node(state: ScreenState) -> dict:
 
 
 def route_after_splice(state: ScreenState):
-    """피드백 루프: LLM 호출 자체가 실패했던 메서드만, 재시도 한도 안에서 다시 디스패치한다.
+    """피드백 루프: LLM 호출 자체가 실패했던 메서드만, 재시도 한도 안에서 다시 배분한다.
 
     검증(validate) 결과를 보고 코드를 고쳐 재시도하는 수리 루프는 여기 없다(모듈 docstring 참고,
     Phase 5로 미룸) - 이건 어디까지나 "호출이 실패해서 아직 시도조차 못 해본" 메서드의 재시도다.
@@ -587,7 +587,7 @@ def run_screen_conversion(
 
 
 def _replace_list(a: list, b: list) -> list:
-    """수리 후보용 리듀서. 빈 리스트가 오면 초기화로 해석해 라운드 간 누적을 끊고, 그 외에는
+    """수리 후보용 리듀서. 빈 리스트가 오면 초기화로 해석해 회차 간 누적을 끊고, 그 외에는
     누적한다(병렬 브랜치가 각자 1건씩 더하는 경우)."""
     if not b:
         return []
@@ -637,13 +637,13 @@ class PipelineState(TypedDict, total=False):
     review_findings: Annotated[dict[str, dict], _merge_dicts]  # {screen_id: {fname: [ConversionIssue,...]}}
 
     # 수리 루프 (validate_all -> repair_gate -> port_one_screen_method(재사용) -> splice_all ->
-    # validate_all ... 최대 max_repair_retries 라운드, 2026-09-04 추가). repair_round/repair_targets는
+    # validate_all ... 최대 max_repair_retries 회차, 2026-09-04 추가). repair_round/repair_targets는
     # repair_gate_node 하나만 쓰는 값이라 리듀서 없이 매번 덮어쓴다(병렬 브랜치가 동시에 안 씀).
     max_repair_retries: int
     repair_round: int
     repair_targets: list[tuple[str, str, str]]  # [(screen_id, method, error_message), ...]
     # ToT 수리 후보: (screen_id, method, 전략라벨, 코드). 병렬 브랜치가 동시에 쓰므로 리듀서 필요.
-    # select_repair_node가 채점 후 빈 리스트로 덮어써서 라운드 간 누적을 끊는다.
+    # select_repair_node가 채점 후 빈 리스트로 덮어써서 회차 간 누적을 끊는다.
     repair_candidates: Annotated[list[tuple[str, str, str, str]], _replace_list]
     repair_candidates_n: int
 
@@ -782,7 +782,7 @@ def _port_target(state: PipelineState, screen_id: str, method: str) -> str:
 
 
 def _dispatch_ports_all(screen_method_pairs: list[tuple[str, str]], state: PipelineState) -> list[Send]:
-    """대상 (화면, F메서드) 조합을 전부 독립된 port_one_screen_method 실행으로 병렬 디스패치한다.
+    """대상 (화면, F메서드) 조합을 전부 독립된 port_one_screen_method 실행으로 병렬 배분한다.
 
     각 메서드가 실제로 호출하는 D 메서드 목록(skel_method_calls에 이미 있음)을 같이 실어 보내서
     포팅 프롬프트에 의존관계 힌트로 쓴다(`_callee_note` 참고, AlphaTrans식 콜리 메타데이터 주입).
@@ -861,7 +861,7 @@ def route_after_convert_all(state: PipelineState):
         log.stage(3, 8, "DECIDE", "LLM 포팅 건너뜀 — 규칙 기반으로 전부 처리됨")
         log.end_stage("LLM 호출 0건")
         return "validate_all"
-    log.stage(3, 8, "TOOL", f"LLM 포팅 — {len(pairs)}건 병렬 디스패치 (fan-out)")
+    log.stage(3, 8, "TOOL", f"LLM 포팅 — {len(pairs)}건 병렬 배분")
     log.plan(
         f"1단계 계획이 지목한 {len(pairs)}건에만 LLM Gateway를 호출한다",
         "대상은 계획 단계에서 이미 확정됐다 — 모델이 무엇을 부를지 스스로 고르지 않는다",
@@ -895,9 +895,9 @@ def _extract_ai_rationale(code: str) -> str:
 
 def port_one_screen_method_node(state: dict) -> dict:
     """병렬 실행 노드 - (화면, 메서드) 조합 1개를 LLM Gateway에 보내 포팅한다. port_one_method_node와
-    로직은 동일하고, 결과에 screen_id만 같이 실어 나른다(여러 화면이 섞여서 디스패치되므로).
+    로직은 동일하고, 결과에 screen_id만 같이 실어 나른다(여러 화면이 섞여서 배분되므로).
 
-    `_repair_error`가 실려 있으면(repair_gate_node가 재디스패치한 경우) 원본 재포팅이 아니라
+    `_repair_error`가 실려 있으면(repair_gate_node가 재배분한 경우) 원본 재포팅이 아니라
     "방금 포팅한 코드의 이 오류만 고쳐라" 프롬프트(_repair_prompt)를 쓴다 - 같은 노드를 재사용해서
     splice_all로 합쳐지는 경로(port_results 리듀서)를 그대로 타게 한다(새 수렴 지점을 안 만듦).
     """
@@ -947,14 +947,14 @@ def splice_all_node(state: PipelineState) -> dict:
             newly_ported.append((screen_id, method))
         elif f'UnsupportedOperationException("TODO: {method} 포팅 필요")' in current:
             # 스텁이 그대로 남아 있는데 결합이 아무것도 안 바꿨다 = 진짜 실패(마커를 못 찾음).
-            # 스텁이 이미 없는 경우는 앞선 라운드에서 같은 코드로 이미 반영된 것이다 -
-            # port_results가 누적 리스트(operator.add)라 수리 라운드마다 이전 결과까지 다시
+            # 스텁이 이미 없는 경우는 앞선 회차에서 같은 코드로 이미 반영된 것이다 -
+            # port_results가 누적 리스트(operator.add)라 수리 회차마다 이전 결과까지 다시
             # 결합되는데, splice가 멱등이라 "변화 없음"이 된다. 그걸 실패로 찍으면 안 된다.
             log.block(f"{screen_id}.{method} 결합 실패 — 결과를 반영하지 못했다",
                       "스텁이 남아 있는데 포팅 마커를 찾지 못했다")
         screen_files[service_fname] = spliced
     if newly_ported:
-        log.ok(f"결합(fan-in) 완료 — {len(newly_ported)}건을 Service/Api에 반영",
+        log.ok(f"결과 합치기 완료 — {len(newly_ported)}건을 Service/Api에 반영",
                ", ".join(f"{s}.{m}" for s, m in newly_ported))
     return {"files": files, "ported_methods": newly_ported, "attempt_count": state.get("attempt_count", 0) + 1}
 
@@ -973,7 +973,7 @@ def route_after_splice_all(state: PipelineState):
 def validate_all_node(state: PipelineState) -> dict:
     """Stage 3: 화면마다 validate_screen()을 그대로 호출한다(로직 변경 없음)."""
     round_no = state.get("repair_round", 0)
-    suffix = f" (수리 {round_no}라운드 후 재검증)" if round_no else ""
+    suffix = f" (수리 {round_no}회차 후 재검증)" if round_no else ""
     log.stage(4, 8, "VALIDATE", f"정적 검증{suffix} — 변환기와 분리된 검증기")
     results = {}
     n_block = n_warn = 0
@@ -1027,7 +1027,7 @@ def _find_repairable_targets(state: PipelineState) -> list[tuple[str, str, str]]
 
 def _dispatch_repairs(targets: list[tuple[str, str, str]], state: PipelineState) -> list[Send]:
     """수리 대상(화면, 메서드, 오류메시지)마다 현재(방금 포팅된, 오류 있는) 코드를 찾아
-    port_one_screen_method로 재디스패치한다 - `_repair_error`가 실려 있으면 그 노드가 자동으로
+    port_one_screen_method로 재배분한다 - `_repair_error`가 실려 있으면 그 노드가 자동으로
     _repair_prompt를 쓴다."""
     files_by_screen = state.get("files", {})
     sends = []
@@ -1129,12 +1129,12 @@ def select_repair_node(state: PipelineState) -> dict:
             screen_files[service_fname] = best[4]
             newly.append((screen_id, method))
 
-    # 다음 라운드에 이전 후보가 다시 섞이지 않도록 비운다(리듀서가 누적 리스트라 명시적 초기화).
+    # 다음 회차에 이전 후보가 다시 섞이지 않도록 비운다(리듀서가 누적 리스트라 명시적 초기화).
     return {"files": files, "ported_methods": newly, "repair_candidates": []}
 
 
 def repair_gate_node(state: PipelineState) -> dict:
-    """validate_all 직후 항상 거치는 게이트 - 수리할 게 있고 라운드 예산이 남았으면 라운드를
+    """validate_all 직후 항상 거치는 게이트 - 수리할 게 있고 회차 예산이 남았으면 회차를
     1 증가시켜 repair_targets를 채우고, 아니면 빈 채로 둔다(라우팅 함수는 상태를 못 바꾸므로
     "카운터 증가"는 반드시 노드에서 해야 한다 - route_after_repair_gate는 여기서 채운 값을 읽기만
     한다).
@@ -1143,22 +1143,22 @@ def repair_gate_node(state: PipelineState) -> dict:
     round_used = state.get("repair_round", 0)
     max_repair = state.get("max_repair_retries", 2)
 
-    log.stage(5, 8, "REFLECT", f"자기 수정 게이트 — 라운드 {round_used}/{max_repair} 사용")
+    log.stage(5, 8, "REFLECT", f"자기 수정 게이트 — 회차 {round_used}/{max_repair} 사용")
     if not targets:
         log.reflect("수리 불필요 → 다음 단계로 진행",
                     "LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 "
                     "(규칙 기반 생성물의 BLOCKER는 대상에서 제외 — LLM이 고칠 문제가 아님)")
-        log.end_stage("수리 0라운드")
+        log.end_stage("수리 0회차")
         return {"repair_targets": []}
     if round_used >= max_repair:
         log.reflect(f"수리 대상 {len(targets)}건이 남았으나 **예산 소진 → 포기**",
                     "무한 재분석은 자율 탐색이 되어버린다 — 상한을 넘기지 않고 미해소로 보고한다")
         for sid, m, err in targets:
             log.block(f"미해소: {sid}.{m}", err[:160])
-        log.end_stage(f"수리 {round_used}라운드 종료 — 미해소 {len(targets)}건")
+        log.end_stage(f"수리 {round_used}회차 종료 — 미해소 {len(targets)}건")
         return {"repair_targets": []}
 
-    log.reflect(f"수리 대상 {len(targets)}건 확정 → 라운드 {round_used + 1} 진입",
+    log.reflect(f"수리 대상 {len(targets)}건 확정 → 회차 {round_used + 1} 진입",
                 "검증 실패 메시지를 프롬프트에 피드백해 해당 메서드만 재생성한다 "
                 "(MatchFixAgent/ACToR 패턴: 검증·수리를 변환기와 분리)")
     for sid, m, err in targets:
@@ -1269,7 +1269,7 @@ def scan_all_node(state: PipelineState) -> dict:
 
 
 def _dispatch_ai_recommend_all(state: PipelineState) -> list[Send]:
-    """Stage 5 대상(화면, nctRid) 조합을 전부 뽑아 병렬 디스패치한다. extract_dto_fields()로
+    """Stage 5 대상(화면, nctRid) 조합을 전부 뽑아 병렬 배분한다. extract_dto_fields()로
     이미 계산돼 있던 요청/응답 필드 목록을 그대로 재사용한다(chatui/react_variant.py와 동일하게
     - 필드 재추출 없음).
     """
@@ -1304,7 +1304,7 @@ def route_after_scan_all(state: PipelineState):
         log.stage(8, 8, "DECIDE", "AI 추천 대상 없음")
         log.end_stage("파이프라인 완료 — 사람 승인 대기")
         return END
-    log.stage(8, 8, "TOOL", f"AI 추천 — {len(sends)}건 병렬 디스패치 (nctRid 단위, opt-in)")
+    log.stage(8, 8, "TOOL", f"AI 추천 — {len(sends)}건 병렬 배분 (nctRid 단위, opt-in)")
     return sends
 
 
@@ -1341,7 +1341,7 @@ def build_pipeline_graph():
     builder.add_edge("port_one_screen_method", "splice_all")
     builder.add_conditional_edges("splice_all", route_after_splice_all, ["port_one_screen_method", "validate_all"])
     # validate_all은 이제 곧장 scan_all로 안 가고 항상 repair_gate를 거친다 - 방금 검증한 BLOCKER
-    # 중 LLM이 포팅한 메서드에 귀속된 게 있으면(그리고 라운드 예산이 남으면) port_one_screen_method로
+    # 중 LLM이 포팅한 메서드에 귀속된 게 있으면(그리고 회차 예산이 남으면) port_one_screen_method로
     # 되돌아가 오류만 고치게 하고, 그 결과는 splice_all -> validate_all로 다시 흘러 재검증된다
     # (2026-09-04 추가, MatchFixAgent/ACToR식 검증-수리 루프 - docs/06-mentor-feedback.md §D).
     builder.add_edge("validate_all", "repair_gate")
@@ -1391,8 +1391,8 @@ def run_pipeline_part_a(
     직접 흉내내면 실수하기 쉬움).
 
     max_repair_retries: 정적 검증에서 BLOCKER가 난 "LLM이 포팅한 메서드"를 다시 LLM에게 보여주고
-    고치게 하는 라운드 수 상한(repair_gate_node 참고, 2026-09-04 추가) - 화면당이 아니라 그래프
-    전체에서 공유하는 라운드 수라는 점이 max_retries(호출 실패 재시도)와 같다. 라운드마다 LLM
+    고치게 하는 회차 수 상한(repair_gate_node 참고, 2026-09-04 추가) - 화면당이 아니라 그래프
+    전체에서 공유하는 회차 수라는 점이 max_retries(호출 실패 재시도)와 같다. 회차마다 LLM
     호출이 추가로 늘어나니(수리 대상 메서드 수만큼) 기본값 2로 낮게 잡았다.
     """
     initial: PipelineState = {
@@ -1404,7 +1404,7 @@ def run_pipeline_part_a(
     }
     log.banner(
         "G-SCM 차세대 전환 Agent — 추론 로그",
-        f"대상 화면 {len(screens)}건 · 수리 라운드 상한 {max_repair_retries} · "
+        f"대상 화면 {len(screens)}건 · 수리 회차 상한 {max_repair_retries} · "
         f"AI 추천 {'포함' if include_ai_recommend else '제외'}",
     )
     graph = get_pipeline_graph()
@@ -1442,7 +1442,7 @@ def run_pipeline_part_a(
             ("생성 파일", f"{sum(len(f) for f in final_state.get('files', {}).values())}종"),
             ("LLM 포팅 호출", f"{llm_planned}건 (규칙 기반으로 회피 {rule_skipped}건"
                             + (f", 규칙 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
-            ("자기 수정 라운드", f"{final_state.get('repair_round', 0)}회"),
+            ("자기 수정 회차", f"{final_state.get('repair_round', 0)}회"),
             ("잔여 BLOCKER", f"{n_block}건"),
             ("동작 일치", eq_line),
             ("반영 여부", "미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨"),

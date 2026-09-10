@@ -182,7 +182,7 @@ def developer_experience(state: dict) -> dict:
 def functional_equivalence(equiv: dict | None) -> dict:
     """D. 동작 일치 — AS-IS/TO-BE를 실제로 실행해 비교한 결과(agents/equivalence_test.py).
 
-    **일치율과 커버리지를 따로 잡는다.** 실행된 케이스만으로 100%가 나와도, 실행하지 못한 화면이
+    **일치율과 범위를 따로 잡는다.** 실행된 케이스만으로 100%가 나와도, 실행하지 못한 화면이
     있으면 "전부 검증됐다"가 아니다. 한 수치로 합치면 부분 검증이 전체 검증처럼 보인다 - 이
     프로젝트가 리뷰 축소율에서 이미 한 번 겪은 실수라 같은 형태를 반복하지 않는다.
     """
@@ -286,7 +286,7 @@ _WEIGHTS = [
     ("B. 사용자 체감", "사람 수정 수용률", 7, "review_acceptance", "dx"),
     ("C. 탐지 정확성", "원본 결함 재현율", 10, "defect_recall", "detect"),
     ("C. 탐지 정확성", "중복 탐지 F1", 10, "dup_f1_proxy", "detect"),
-    # 일치율과 커버리지를 따로 채점한다 - 부분 검증이 전체 검증으로 보이지 않게.
+    # 일치율과 범위를 따로 채점한다 - 부분 검증이 전체 검증으로 보이지 않게.
     ("D. 동작 일치", "업무 로직(F) 일치율", 9, "service_match_rate", "equiv"),
     ("D. 동작 일치", "화면 요청(Api) 일치율", 6, "api_match_rate", "equiv"),
     ("D. 동작 일치", "일치 검증 범위", 10, "coverage", "equiv"),
