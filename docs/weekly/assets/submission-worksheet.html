@@ -383,264 +383,179 @@ python -m agents.scorecard <폴더> --screens PLA087,PLA089,PLA093,PLA096,PLA100
 <section id="deck">
   <div class="shead">
     <span class="idx">DECK</span>
-    <h2>발표 장표 10장</h2>
-    <span class="note">각 장 = 대본의 한 구간</span>
+    <h2>발표 장표 — 표지 + 3장</h2>
+    <span class="note">가이드 규격 확정</span>
   </div>
-  <p class="lede">장표를 먼저 만들고 대본을 끼워 맞추면 "기능 나열"이 됩니다. 반대로 했습니다 — 대본이 증명해야 하는 것을 먼저 정하고, 그 증명을 받아낼 장만 남겼습니다. 숫자가 없는 장은 넣지 않았습니다.</p>
+  <p class="lede">제출 가이드가 <b>표지 + 3페이지(총 4슬라이드), 10분 이내</b>로 규격을 못 박고 있습니다. 이전 초안의 10장 구성은 규격 위반이라 폐기했습니다. 완성본은 공식 템플릿에 채워 <code>docs/weekly/assets/최종발표장표.pptx</code>로 있고, 아래는 그 안의 문구입니다. 장표는 요약만 담고 서술은 발표로 채웁니다.</p>
+
+  <div class="call">
+    <h3>가이드가 지목한 득점 포인트</h3>
+    <p>가이드는 <em>"심사위원은 LangGraph, LangChain을 기본으로 간주한다"</em>고 적고, <b>MCP · Tree of Thoughts · Self-Correction</b>을 추가 득점 요소로 지목합니다. 세 가지 모두 실제 구현이 있어 슬라이드 2의 기술 3선에 그대로 배치했습니다.</p>
+    <p><b>가이드의 오류 하나는 따르지 않았습니다.</b> 가이드 예시문이 MCP를 "Model-based Coherent Planning"으로 적었는데, MCP는 <b>Model Context Protocol</b>입니다. 틀린 용어를 따라 쓰면 오히려 감점 요인이라 올바른 정의를 쓰고, "표면을 갈랐다"(조회만 노출, 변환 실행 미노출)는 설계 판단을 선택 이유로 적었습니다.</p>
+  </div>
 
   <div class="slides">
 
     <div class="slide">
-      <div class="sn">01 / 표지</div>
-      <h4>10년 운영한 시스템을, 운영한 사람이 전환한다</h4>
-      <div class="role">대본 0:00 — 문제의 당사자성</div>
-<pre>G-SCM 차세대 전환 Agent
-1단계 · 서버(Java/XSQL → Spring/MyBatis)
-
-화면 1,416개에 대응하는 P/F/D BizUnit과 XSQL을
-Spring/MyBatis로 자동 전환하는 파이프라인
-
-발표자는 이 시스템의 개발·유지보수 실무 담당자</pre>
+      <div class="sn">표지</div>
+      <h4>과제명 · 멘티 · 멘토</h4>
+      <div class="role">가이드: 내용 없이 3가지 정보만</div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">표지</span><span class="fhint">성명·사번만 채우면 완료</span><button class="copy" type="button">복사</button></div>
+<pre>과제명   G-SCM 차세대 전환 Agent
+멘   티   [성명], [사번]
+멘   토   [성명]</pre>
+      </div>
     </div>
 
     <div class="slide">
-      <div class="sn">02 / 문제</div>
-      <h4>병목은 변환이 아니라 추적이었다</h4>
-      <div class="role">대본 0:00–0:30 — 왜 이 도구인가</div>
-<pre>화면-서비스 매핑(nctRid)이 명명 규칙과 일치하지 않는다.
-서버 로직 하나를 옮기려면 화면마다 사람이
-P / F / D / XSQL 4종 파일을 직접 추적해야 한다.
+      <div class="sn">01 / 03 · 프로젝트 개요</div>
+      <h4>왜 했는가 · 무엇을 만들었는가 · 무엇이 나왔는가</h4>
+      <div class="role">권장 2분 · 대본 0:00~0:30 구간</div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">문제 정의</span><span class="fhint">솔루션이 아니라 문제를 적는다</span><button class="copy" type="button">복사</button></div>
+<pre>화면-서비스 매핑(nctRid)이 명명 규칙과 불일치
+→ 서버 로직 1건 전환에 P·F·D·XSQL 4종 파일 수작업 추적
 
-이 추적이 1,416회 반복된다.
+규모    1,416개 화면에서 동일 추적 반복
+품질    개발자별 응답·예외 처리 이원화
+리스크  원본에 결함 혼재 — 컴파일 불가·XML·SQL 오류
 
-그리고 원본 자체에 결함이 섞여 있다
- · Java 중괄호 누락 — 컴파일 불가
- · XML 태그 불일치
- · SQL 문법 오류
+정상 원본을 전제한 도구는 첫 화면에서 멈춤</pre>
+      </div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">핵심 기능</span><span class="fhint">Agent 구성 흐름 중심</span><button class="copy" type="button">복사</button></div>
+<pre>폴더 지정 → 8단계 자동 진행 → 사람 승인 후에만 반영
 
-이 마지막 항목이 설계를 좌우했다.
-전환 도구가 "정상 원본"을 전제하면 첫 화면에서 멈춘다.</pre>
+에이전트 구성
+  Planner          계획 파일 고정 (LLM 미사용)
+  Translator       규칙 46% / LLM 54% 분업
+  Validator        변환기와 분리
+  Repairer         자기 수정, 라운드 상한 2
+  Human Approval   승인 전 저장 0건
+
+기술 스택
+  LangGraph StateGraph · MCP(Model Context Protocol)
+  Azure OpenAI 호환 사내 LLM Gateway · Tree-of-Thoughts · Oracle</pre>
+      </div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">핵심 성과 3</span><span class="fhint">①정확도 ②성공률 ③사용자 체감</span><button class="copy" type="button">복사</button></div>
+<pre>100%     원본 결함 탐지 재현율
+         30화면 정답키 · 오탐 0건
+
+96.7%    정적 검증 통과율
+         29/30건
+
+0.20%    사람 수정 라인 비율 · 리뷰 대상 87.3% 축소
+         생성 1,960줄 중 4줄 · AI 리뷰어 1차 기준 하한값</pre>
+      </div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">Key Message</span><span class="fhint">하나만 기억한다면</span><button class="copy" type="button">복사</button></div>
+<pre>"결정론 변환에 LLM을 쓰지 않아 호출 46% 절감,
+ 정적 검증 통과 코드의 실행 일치율 33%를
+ 직접 측정해 100%로 개선"
+
+전환 스코어카드 80.9 / 100 · 측정 범위 확대로 88.2에서 하향</pre>
+      </div>
     </div>
 
     <div class="slide">
-      <div class="sn">03 / 설계 원칙</div>
-      <h4>결정론으로 풀리는 변환에 LLM을 쓰지 않는다</h4>
-      <div class="role">대본 0:30–1:30 — 계획 단계의 근거</div>
-<pre>규칙이 하는 일 (LLM 호출 0회)
- · iBatis → MyBatis 문법 변환
- · BizUnit 시그니처 → Api/Service/Store 골격
- · .BIZUNIT → DTO
- · 매핑 그래프, 영향도, 중복·미사용 함수
+      <div class="sn">02 / 03 · 기술 아키텍처</div>
+      <h4>어떻게 만들었는가 · 왜 이 기술인가</h4>
+      <div class="role">권장 4분 · 대본 1:30~3:30 구간의 근거</div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">아키텍처 다이어그램</span><span class="fhint">좌측 영역 · 도형으로 직접 작성</span><button class="copy" type="button">복사</button></div>
+<pre>AS-IS  ·  화면 1개 = 5 fragment
+  .BIZUNIT   P BizUnit   F BizUnit   D BizUnit   XSQL
+      ↓
+╔════════════════════════════════════════════════════════════════╗
+║ ① Planner — 무엇을 어떤 도구로 처리할지 먼저 판단한다            ║
+║   메서드 단위로 규칙 / LLM을 가르고, 호출 대상·순서·예산을 확정  ║
+║   정적 분석 · LLM 미사용 · conversion-plan.json 으로 고정        ║
+╚════════════════════════════════════════════════════════════════╝
+      ↓         ↓         ↓         ↓        (팬아웃)
+┌ Planner가 지목한 대상만 호출 — 모델이 도구를 스스로 고르지 않는다 ┐
+│  ② 규칙 변환기     ② 골격·DTO 생성   ③ LLM Gateway   ④ 정적 검증기 │
+│  iBatis→MyBatis   시그니처→클래스   업무 로직 포팅   변환기와 분리 │
+│                                                                  │
+│  ⑤ ToT 수리기      ⑥ 동등성 L3       ⑦ 교차 분석     ⑧ Maven 빌드 │
+│  후보 N개→채점     javac/java 실행   엔드포인트 충돌  mvn compile  │
+└──────────────────────────────────────────────────────────────────┘
+  ⑤ 자기 수정은 ④ 검증 실패 시에만 ③으로 되돌린다 (라운드 상한 2)
+      ↓
+  사람 승인 게이트 — 승인 전에는 산출물·DB에 아무것도 쓰지 않는다
+      ↓
+TO-BE  ·  Spring / MyBatis
+  Api   Service   Store   Dto   Mapper.xml
 
-LLM이 하는 일 (좁게)
- · 계산·분기가 있는 업무 로직 포팅
- · P 계층 오케스트레이션 포팅
- · 검증 실패 시 자기 수정
+범례   민트 = 결정론(LLM 0회)   네이비 = LLM 호출
+       MCP 조회 서버(읽기 전용 4종) — 변환 실행 미노출</pre>
+      </div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">기술 선택 3가지</span><span class="fhint">선택 이유 + 핵심 활용</span><button class="copy" type="button">복사</button></div>
+<pre>01  LangGraph StateGraph + 계획 파일 고정
+    선택 이유  ReAct 자율 탐색은 1,416회 반복에서 화면마다 경로가 갈림
+    핵심 활용  계획을 파일로 확정 → 이후 단계는 지목된 대상만 호출
+               Send() fan-out 병렬
+    강점       계획이 도구 호출을 지휘 — 재현·리뷰·재실행 가능
 
-실측 — 포팅 대상 46건 중 21건을 규칙으로 회피(46%)
-LLM 호출 낭비도 화면당 5건 → 1건으로 제거</pre>
+02  MCP (Model Context Protocol)
+    선택 이유  도구 동적 선택은 '자율 탐색 배제' 원칙과 충돌 → 표면 분리
+    핵심 활용  조회 4종만 노출, 변환 실행 미노출
+               실 클라이언트 stdio 연결 검증
+    강점       표준 프로토콜을 열되 승인 게이트는 우회 불가
+
+03  Tree-of-Thoughts + Self-Correction
+    선택 이유  통상 ToT는 모델이 자기 가지를 자평 → 결정론적 검증기로 대체
+    핵심 활용  후보 병렬 생성 → 잔여 BLOCKER 수로 채점
+               (MatchFixAgent/ACToR)
+    강점       채점자가 LLM이 아니라 결정론적 검증기</pre>
+      </div>
     </div>
 
     <div class="slide">
-      <div class="sn">04 / 파이프라인</div>
-      <h4>8단계 고정 파이프라인과 사람 승인 게이트</h4>
-      <div class="role">대본 전 구간 — 화면 하단 상시 노출</div>
-<pre>0 계획 수립      규칙, 코드 생성 전에 파일로 고정
-1 규칙 기반 변환   LLM 미사용
-2 LLM 포팅       병렬 디스패치, 피호출자 계약 주입
-3 정적 검증       변환기와 분리된 검증기
-  └ 자기 수정 게이트 (라운드 상한 2)
-4 기능 동등성 L3   AS-IS/TO-BE 실제 실행 비교
-5 품질·취약점 스캔
-6 AI 추천        opt-in, 채택은 사람
-7 교차 분석       엔드포인트 충돌, 중복·미사용
-8 Maven 빌드 검증
+      <div class="sn">03 / 03 · 핵심 기술 과제</div>
+      <h4>어떤 장벽 · 어떻게 돌파 · 결과는 수치로</h4>
+      <div class="role">권장 4분 · 심사위원이 가장 집중해서 보는 장</div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">핵심 난제</span><span class="fhint">왜 기존 방법이 안 되는가부터</span><button class="copy" type="button">복사</button></div>
+<pre>정적 검증 100% 통과 코드가 실행에서는 동작 불일치
+— 검증 수단 자체가 부재
 
-  ═══ 사람 승인 게이트 ═══
-  승인 전에는 산출물·DB에 아무것도 쓰지 않는다</pre>
-    </div>
+AlphaTrans(FSE 2025) 동일 간극 보고
+  문법 96.40%  vs  기능 동등성 25.14%</pre>
+      </div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">엔지니어링 접근</span><span class="fhint">설계 결정 중심</span><button class="copy" type="button">복사</button></div>
+<pre>전제 재검토
+  "실행 수단이 없다"가 오판 — 필요한 건 앱 기동이 아닌 F 메서드 호출 환경.
+  AS-IS 프레임워크 API는 10개 남짓의 닫힌 집합
 
-    <div class="slide">
-      <div class="sn">04b / 오케스트레이션</div>
-      <h4>Planning이 도구 호출을 지휘한다</h4>
-      <div class="role">대본 0:30–1:30 + 1:30–2:00</div>
-<pre>모델이 도구를 스스로 고르지 않는다.
-계획 단계가 "무엇을, 어떤 도구로, 왜" 부를지 먼저 확정하고
-이후 단계는 그 계획대로만 호출한다.
+① 최소 실행 하네스 (L3)
+   데이터 계층을 양쪽 동일 캔드 데이터로 고정 → 차이는 포팅 차이만
+   0행 / 1행 / 3행으로 분기 경로 전수
 
-[STAGE 1] PLAN — 정적 분석만, LLM 호출 0회
-  메서드마다 판단하고 근거를 남긴다
-    fCommonCodeQry     → 규칙 기반 생성 (LLM 호출 안 함)
-                         ↳ 단순 위임 — store 호출 1건으로 결정론적 생성 가능
-    fPLA087QrySelect…  → LLM 포팅
-                         ↳ 계산·분기가 있어 기계적 1:1 치환 불가
-    pPLA08701          → LLM 포팅 (Api 계층)
-                         ↳ P가 순수 위임이 아님 — 권한 게이트·레코드셋 선별
+② 피호출자 계약 JSON 주입
+   콜그래프의 실제 메서드명·반환 타입·카디널리티를 프롬프트에 명시
 
-  PLAN  도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
-        ↳ 규칙 변환기 21건(LLM 미사용) · LLM Gateway 25건
-          · 검증기 전건 · 수리 루프는 검증 실패 시에만
+③ ToT 수리 — 채점자 분리
+   후보 병렬 생성, 결정론적 검증기가 채점 (모델 자기평가 미사용)
 
-[STAGE 2] TOOL  규칙 변환기       계획이 지목한 21건
-[STAGE 3] TOOL  LLM Gateway      계획이 지목한 25건, 병렬 fan-out
-          CONTEXT 호출 직전 피호출자 계약을 JSON으로 주입
-[STAGE 4] TOOL  검증기            변환기와 분리, 전건
-[STAGE 5] REFLECT 수리 루프        검증이 실패시킨 것만, 상한 2
+④ 자동화하지 않을 것을 확정
+   원본 결함은 보존·표시, 미확인 패턴에 규칙 생성 금지</pre>
+      </div>
+      <div class="field">
+        <div class="fhead"><span class="flabel">결과 및 성과</span><span class="fhint">반드시 수치로</span><button class="copy" type="button">복사</button></div>
+<pre>33% → 100%   F 계층 실행 일치율
+             27건 중 9건 일치 → 원인(레코드셋 추출 누락) 수정 후 48/48
 
-계획 파일은 tracking/conversion-plans/ 에 남는다.
-리뷰·재현·재실행이 가능하다.</pre>
-    </div>
+0/9 → 9/9    Api 계층 페이로드 일치율
+             "P는 순수 위임" = 표본 1건 가정.
+             30화면 전수 확인 → 권한 게이트 누락 발견
 
-    <div class="slide">
-      <div class="sn">05 / 핵심 장면</div>
-      <h4>Agent가 "내가 고칠 것"과 "사람이 볼 것"을 가른다</h4>
-      <div class="role">대본 2:30–3:30 ★ 배점 40% 구간</div>
-<pre>검증 결과 — BLOCKER 2건
-
- [1] UNRESOLVED_STORE_CALL
-     존재하지 않는 store.dPLA08710(...) 호출
-     → LLM 포팅 산출물이다. 수리 대상으로 채택.
-
- [2] XML_PARSE_ERROR
-     Mapper 닫는 태그 누락
-     → 규칙 기반 산출물이다. LLM이 고칠 문제가 아니다.
-       의도적으로 제외하고 사람에게 넘긴다.
-
-1라운드 만에 해결 — BLOCKER 2건 → 1건
-정답키 대조: "정상 메서드명은 dPLA08701"
-수리 결과:   store.dPLA08701(...)   ← 정답과 일치</pre>
-    </div>
-
-    <div class="slide">
-      <div class="sn">06 / 고급 기법</div>
-      <h4>Tree-of-Thoughts의 채점자를 LLM에서 떼어냈다</h4>
-      <div class="role">대본 3:00–3:30 보조</div>
-<pre>일반적인 ToT의 약점 — 모델이 자기 가지를 자기가 평가한다.
-이 프로젝트에는 결정론적 검증기가 이미 있다.
-
- 1. BLOCKER 1건마다 방침을 달리한 후보 N개 병렬 생성
-    (최소수정 / 계약우선)
- 2. 후보마다 실제로 splice한 사본을 만들어 검증기 실행
- 3. 잔여 BLOCKER 수로 채점, 동점이면 원본에서 덜 벗어난 쪽
- 4. 채택·탈락 근거를 로그에 남김
-
-실측에서는 두 후보 모두 0건이라 결과가 바뀌지 않았다.
-가지치기가 이번엔 수정을 확인했을 뿐 개선하진 않았다 —
-그 사실을 그대로 보고한다.</pre>
-    </div>
-
-    <div class="slide">
-      <div class="sn">06b / 선행 연구</div>
-      <h4>차용한 것과, 버린 것과, 그 이유</h4>
-      <div class="role">Q&amp;A 대비 · 상세는 docs/10-prior-art.md</div>
-<pre>차용                          구현 위치
- AlphaTrans      fragment 분해 · 콜그래프 역순
-                 · 스켈레톤 우선 · 조각별 콜러/콜리 계약
-                 → skeleton_gen.py, _callee_note()
- ReCodeAgent     역할 분리 · 계획 파일 영속화 · 경량 파서
-                 → conversion_plan.py, nctrid_graph.py
- MatchFixAgent   검증·수리를 변환기와 분리 (최대 차용점)
- / ACToR         → validators.py, repair_gate_node
- AWS Transform   Refactor / Reimagine 이원화
-                 → track_signals (신호만, 결정은 사람)
- C2SaferRust     트랜스파일러 먼저 · Strangler Fig
- RepoTransBench  자체 벤치마크 선행 · 사람 수정 라인 비율
-                 → benchmark.py, review.py, scorecard.py
-
-의도적으로 버린 것
- 학습 기반 변환      병렬 데이터 없음, 규칙성 높음 — 학습할 이유가 없다
- 자율 탐색 에이전트   1,416회 반복엔 고정 파이프라인이 낫다
- 범용 다국어 전환기   단일 쌍 특화가 훨씬 효율적이다
- RAG               파일럿 결과물이 코퍼스다 — 파일럿이 먼저다
-                   (구현 안 했으므로 구현 기능으로 적지 않는다)
-
-수치는 출처를 구분한다
- AlphaTrans 원문 직접 확인 — 문법 96.40% vs 기능 25.14%
- (멘토 코멘트 인용본은 99.1 / 25.8. 검증 없이 옮기지 않았다)</pre>
-    </div>
-
-    <div class="slide">
-      <div class="sn">07 / 반증</div>
-      <h4>정적 검증을 전부 통과한 코드가 실행에서는 33%만 맞았다</h4>
-      <div class="role">대본 4:30–5:00 — 이 PoC의 최대 성과</div>
-<pre>가설 H3 — 정적 검증만으로 변환 정확성을 보증할 수 있다
-결과   — 반증됨. 추론이 아니라 실증으로.
-
-"실행할 수단이 없다"는 전제 자체가 틀렸다.
-필요한 건 애플리케이션 기동이 아니라
-F 메서드를 부를 최소 환경이었고,
-AS-IS가 쓰는 프레임워크 API는 10개 남짓의 닫힌 집합이었다.
-
-하네스를 만들어 돌리자 27건 중 9건만 일치(33%).
-원인 — 배관 규칙이 Store 반환값을 통째로 담아
-       원본의 getRecordSet(name) 추출 단계를 빠뜨림.
-고쳐서 100%.
-
-AlphaTrans(FSE 2025)가 보고한
-문법 96.40% vs 테스트 통과 25.14%의 간극을
-우리 코드에서 직접 재현하고 닫았다.</pre>
-    </div>
-
-    <div class="slide">
-      <div class="sn">08 / 지표</div>
-      <h4>측정 범위를 넓히면 점수는 내려간다. 되돌리지 않았다</h4>
-      <div class="role">대본 4:30–5:00 — 성과 요약</div>
-<pre>전환 스코어카드  80.9 / 100   (직전 88.2에서 하향)
-
- A 전환 성공률   생성률 100% · 정적 검증 96.7%
- B 사용자 체감   리뷰 축소 87.3% · 결정론 45.6% · 수정 0.20%
- C 탐지 정확성   원본 결함 10/10 · 오탐 0 · 중복 F1 66.7%
- D 기능 동등성   F 48/48 · Api 페이로드 9/9 · 커버리지 3/5
-
-점수가 내려간 이유는 도구가 나빠져서가 아니다.
- ① Api(HTTP) 계층을 처음 재보니 P 오케스트레이션이
-    통째로 빠져 있었다 — 정적 검증은 전부 통과했었다.
- ② 결정론 처리 비중의 분모가 틀렸다 (75% → 46%).
-
-리뷰 축소율도 스스로 깎았다 — 99.7%는 과장이었다.
-LLM 포팅 라인은 이슈가 없어도 사람이 전부 읽어야 하므로
-포함해 다시 재니 87.3%.
-유리한 정의를 버리고 방어 가능한 정의를 택했다.</pre>
-    </div>
-
-    <div class="slide">
-      <div class="sn">09 / 가드레일</div>
-      <h4>자율성을 주지 않는 것이 설계다</h4>
-      <div class="role">대본 3:30–4:30 — 승인 게이트</div>
-<pre>승인 게이트     승인 전엔 산출물·DB에 아무것도 쓰지 않음
-임시 사본 격리   승인 전 검증은 사본에서, 종료 시 항상 삭제
-생성 식별자 대조  LLM이 원본에 없는 필드를 만들면 자동 차단
-미지원 명시     본 적 없는 패턴에 규칙을 만들지 않는다
-원본 결함 보존   임의 수정 금지, ORIGINAL_BUG으로 구분
-수리 라운드 상한  무한 루프 / 자율 탐색화 차단
-
-MCP도 같은 원칙으로 갈랐다
- 변환 실행 → 노출하지 않음 (승인 게이트 우회 경로를 열지 않는다)
- 분석 조회 → 노출함 (부작용 없는 결정론적 그래프 조회)
-읽기 전용 4종을 실제 MCP 클라이언트로 연결해 검증했다.</pre>
-    </div>
-
-    <div class="slide">
-      <div class="sn">10 / 다음</div>
-      <h4>다음 단계 1순위는 실행 수단이다</h4>
-      <div class="role">대본 5:00 — 마무리 + 확장</div>
-<pre>당장의 1순위
- 포팅 결과를 실행할 수단 확보.
- 수리 루프를 아무리 고도화해도 개선되는 건 이미 높은
- 문법 층이다. 낮은 기능 층을 건드리려면 실행이 필요하다.
-
-내년 차세대 전환 프로젝트로의 확장 — 두 축
-
- [축 1] 전환 속도와 정확도
-        Agent가 화면 단위 전환을 수행하고 사람은 승인만
-
- [축 2] 표준화 리뷰 — 이번에 새로 넣는 축
-        10년 이상 누적된 원본을 그대로 옮기면
-        낡은 네이밍과 개발 편차까지 함께 이관된다.
-        전환 직후 LLM이 표준 개발 형식(네이밍 규칙,
-        계층 책임, 예외·응답 규약)에 비추어 한 번 더
-        검토하고 표준화 제안을 낸다.
-        전환을 "이관"이 아니라 "정비"로 만든다.</pre>
+5 → 1건      화면당 LLM 포팅 호출
+             성공 불가 대상 반복 호출 80% 제거 · 규칙 기반 회피 46% 포함</pre>
+      </div>
     </div>
 
   </div>
@@ -1220,7 +1135,7 @@ AWS Transform
   프롬프트에 명시적 JSON 계약 객체로 넣는다.
 
   {"name": "dPLA04606",
-   "return_type": "Map<String, Object>",
+   "return_type": "Map&lt;String, Object>",
    "cardinality_mismatch": true}
 
   name                  콜그래프에서 뽑은 실제 이름. 추측 금지
