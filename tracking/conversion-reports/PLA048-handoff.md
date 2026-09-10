@@ -1,9 +1,9 @@
 # PLA048 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-09T13:01:44
+- 생성 시각: 2026-09-10T10:29:58
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla048Api.java, Pla048Dto.java, Pla048Mapper.xml, Pla048Service.java, Pla048Store.java)
-- 사람이 반드시 처리해야 할 항목: **3건**, 확인 권장: 6건
+- 사람이 반드시 처리해야 할 항목: **6건**, 확인 권장: 6건
 
 > 이 문서는 파이프라인이 이미 만든 결과(계획서·생성 이슈·정적 검증·품질 스캔)를 사람이 읽을 순서로 재구성한 것입니다. 자동 변환 결과는 **사람 리뷰 없이 커밋/배포하지 않습니다.**
 
@@ -14,6 +14,12 @@
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04802`) — pPLA04802가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
   - 발견: 골격 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04803`) — pPLA04803가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **STORE_CARDINALITY_MISMATCH** (메서드 `dHistoryQry`) — dHistoryQry: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
+  - 발견: 골격 생성(skeleton_gen)
+- **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04801`) — dPLA04801: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
+  - 발견: 골격 생성(skeleton_gen)
+- **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04802`) — dPLA04802: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
   - 발견: 골격 생성(skeleton_gen)
 
 ## 🟡 확인이 필요한 것 (WARNING)
@@ -46,9 +52,6 @@
 - **FETCH_SIZE_DROPPED** — fetchSize 속성은 MyBatis 변환 시 제거했습니다 - 필요하면 <select>에 수동으로 다시 넣으세요.
   - 발견: Mapper 변환(converters)
   - 조치: fetchSize 속성을 제거했습니다. 성능이 중요하면 MyBatis 설정으로 다시 지정하세요.
-- **ORIGINAL_BUG** (메서드 `fAuthCheck`, 48행) — 48행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 getRecordSet("AUTH_LIST").getRecordCount() 전제이나, 포팅 대상의 반환 타입 계약이 명확하지 않아 단건 객체는 1건으로 간주
-  - 발견: 품질·취약점 스캔(Pla048Service.java)
-  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 
 </details>
 

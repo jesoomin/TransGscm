@@ -1,9 +1,9 @@
 # PLA050 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-09T13:01:44
+- 생성 시각: 2026-09-10T10:29:58
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla050Api.java, Pla050Dto.java, Pla050Mapper.xml, Pla050Service.java, Pla050Store.java)
-- 사람이 반드시 처리해야 할 항목: **3건**, 확인 권장: 6건
+- 사람이 반드시 처리해야 할 항목: **6건**, 확인 권장: 6건
 
 > 이 문서는 파이프라인이 이미 만든 결과(계획서·생성 이슈·정적 검증·품질 스캔)를 사람이 읽을 순서로 재구성한 것입니다. 자동 변환 결과는 **사람 리뷰 없이 커밋/배포하지 않습니다.**
 
@@ -14,6 +14,12 @@
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05002`) — pPLA05002가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
   - 발견: 골격 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05003`) — pPLA05003가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
+  - 발견: 골격 생성(skeleton_gen)
+- **STORE_CARDINALITY_MISMATCH** (메서드 `dHistoryQry`) — dHistoryQry: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
+  - 발견: 골격 생성(skeleton_gen)
+- **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA05001`) — dPLA05001: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
+  - 발견: 골격 생성(skeleton_gen)
+- **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA05002`) — dPLA05002: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
   - 발견: 골격 생성(skeleton_gen)
 
 ## 🟡 확인이 필요한 것 (WARNING)

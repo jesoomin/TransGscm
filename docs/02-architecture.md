@@ -5,7 +5,38 @@
 ## AS-IS: NEXCORE 구조
 NEXCORE는 SK그룹 표준 Java Spring 기반 애플리케이션 프레임워크로, 업무 로직을 BizUnit 단위로 개발한다. G-SCM에서는 화면 하나당 P(Presentation)/F(Function)/D(Data) 3개 BizUnit과 XSQL(iBatis SQL 매핑) 세트로 구성되어 있다.
 
-요청 흐름:
+요청 흐름(비즈니스 플로우, 2026-09-10 도식화 - 텍스트 설명은 실측 근거대로 유지, 그림은 이해를 돕는 보조 자료):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as Nexacro 화면(.xfdl)
+    participant Adapter as UIAdapter
+    participant Dispatch as nctRid 공통 디스패처
+    participant P as P BizUnit
+    participant F as F BizUnit
+    participant D as D BizUnit
+    participant XSQL as XSQL(iBatis)
+    participant DB as Oracle DB
+
+    UI->>Adapter: Dataset 구성 + transaction(nctRid, 예: RPLA04701)
+    Adapter->>Dispatch: Dataset → IDataSet 직렬화
+    Dispatch->>P: nctRid → P BizUnit 라우팅
+    Note over P: 순수 위임이 아니다(2026-09-05 표본 확대로 정정) -<br/>권한 게이트(AUTH_YN) 조기 반환 + 여러 F 순서 호출 +<br/>결과 레코드셋 선별(getRecordSet)이 P의 몫
+    P->>F: 권한 게이트 통과 후 F 호출(순서·분기 그대로)
+    Note over F: 계산·분기 등 실제 업무 로직
+    F->>D: D 메서드 호출(메서드 하나가 D를 여러 개 부르기도 함)
+    D->>XSQL: dbSelect/dbInsert/dbUpdate/dbDelete("S00N", paramMap, ctx)
+    XSQL->>DB: SQL 실행
+    DB-->>XSQL: ResultSet
+    XSQL-->>D: IRecordSet(0~N행)
+    D-->>F: IDataSet 응답
+    F-->>P: IRecordSet(레코드셋 이름으로 구분)
+    P-->>Dispatch: 결과 메시지 코드 + 선별된 레코드셋만 putRecordset
+    Dispatch-->>Adapter: IDataSet 응답
+    Adapter-->>UI: Nexacro Dataset 갱신
+```
+
 - Nexacro 화면이 Dataset을 구성해 트랜잭션을 호출한다 (예: `nctRid = RPLA04701`)
 - UIAdapter가 Nexacro의 Dataset을 서버의 IDataSet 객체로 직렬화해 전달한다
 - nctRid 하나로 들어온 요청이 공통 디스패처를 거쳐 P → F → D BizUnit 순서로 호출된다
@@ -28,6 +59,35 @@ Nexacro 화면은 그대로 두고, 그 화면이 호출하던 nctRid 트랜잭�
 
 패키지: `com.skhynix.gscm.r.{p1}.{p2}` (AS-IS의 `{p2}b` 서브패키지는 사라짐).
 
+TO-BE 요청 흐름(비즈니스 플로우) - 화면(2단계)은 아직 없으므로 지금은 기존 Nexacro 화면이 이 API를 그대로 호출하는 것을 정상 상태로 취급한다(Strangler Fig):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as (2단계, 참고용) React 화면
+    participant Legacy as 기존 Nexacro 화면(1단계 기간 중 공존)
+    participant Api as {화면}Api (Controller)
+    participant Svc as {화면}Service
+    participant Store as {화면}Store
+    participant Mapper as {화면}Mapper.xml (MyBatis)
+    participant DB as Oracle DB
+
+    rect rgba(200,200,200,0.15)
+    Note over UI,Legacy: 2단계 완료 전까지는 Legacy 경로만 실제로 존재
+    end
+    Legacy->>Api: REST 호출 (nctRid 1개 = 엔드포인트 1개, 그대로 유지)
+    Api->>Svc: P의 오케스트레이션 포팅(권한 게이트·순서·레코드셋 선별)
+    Svc->>Store: F의 계산·분기 포팅 후 Store 호출
+    Store->>Mapper: sqlSession.selectOne/insert/update/delete(statement, params)
+    Mapper->>DB: SQL 실행 (MyBatis 문법, SQL 로직은 원본 그대로)
+    DB-->>Mapper: ResultSet
+    Mapper-->>Store: Map<String,Object> (DML은 int)
+    Store-->>Svc: 그대로 반환
+    Svc-->>Api: 계산·분기 반영한 결과
+    Api-->>Legacy: JSON 응답 (nctRid 계약과 동일한 필드 구성)
+    Note over UI: 2단계에서 React가 붙으면 Legacy 자리를<br/>그대로 대체(API는 안 바뀜)
+```
+
 ## 결정론적 변환 / LLM 변환의 경계
 멘토 코멘트(@docs/06-mentor-feedback.md §2) 기준. 여기를 잘못 그으면 비용은 쓰고 품질은 안 나온다.
 
@@ -49,12 +109,21 @@ Nexacro 화면은 그대로 두고, 그 화면이 호출하던 nctRid 트랜잭�
 ## 검증 전략: 차등 테스트(Differential Testing)
 "변환된다"와 "맞다"는 다른 문제다 — 문법 정확도가 높아도 기능적 정확성은 별개로 검증해야 한다.
 
+```mermaid
+flowchart LR
+    Input([동일 입력]) --> Legacy[레거시 nctRid 호출]
+    Input --> New[신규 REST API 호출]
+    Legacy --> LegacyResp[IDataSet 응답]
+    New --> NewResp[JSON 응답]
+    LegacyResp --> Normalize[정규화]
+    NewResp --> Normalize
+    Normalize --> Diff{diff 일치?}
+    Diff -- Yes --> Pass([PASS])
+    Diff -- No --> Repair[수리 에이전트 → 재검증 → 최종 판정]
+    Repair --> Normalize
 ```
-동일 입력 → [레거시 nctRid 호출]   → IDataSet 응답 ┐
-                                                    ├→ 정규화 후 diff
-동일 입력 → [신규 REST API 호출]   → JSON 응답     ┘
-```
-NEXCORE가 단일 진입점(nctRid)에 고정된 Dataset 포맷을 쓰기 때문에 이 비교가 깔끔하게 성립한다. 로컬 Oracle DB(`.env` 설정, @CLAUDE.md "로컬 개발 환경" 참고)에 두 경로를 동시에 붙여서 이 하네스를 파일럿보다 먼저 구축한다.
+
+NEXCORE가 단일 진입점(nctRid)에 고정된 Dataset 포맷을 쓰기 때문에 이 비교가 깔끔하게 성립한다. 로컬 Oracle DB(`.env` 설정, @CLAUDE.md "로컬 개발 환경" 참고)에 두 경로를 동시에 붙여서 이 하네스를 파일럿보다 먼저 구축한다. **현재 실제 구현 범위(2026-09-05)는 이 그림 전체가 아니라 D 계층(SQL)까지다** - Spring Boot를 실제로 띄우는 환경이 없어 Api~HTTP 왕복은 별도 최소 실행 하네스(`agents/equivalence_test.py`, L3)로, "레거시 nctRid 호출" 자체는 아직 하지 않는다(§8.4 실측 참고, docs/weekly/00-종합산출물.md).
 
 변환기(Translator)와 검증기(Validator)는 별도 모듈로 분리한다 — 나중에 변환기를 바꿔도 검증 자산(차등 테스트 하네스, 결과 리포트)이 살아남게 하기 위함.
 
@@ -64,8 +133,9 @@ NEXCORE가 단일 진입점(nctRid)에 고정된 Dataset 포맷을 쓰기 때문
 - `.BIZUNIT` XML의 실제 스키마 (필드/타입 정의 포맷) — 비어있는 경우가 많아 대체 추출 규칙 필요
 - ~~P BizUnit이 순수 진입점 역할만 하는지~~ → **표본을 넓혀 확인 완료(2026-09-05): 순수 위임이 아니다.** PLA047 1건만 볼 때는 순수 위임이었지만 `PLA081-110_migration_sample` 30화면을 전수 확인하니 30/30이 권한 게이트(`AUTH_YN` 확인 후 조기 반환)를 갖고 있고, `setOkResultMessage` 호출 195건, `getRecordSet`으로 특정 레코드셋만 골라 담는 코드 165건이 있다. 즉 P는 **여러 F를 순서대로 부르고 분기하는 오케스트레이션 계층**이다. 그래서 Api를 위임 한 줄로 생성하면 이 로직이 통째로 사라진다 — 실제로 그렇게 생성하고 있었고, L3 실행 하네스가 Api 계층 0/9로 잡아냈다(`agents/equivalence_test.py`). 지금은 `skeleton_gen.detect_p_orchestration()`이 이런 P를 골라내 Api를 LLM 포팅 대상으로 남긴다
 - 소스코드 외부 LLM 전송에 대한 사내 보안 정책
-- 로컬 Oracle DB 접속 가능 여부 및 스키마(`RPLS_ADM`) 접근 권한 확인
+- ~~로컬 Oracle DB 접속 가능 여부 및 스키마(`RPLS_ADM`) 접근 권한 확인~~ → **해소(2026-08-14)**: `sqlplus`로 접속 검증 완료(SID `xe`, DB_NAME `XE`). 스키마 세부 권한(테이블 조회 등)은 차등 테스트 하네스(`agents/diff_test.py`)가 실제 SELECT를 실행해가며 확인 중 - @docs/03-kickoff-plan.md Phase 1 참고
 
 ## 리스크 (멘토 코멘트 §6, 1단계 범위에서 재해석)
 - **Dataset 상태 모델**: Nexacro의 `rowState`(insert/update/delete 플래그)는 프론트 개념이라 1단계(서버 전환) 범위에선 직접 영향은 적지만, API가 트랜잭션 단위(nctRid 1:1)를 유지하는 한 D BizUnit의 개별 insert/update/delete 메서드 단위 그대로 Store 메서드로 옮기면 된다. 이후 2단계 React 트랙에서 그리드 dirty tracking을 어떻게 표현할지는 **API 설계 시점에 미리 고려**해야 나중에 API를 다시 바꾸지 않는다.
 - **동기 호출 유지**: 지금은 REST도 기존과 동일하게 동기 요청/응답으로 유지한다. Nexacro `transaction()` 콜백 → `async/await` 재작성은 2단계 React 트랙의 문제이므로 여기서 미리 비동기로 설계하지 않는다.
+- **D 계층 결과 카디널리티(단건/다건) 불일치 — 실제 발견된 결함(2026-09-10)**: 위 "Dataset 상태 모델" 항목이 예상했던 프론트 쪽 리스크와 별개로, **서버(1단계) 안에서 실제로 터지는 리스크**를 하나 더 찾았다. `skeleton_gen.py`가 모든 select statement를 단건(`Map<String,Object>`, MyBatis `selectOne`)으로 생성하는데, 원본 D BizUnit이 다건(recordset)으로 설계한 조회(예: PLA047 `dPLA04701` - 유일키 조건 없는 `WHERE`+`ORDER BY`, F 코드가 `getRecordSet(...)`으로 받아 색인 없이 그대로 응답에 전달)가 여기 해당하면, 실제로 2행 이상 나올 때 MyBatis가 런타임에 `TooManyResultsException`을 던진다. 정적 검증·컴파일·L3 동등성 하네스(Store를 스텁으로 우회) 어느 것도 이 결함을 잡지 못한다 - PLA045~050 6개 실화면 전부에서 재현(`STORE_CARDINALITY_MISMATCH`, @docs/03-kickoff-plan.md 2026-09-10 참고). 지금은 자동으로 고치지 않고(Store→Service→Api 시그니처가 연쇄적으로 바뀌는 아키텍처 결정이라) BLOCKER로 드러내기만 한다 - Store를 `selectList`/`List<Map<String,Object>>`로 바꿀지는 사람이 판단해야 한다.
