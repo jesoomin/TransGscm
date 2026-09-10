@@ -258,52 +258,87 @@ footer p{margin:0 0 6px}
   <p class="lede">소스를 제출하지 않으므로 <b>화면에 보이는 로그가 유일한 증거</b>입니다. 제출 가이드도 “Agent의 추론 과정이 보여지는 로그로 증명해야 기술 깊이를 평가받는다”고 못 박고 있어, 콘솔이 주인공이고 UI는 30초 이내 보조로 씁니다.</p>
 
   <div class="field">
-    <div class="fhead"><span class="flabel">구성 원칙</span><span class="fhint">가이드 배점 신호에 맞춤</span><button class="copy" type="button">복사</button></div>
-<pre>1. 무엇을 증명할 것인가
-  1) Agent가 스스로 계획을 세운다        → Planning 로그
-  2) 계획이 도구 호출을 지휘한다          → Tool Call 로그
-  3) 실패를 스스로 고치고, 못 고칠 것은 넘긴다 → Self-Correction 로그
-  4) 결과가 정답과 맞는지 수치로 증명한다   → 정답키 대조
+    <div class="fhead"><span class="flabel">이 영상이 증명할 것</span><span class="fhint">5가지</span><button class="copy" type="button">복사</button></div>
+<pre>1. Agent가 스스로 계획을 세운다
+  - 근거 화면 : STAGE 1  PLAN / DECIDE
 
-2. 시간 배분 (총 5:00)
-  1) 0:00~0:30  시나리오 소개
-    - 결함이 심어진 화면 5개 투입을 선언
-  2) 0:30~1:30  실행 + 계획 수립
-    - 규칙 21건 / LLM 25건으로 갈리는 판단 근거를 짚는다
-  3) 1:30~3:30  핵심 구간 (배점 40%)
-    - 계약 주입 → 모델의 근거(THINK) → 검증 실패 → 자가 교정 → 정답 대조
-  4) 3:30~4:30  결과 확인
-    - 동작 일치 검증 → 실행 요약 → 승인 게이트
-  5) 4:30~5:00  성과 수치
+2. 계획이 도구 호출을 지휘한다 — 모델이 고르지 않는다
+  - 근거 화면 : STAGE 3  PLAN
 
-3. 반드시 화면에 담을 것
-  1) 터미널 추론 로그 (주인공)
-  2) 정답키 CSV와 수리된 코드의 좌우 대조
-  3) "미반영 — 사람이 승인해야 기록됨" 마지막 줄
-  4) UI는 승인 게이트 장면만, 30초 이내</pre>
+3. 모델이 자기 판단 근거를 남긴다
+  - 근거 화면 : THINK  (모델 자신의 문장)
+
+4. 실패를 스스로 고치고, 못 고칠 것은 사람에게 넘긴다
+  - 근거 화면 : STAGE 5  REFLECT / DECIDE
+
+5. 결과가 정답과 맞는지 수치로 증명된다
+  - 근거 화면 : 정답키 대조 + 실행 요약</pre>
   </div>
+  <div class="field">
+    <div class="fhead"><span class="flabel">두 개의 소스 세트</span><span class="fhint">섞으면 틀린 주장이 된다</span><button class="copy" type="button">복사</button></div>
+<pre>1. 실제 전환 대상 — PLA045~050 (6화면)
+  1) 정체 : 운영 소스 트리의 경영분석 화면
+  2) 역할 : "무엇을 전환하는가"를 보여준다
 
+2. 정답키 평가 세트 — PLA087~100 (5화면)
+  1) 정체 : 결함을 의도적으로 주입하고 정답키를 함께 제공하는 채점용 세트
+  2) 역할 : "제대로 잡아냈는가"를 채점한다
+
+3. 왜 평가 세트가 필요한가
+  - 실제 전환 대상에는 정답이 없다
+  - 탐지·교정 성능을 증명하려면 정답이 확정된 세트가 있어야 한다
+  - 이 한 줄을 0:20 지점에 넣어 두 세트를 말로 구분한다</pre>
+  </div>
+  <div class="field">
+    <div class="fhead"><span class="flabel">시간 배분</span><span class="fhint">총 5:00</span><button class="copy" type="button">복사</button></div>
+<pre>1. 0:00 ~ 0:30  무엇을, 왜
+  - 전환 대상과 병목을 한 문장으로
+  - 투입 화면에 정답키가 있다는 사실을 선언
+
+2. 0:30 ~ 1:30  계획 수립 (STAGE 1)
+  - 규칙 21건 / LLM 25건으로 갈리는 판단 근거를 짚는다
+  - 원본이 컴파일 안 되는 화면을 변환 전에 잡아내는 장면
+
+3. 1:30 ~ 3:30  핵심 구간 (배점 40%)
+  1) 계획이 도구를 지휘 — STAGE 3 PLAN
+  2) 호출 대상 계약 주입 — CONTEXT
+  3) 모델이 남긴 근거 — THINK (원본 버그를 스스로 지적)
+  4) 검증이 결함을 잡음 — BLOCKER 10건
+  5) 자가 교정 게이트가 9건만 선택 — 나머지는 사람에게
+  6) 정답키와 좌우 대조
+
+4. 3:30 ~ 4:30  결과 확인
+  1) 동작 일치 — 업무 로직(F) 48/48 · 화면 요청(Api) 0/9(페이로드 9/9)
+  2) 실행 요약 — 마지막 줄 "미반영"
+  3) 실제 전환 대상에서 찾은 결함 (PLA046)
+  4) 승인 게이트 (UI, 20초)
+
+5. 4:30 ~ 5:00  성과 수치
+  - 탐지율 10/10 · 중복 209/210 · 스코어카드 80.9 · 사람 수정 0.20%</pre>
+  </div>
   <div class="field">
     <div class="fhead"><span class="flabel">실행 명령</span><span class="fhint">녹화 시 그대로 입력</span><button class="copy" type="button">복사</button></div>
-<pre>1. 리허설 (LLM 호출 없이 전 구간 재현)
-  - python -m agents.run_pipeline PLA081-110_migration_sample
+<pre>1. 리허설 — LLM 호출 없이 전 구간 재현
+  python -m agents.run_pipeline <평가 세트>
       --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend --dry-run
 
 2. 본 녹화
-  - python -m agents.run_pipeline PLA081-110_migration_sample
+  python -m agents.run_pipeline <평가 세트>
       --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend
 
 3. 성과 수치 확보
-  - python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더>
+  python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더>
 
 4. 사전 점검
-  1) 터미널 UTF-8 확인 (cp949면 로그가 중단됨)
+  1) 터미널 UTF-8 확인 — cp949면 로그가 중단된다 (chcp 65001)
   2) 폭 100컬럼 이상, 글꼴 14pt 이상
   3) .env / API 키 / DB 접속정보 노출 없는지 스크롤 정리
-  4) 세트 B로 녹화 (5화면 약 30초). sample_data는 단건 96.6초로 5분에 안 담김</pre>
+  4) 실행 시간 약 40초 — 배속 없이 담긴다
+  5) UI로 실행해도 터미널에 추론 로그가 찍힌다
+     (streamlit을 띄운 터미널을 화면에 함께 잡으면 UI와 로그가 같이 보인다)</pre>
   </div>
-
 </section>
+
 <section id="deck">
   <div class="shead">
     <span class="idx">DECK</span>

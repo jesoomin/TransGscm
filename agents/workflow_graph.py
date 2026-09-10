@@ -708,7 +708,7 @@ def plan_all_node(state: PipelineState) -> dict:
         log.observe(f"{screen_id}: 트랙 = {plan.get('track')}", "자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정")
 
     denom = total_llm + total_rule
-    saved = f"{total_rule}/{denom}건({total_rule * 100 // denom}%)을 규칙으로 처리 → LLM 호출 회피" if denom else "포팅 대상 없음"
+    saved = f"{total_rule}/{denom}건({round(total_rule * 100 / denom)}%)을 규칙으로 처리 → LLM 호출 회피" if denom else "포팅 대상 없음"
     log.plan(f"LLM 호출 예산 확정: {total_llm}건", saved)
     # 계획이 "이후 어떤 도구를 왜 부를지"까지 확정한다는 걸 드러낸다. 아래 단계들은 이 표에
     # 적힌 대로만 부르고, 여기 없는 도구를 모델이 스스로 고르는 일은 없다(고정 파이프라인).
@@ -1451,7 +1451,7 @@ def run_pipeline_part_a(
             ("처리 화면", f"{len(final_state.get('files', {}))}건"),
             ("생성 파일", f"{sum(len(f) for f in final_state.get('files', {}).values())}종"),
             ("LLM 포팅 호출", f"{llm_planned}건 (규칙 기반으로 회피 {rule_skipped}건"
-                            + (f", 규칙 처리 비중 {rule_skipped * 100 // denom}%)" if denom else ")")),
+                            + (f", 규칙 처리 비중 {round(rule_skipped * 100 / denom)}%)" if denom else ")")),
             ("자가 교정 회차", f"{final_state.get('repair_round', 0)}회"),
             ("잔여 BLOCKER", f"{n_block}건"),
             ("동작 일치", eq_line),
