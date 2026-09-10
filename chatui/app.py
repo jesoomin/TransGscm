@@ -233,18 +233,23 @@ def _show_impact_dialog() -> None:
         screen_filter = c2.text_input("화면 ID(선택)", placeholder="예: PLA047")
         submitted = st.form_submit_button("조회", type="primary")
 
-    if not submitted:
-        return
-    if not method_name.strip():
-        st.warning("메서드명을 입력하세요.")
-        return
+    if submitted:
+        if not method_name.strip():
+            st.warning("메서드명을 입력하세요.")
+            return
+        from agents.impact_analysis import find_impact_of_method
 
-    from agents.impact_analysis import find_impact_of_method
+        try:
+            st.session_state["impact_result"] = find_impact_of_method(
+                method_name.strip(), screen_filter.strip() or None)
+            st.session_state["impact_method"] = method_name.strip()
+            st.session_state.pop("impact_advice", None)
+        except Exception as e:  # noqa: BLE001 - DB 미접속 등도 그대로 사용자에게 보여준다
+            st.error(f"조회 실패: {e}")
+            return
 
-    try:
-        result = find_impact_of_method(method_name.strip(), screen_filter.strip() or None)
-    except Exception as e:  # noqa: BLE001 - DB 미접속 등도 그대로 사용자에게 보여준다
-        st.error(f"조회 실패: {e}")
+    result = st.session_state.get("impact_result")
+    if result is None:
         return
 
     if not result["targets"]:
@@ -286,6 +291,32 @@ def _show_impact_dialog() -> None:
 
     for note in result["notes"]:
         st.caption(f"※ {note}")
+
+    # 여기까지가 규칙 기반 조회 결과다 - 답이 결정적이고 근거가 그대로 붙는다.
+    # 아래는 그 결과를 **입력으로만 받아** 사람이 다음에 할 일을 제안하는 선택 실행 기능이다.
+    # 조회 결과를 다시 계산하지도, 바꾸지도 않는다.
+    st.divider()
+    st.markdown("**🤖 수정 가이드 (선택 실행 · 검토용)**")
+    st.caption(
+        "위 조회 결과만 근거로 '무엇을 함께 확인해야 하는지'를 정리해 줍니다. "
+        "조회 결과에 없는 메서드·화면을 언급하면 자동으로 차단합니다. 채택 여부는 사람이 판단하세요."
+    )
+    if st.button("수정 가이드 생성", key="impact_advice_btn"):
+        from impact_advisor import advise_on_impact
+
+        with st.spinner("가이드 생성 중..."):
+            try:
+                st.session_state["impact_advice"] = advise_on_impact(result)
+            except Exception as e:  # noqa: BLE001 - LLM 장애가 조회 결과를 가리지 않게 한다
+                st.error(f"가이드 생성 실패(조회 결과는 위에 그대로 있습니다): {e}")
+
+    advice = st.session_state.get("impact_advice")
+    if advice is not None:
+        for iss in advice.issues:
+            (st.error if iss["severity"] == "BLOCKER" else st.warning)(iss["message"])
+        if advice.guidance:
+            st.markdown(advice.guidance)
+            st.caption(f"프롬프트 {advice.prompt_chars:,}자 · LLM 호출 1회")
 
 
 def _categorize(files) -> tuple[dict[str, dict[str, str]], list[str]]:
