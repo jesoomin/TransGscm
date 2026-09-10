@@ -1277,18 +1277,21 @@ if input_mode == "폴더 경로 지정":
             ):
                 from agents.workflow_graph import run_pipeline_part_a
 
-                # st.status()로 감싸서 "에이전트가 단계별로 생각하며 진행하는" 느낌을 준다
-                # (2026-09-10, 사용자 요청) - 안의 화면별 체크리스트(stage_placeholders/
-                # _render_stage_line)는 손대지 않았다(이미 검증된 로직) - 그 바깥에 실행 중
-                # 스피너 + 현재 활동 한 줄을 보여주는 상위 레이어만 추가했다. `.update(label=...)`
-                # 호출은 순수 표시용이라 실패해도 파이프라인 자체에는 영향이 없다.
-                with st.status("🤖 파이프라인 준비 중...", expanded=True, state="running") as pipeline_status:
-                    pipeline_screens = {sid: screens[sid] for sid in pipeline_target_ids}
+                # 단계 체크리스트는 st.status() **바깥**에 둔다.
+                # 안에 두면 `.update(label=...)`가 호출될 때마다 상태 위젯이 다시 그려지면서
+                # 사람이 펼쳐 둔 것이 접힌다 - 실행 중에 남은 단계를 보려고 열어도 계속 닫혔다
+                # (2026-09-11 사용자 보고). 체크리스트는 항상 보여야 하는 정보라 접히는 컨테이너
+                # 안에 둘 이유가 없다. st.status는 스피너와 현재 활동 한 줄만 담당한다.
+                stage_box = st.container()
+                with stage_box:
                     stage_placeholders = {n: st.empty() for n in range(0, 9)}
                     for n in range(0, 9):
                         _render_stage_line(stage_placeholders[n], n, "⏳", " — 대기")
                     if not pipeline_include_ai:
                         _render_stage_line(stage_placeholders[6], 6, "⏭️", " — 건너뜀(선택 해제됨)")
+
+                with st.status("🤖 파이프라인 준비 중...", expanded=False, state="running") as pipeline_status:
+                    pipeline_screens = {sid: screens[sid] for sid in pipeline_target_ids}
 
                     total_screens = len(pipeline_target_ids)
 
@@ -1457,7 +1460,7 @@ if input_mode == "폴더 경로 지정":
 
                     pipeline_status.update(
                         label="✅ 파이프라인 완료 — 아래에서 화면별 결과를 검토하고 저장하세요.",
-                        state="complete", expanded=False,
+                        state="complete",
                     )
 
                 st.session_state["pipeline_final_state"] = final_state

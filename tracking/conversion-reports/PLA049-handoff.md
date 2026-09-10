@@ -1,6 +1,6 @@
 # PLA049 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-10T10:29:58
+- 생성 시각: 2026-09-11T04:43:54
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla049Api.java, Pla049Dto.java, Pla049Mapper.xml, Pla049Service.java, Pla049Store.java)
 - 사람이 반드시 처리해야 할 항목: **7건**, 확인 권장: 8건
@@ -61,9 +61,6 @@
 - **FETCH_SIZE_DROPPED** — fetchSize 속성은 MyBatis 변환 시 제거했습니다 - 필요하면 <select>에 수동으로 다시 넣으세요.
   - 발견: Mapper 변환(converters)
   - 조치: fetchSize 속성을 제거했습니다. 성능이 중요하면 MyBatis 설정으로 다시 지정하세요.
-- **ORIGINAL_BUG** (메서드 `fAuthCheck`, 52행) — 52행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 IRecordSet#getRecordCount()에 의존하므로 Spring/Map 포팅에서는 AUTH_LIST의 실제 런타임 타입 계약이 불명확하다.
-  - 발견: 품질·취약점 스캔(Pla049Service.java)
-  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 
 </details>
 

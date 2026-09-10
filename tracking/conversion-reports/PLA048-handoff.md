@@ -1,6 +1,6 @@
 # PLA048 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-10T10:29:58
+- 생성 시각: 2026-09-11T04:43:54
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla048Api.java, Pla048Dto.java, Pla048Mapper.xml, Pla048Service.java, Pla048Store.java)
 - 사람이 반드시 처리해야 할 항목: **6건**, 확인 권장: 6건
