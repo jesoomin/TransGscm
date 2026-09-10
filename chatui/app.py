@@ -1276,6 +1276,14 @@ if input_mode == "폴더 경로 지정":
                 disabled=not pipeline_target_ids, key="pipeline_start_btn",
             ):
                 from agents.workflow_graph import run_pipeline_part_a
+                from agents.reasoning_log import log as _reasoning_log
+
+                # 추론 로그를 켠다. 기본값이 꺼짐이라 UI로 실행하면 터미널에 아무것도 안 남았다
+                # (2026-09-11 사용자 보고). 파이프라인이 내리는 판단 - 어떤 메서드를 규칙으로
+                # 처리하고 어떤 것을 LLM에 보낼지, 검증 실패를 교정으로 되돌릴지 - 은 진행률
+                # 표시로는 드러나지 않는다. 출력 대상은 `streamlit run`을 띄운 터미널이라
+                # 브라우저 화면에는 영향이 없다. 여러 번 눌러도 켜기는 멱등이다.
+                _reasoning_log.enable()
 
                 # 현재 활동 한 줄(status)이 위, 단계 체크리스트가 아래로 온다.
                 # status 안에는 아무것도 넣지 않는다 - 넣으면 `.update(label=...)`가 호출될
