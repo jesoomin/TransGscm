@@ -104,7 +104,7 @@ def build_fixed_store_method(d_method: str, mapper_stmt_id: str) -> str:
 _FIX_PROMPT = """\
 다음은 NEXCORE D BizUnit 메서드 `{d_method}`를 호출하는 Spring Service 메서드다. 지금까지
 `store.{d_method}(...)`의 반환 타입이 `Map<String,Object>`(단건)였는데, 원본을 다시 확인한
-결과 실제로는 다건(recordset)이라 `List<Map<String,Object>>`로 고쳐야 한다는 게 이미 결정론
+결과 실제로는 다건(recordset)이라 `List<Map<String,Object>>`로 고쳐야 한다는 게 이미 규칙 기반
 적으로 확인됐다(추측이 아니다 - 원본 D BizUnit의 XSQL statement 종류와 원본 F 소스가 그 결과를
 소비하는 방식을 대조해 확정함).
 

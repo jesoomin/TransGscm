@@ -119,7 +119,7 @@ def diff_one_statement(
                     f"TO-BE id={stmt_id_new!r} 찾음={new_block is not None})",
         )
     if not is_static(legacy_block) or not is_static(new_block):
-        return DiffResult(stmt_id_new, "SKIPPED", message="동적 태그 포함 - 이 하네스는 정적 바인드 전용 SELECT만 지원")
+        return DiffResult(stmt_id_new, "SKIPPED", message="동적 태그 포함 - 이 Harness는 정적 바인드 전용 SELECT만 지원")
 
     legacy_sql = extract_sql_text(legacy_block)
     new_sql = extract_sql_text(new_block)

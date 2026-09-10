@@ -458,7 +458,7 @@ def detect_simple_delegation_spec(f_body: str) -> tuple[str, str] | None:
     원본은 `getRecordSet("CODE_LIST")`로 **그 키 하나만** 꺼내 담는다. 결과 Map을 통째로
     되돌려주면 원본이 반환하지 않던 레코드셋이 전부 새어 나간다.
 
-    이 결함은 L3 하네스가 개명된 메서드(fCommonCodeQry -> commoncodeqry)를 이름으로 못 찾아
+    이 결함은 L3 Harness가 개명된 메서드(fCommonCodeQry -> commoncodeqry)를 이름으로 못 찾아
     비교에서 통째로 빼고 있었기 때문에 오래 안 보였다 - "규칙 기반이라 안전하다"고 말해 온
     경로에서 나온 결함이라 더 중요하다.
     """
@@ -684,7 +684,7 @@ def generate_skeletons(
                 severity="WARNING",
                 message=(
                     ".bizunit에서 <method>/<transactionId> 쌍을 찾지 못했습니다 "
-                    "(XML이 심하게 깨져있거나 구조가 예상과 다를 수 있음) - Api 골격에 nctRid 주석이 비어있을 수 있습니다."
+                    "(XML이 심하게 깨져있거나 구조가 예상과 다를 수 있음) - Api 코드 뼈대에 nctRid 주석이 비어있을 수 있습니다."
                 ),
             ))
 
@@ -739,7 +739,7 @@ def generate_skeletons(
             "",
             "// 주의: P가 순수 위임이라는 가정은 PLA047 1건 기준이었고, PLA081-110 코퍼스"
             " 30/30 화면에서 거짓으로 확인됐다(권한 게이트·결과 메시지·레코드셋 선별)."
-            "\n// 그런 메서드는 위임 한 줄로 생성하지 않고 PORT 스텁으로 남긴다.",
+            "\n// 그런 메서드는 위임 한 줄로 생성하지 않고 PORT 빈 껍데기 코드으로 남긴다.",
             f"@RestController",
             f'@RequestMapping("/api/{package_p1}/{package_p2}")',
             f"public class {prefix}Api {{",
@@ -856,7 +856,7 @@ def generate_skeletons(
     else:
         result.issues.append(ConversionIssue(
             issue_type="MISSING_INPUT_FILE", severity="INFO",
-            message="P(Java) 파일이 없어 Api 골격을 생성하지 않았습니다.",
+            message="P(Java) 파일이 없어 Api 코드 뼈대을 생성하지 않았습니다.",
         ))
 
     # ---- Service ----
@@ -1010,7 +1010,7 @@ def generate_skeletons(
     else:
         result.issues.append(ConversionIssue(
             issue_type="MISSING_INPUT_FILE", severity="INFO",
-            message="F(Java) 파일이 없어 Service 골격을 생성하지 않았습니다.",
+            message="F(Java) 파일이 없어 Service 코드 뼈대을 생성하지 않았습니다.",
         ))
 
     # ---- Store ----
@@ -1139,7 +1139,7 @@ def generate_skeletons(
             cardinality = infer_d_method_cardinality(f"{f_java_text or ''}\n{p_java_text or ''}", method)
             if cardinality == "LIST":
                 lines.append(
-                    f"    // TODO(카디널리티 불일치): 원본은 이 statement를 getRecordSet(다건)으로 "
+                    f"    // TODO(결과 건수 불일치): 원본은 이 statement를 getRecordSet(다건)으로 "
                     f"받는데 selectOne(단건)으로 생성됨 - 2행 이상 나오면 런타임 예외"
                 )
                 result.issues.append(ConversionIssue(
@@ -1173,7 +1173,7 @@ def generate_skeletons(
     else:
         result.issues.append(ConversionIssue(
             issue_type="MISSING_INPUT_FILE", severity="INFO",
-            message="D(Java) 파일이 없어 Store 골격을 생성하지 않았습니다.",
+            message="D(Java) 파일이 없어 Store 코드 뼈대을 생성하지 않았습니다.",
         ))
 
     # ---- 콜그래프 완전성 보강 (2026-09-03, 영향도 분석 정확도 개선) ----

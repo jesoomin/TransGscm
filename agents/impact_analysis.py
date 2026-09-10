@@ -65,7 +65,7 @@ def find_unused_methods(screen_id: str | None = None) -> list[dict]:
 def _load_reverse_edges(cur) -> dict[int, list[int]]:
     """{callee_method_id: [caller_method_id, ...]} 역방향 인접 리스트를 한 번에 읽어온다.
 
-    Oracle 재귀 쿼리(CONNECT BY) 대신 파이썬에서 BFS를 돈다 - 콜그래프가 작고(실측 890엣지)
+    Oracle 재귀 쿼리(CONNECT BY) 대신 파이썬에서 BFS를 돈다 - 호출 관계도가 작고(실측 890엣지)
     한 번에 메모리에 올려도 부담이 없어서, DB 방언에 얽히지 않고 로직을 눈으로 검증할 수 있는
     쪽을 택했다.
     """
@@ -114,7 +114,7 @@ def resolve_method_identity(method_name: str, screen_id: str | None = None) -> l
     **이름만으로** 답하면 서로 무관한 화면까지 한 덩어리로 묶여 범위가 부풀려진다.
 
     여기서는 `BODY_HASH`(공백 정규화한 본문 해시)로 묶어서, 같은 이름이라도 **내용이 다르면 다른
-    것으로** 취급한다. D 계층 메서드는 실행하는 쿼리가 본질이므로 `MAPPER_STMT_ID`도 함께 묶음
+    것으로** 취급한다. 데이터 접근 계층(D) 메서드는 실행하는 쿼리가 본질이므로 `MAPPER_STMT_ID`도 함께 묶음
     키에 넣는다.
 
     **한계(그대로 적는다)**: DB에는 Mapper.xml의 SQL 텍스트 자체가 아니라 statement id만 있다.

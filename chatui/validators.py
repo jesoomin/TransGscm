@@ -251,7 +251,7 @@ def _check_unspliced_markers(java_text: str) -> list[ValidationIssue]:
             # "포팅된 코드의 오류를 고치는 것"과 "포팅 자체가 안 된 것"은 다른 문제이고, 후자는
             # route_after_splice_all의 max_retries 재시도가 담당한다(_find_repairable_targets 참고).
             issue_type="PORTING_INCOMPLETE", severity="BLOCKER",
-            message=f"{m.group(1)}가 아직 LLM 포팅되지 않고 스텁(UnsupportedOperationException) 상태입니다.",
+            message=f"{m.group(1)}가 아직 LLM 포팅되지 않고 빈 껍데기 코드(UnsupportedOperationException) 상태입니다.",
             line_no=line_no, method_name=m.group(1),
         ))
     return issues

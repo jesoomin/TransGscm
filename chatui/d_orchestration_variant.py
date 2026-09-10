@@ -33,7 +33,7 @@ _MYBATIS_CALL = {"select": "selectOne", "insert": "insert", "update": "update", 
 
 _ORCHESTRATION_PROMPT = """\
 다음은 NEXCORE D(Data) BizUnit 메서드 원본이다. 이 메서드는 원래 "순수 데이터 접근"이어야 하는
-D 계층인데, 실제로는 SQL statement를 2개 이상 순서대로(또는 조건부로) 실행하고 있다 - TO-BE
+데이터 접근 계층(D)인데, 실제로는 SQL statement를 2개 이상 순서대로(또는 조건부로) 실행하고 있다 - TO-BE
 아키텍처에서는 이런 오케스트레이션(순서·분기)이 F(Service) 계층의 몫이다.
 
 원본 D 메서드 `{d_method}`:
@@ -41,7 +41,7 @@ D 계층인데, 실제로는 SQL statement를 2개 이상 순서대로(또는 �
 {d_body}
 ```
 
-이 메서드가 실제로 실행하는 statement 목록(이미 결정론적으로 확인됨 - 이 목록 밖의 호출을
+이 메서드가 실제로 실행하는 statement 목록(이미 규칙으로 확인됨 - 이 목록 밖의 호출을
 만들지 마라):
 {call_list}
 

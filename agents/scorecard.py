@@ -335,10 +335,10 @@ def build_scorecard(state: dict, bench: dict | None = None,
         "detail": {"conversion": conv, "developer_experience": dx, "detection": det,
                    "equivalence": eq},
         "not_covered": [
-            "Api~클라이언트 구간(실제 HTTP 왕복·JSON 직렬화) — Api 계층은 메서드 호출로 "
+            "Api~클라이언트 구간(실제 HTTP 왕복·JSON 직렬화) — 화면 요청 계층(Api)은 메서드 호출로 "
             "비교했지만 서블릿/Jackson을 거치는 진짜 왕복은 아직 검증하지 않았다",
             "결과 메시지 코드(W0024/I0016 등)의 TO-BE 응답 규약 — 확정 전이라 어떤 키로도 "
-            "싣지 않았다(docs/09 열린 질문 2번). Api 계층 엄격 일치율이 낮은 유일한 원인이며, "
+            "싣지 않았다(docs/09 열린 질문 2번). 화면 요청 계층(Api) 엄격 일치율이 낮은 유일한 원인이며, "
             "규약이 정해지기 전에는 우리가 코드로 해소할 수 없다",
             "L4 사람 수정 라인 비율 — 값은 나왔으나 **AI 리뷰어 1차 리뷰 기준**이다. "
             "사람 개발자가 업무 로직까지 검토하면 더 높아질 수 있으므로 하한값으로 읽어야 한다",
@@ -384,9 +384,9 @@ def render(sc: dict) -> str:
     out.append(f"  리뷰 대상     {x['review_target_lines']}줄 ({x['review_ratio']:.1%}) "
                f"= LLM 포팅 {x['llm_ported_lines']}줄 + 이슈 귀속 {x['flagged_lines']}줄")
     out.append(f"                → 사람이 정독할 곳이 {x['review_reduction']:.1%} 줄어듦 "
-               f"(규칙 기반 생성물은 템플릿 결정론 출력)")
+               f"(규칙 기반 생성물은 템플릿 규칙 기반 출력)")
     out.append(f"  LLM/규칙      LLM {x['llm_calls']}건 · 규칙 {x['rule_handled']}건 "
-               f"(결정론 {x['deterministic_ratio']:.0%})")
+               f"(규칙 기반 {x['deterministic_ratio']:.0%})")
     out.append(f"  추적 제거     화면당 AS-IS 파일 평균 {x['asis_files_per_screen']}종 → 그래프 조회 1회")
     if x.get("human_edit_ratio") is not None:
         out.append(f"  사람 수정     {x['human_edit_ratio']:.1%} "
@@ -405,11 +405,11 @@ def render(sc: dict) -> str:
                    f"· 화면 {e['screens_executed']}/{e['screens_total']} 실행 "
                    f"(나머지는 AS-IS 원본이 컴파일 불가)")
         if e.get("service_match_rate") is not None:
-            out.append(f"                F 계층(업무 로직)   "
+            out.append(f"                업무 로직 계층(F)(업무 로직)   "
                        f"{e['service_matched']}/{e['service_cases']} "
                        f"({e['service_match_rate']:.0%}) · 화면 {e['service_screens']}개")
         if e.get("api_match_rate") is not None:
-            out.append(f"                Api 계층(HTTP/직렬화) "
+            out.append(f"                화면 요청 계층(Api)(HTTP/직렬화) "
                        f"{e['api_matched']}/{e['api_cases']} "
                        f"({e['api_match_rate']:.0%}) · 화면 {e['api_screens']}개")
             if e.get("api_payload_match_rate") is not None:
@@ -420,7 +420,7 @@ def render(sc: dict) -> str:
                 out.append("                    (메시지 코드를 담을 TO-BE 응답 규약이 "
                            "미확정이라 생성기가 일부러 비워둔 자리 — 사람 결정 대기)")
         else:
-            out.append("                Api 계층(HTTP/직렬화) 미측정 — "
+            out.append("                화면 요청 계층(Api)(HTTP/직렬화) 미측정 — "
                        "P 원본이 컴파일되지 않아 비교 대상이 없음")
     out.append("\n[이 점수가 말하지 않는 것]")
     for n in sc["not_covered"]:

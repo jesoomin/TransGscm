@@ -215,7 +215,7 @@ def _show_maven_dialog(header: str, grouped: dict[str, list[tuple[int, int, str]
     _render_maven_errors(grouped, ungrouped)
 
 
-@st.dialog("🎯 영향도 질의 (콜그래프 역추적)", width="large")
+@st.dialog("🎯 영향도 질의 (호출 관계도 역추적)", width="large")
 def _show_impact_dialog() -> None:
     """"이 메서드를 고치면 뭐가 영향받나"를 팝업에서 바로 조회한다.
 
@@ -544,7 +544,7 @@ def _pipeline_state_to_batch_results(
         package_p1, package_p2 = package_map.get(screen_id, ("TODO", "TODO"))
         results.append({
             "screen_id": screen_id, "package_p1": package_p1, "package_p2": package_p2,
-            "error": None if files else "골격 생성 결과 없음",
+            "error": None if files else "코드 뼈대 생성 결과 없음",
             "files": files,
             "buckets": screens[screen_id],
             "as_is_paths": all_paths.get(screen_id, {}),
@@ -657,8 +657,8 @@ def _render_d_orchestration_recommendation(screen_id: str, buckets: dict | None)
 
     st.warning(
         f"D 메서드 {len(candidates)}개가 statement를 2개 이상 순서대로/조건부로 실행합니다 - "
-        "D 계층은 원래 순수 데이터 접근이어야 하는데 여기 오케스트레이션 로직이 섞여 있습니다. "
-        "아래에서 화면당 F(Service)로 옮기는 안을 AI가 제안합니다(opt-in, 채택 전 반드시 검토)."
+        "데이터 접근 계층(D)은 원래 순수 데이터 접근이어야 하는데 여기 오케스트레이션 로직이 섞여 있습니다. "
+        "아래에서 화면당 F(Service)로 옮기는 안을 AI가 제안합니다(선택 실행, 채택 전 반드시 검토)."
     )
     for d_method, calls in candidates.items():
         call_desc = ", ".join(f'{verb}("{sid}")' for verb, sid in calls)
@@ -711,14 +711,14 @@ def _render_cardinality_fix_recommendation(screen_id: str, prefix: str, files: d
     d_xsql = buckets.get("D", {}).get("xsql")
     mismatches = find_cardinality_mismatches(d_java, f_java, p_java, d_xsql)
     if not mismatches:
-        st.success("이 화면엔 카디널리티(단건/다건) 불일치가 없습니다 - 추천 대상 없음.")
+        st.success("이 화면엔 결과 건수(단건/다건) 불일치가 없습니다 - 추천 대상 없음.")
         return
 
     st.warning(
         f"D 메서드 {len(mismatches)}개가 원본에서는 다건(recordset)으로 쓰이는데 Store는 단건"
         "(`selectOne`)으로 생성돼 있습니다 - 실제로 2행 이상 나오면 런타임에 "
         "`TooManyResultsException`이 납니다. 아래에서 Store/Service 수정안을 AI가 제안합니다"
-        "(opt-in, 채택 전 반드시 검토)."
+        "(선택 실행, 채택 전 반드시 검토)."
     )
     service_java = files.get(f"{prefix}Service.java", "")
     for d_method, stmt_id in mismatches.items():
@@ -758,7 +758,7 @@ def _render_diff_test(screen_id: str, buckets: dict | None, package_p1: str, pac
     상세보기 양쪽에서 공유한다(AI 추천과 같은 이유 - 한쪽만 고치고 잊어버리는 문제 방지).
     """
     if not buckets or not buckets.get("D", {}).get("xsql") or not buckets.get("D", {}).get("java"):
-        st.info("D(Java)/XSQL 파일이 없어 차등 테스트를 할 수 없습니다.")
+        st.info("D(Java)/XSQL 파일이 없어 SQL 결과를 비교할 수 없습니다.")
         return
 
     st.caption(
@@ -768,7 +768,7 @@ def _render_diff_test(screen_id: str, buckets: dict | None, package_p1: str, pac
         "여러 테이블을 조인하는 statement는 SKIPPED로 표시됩니다(추측으로 더미 데이터를 넣지 않음)."
     )
     result_key = f"diff_test_{screen_id}"
-    if st.button("🧪 더미 데이터로 차등 테스트 실행", key=f"diff_test_btn_{screen_id}"):
+    if st.button("🧪 더미 데이터로 SQL 결과 비교 실행", key=f"diff_test_btn_{screen_id}"):
         with st.spinner("더미 데이터 생성 → AS-IS/TO-BE 실행 → 비교 → 삭제 중..."):
             try:
                 from agents import diff_test
@@ -777,7 +777,7 @@ def _render_diff_test(screen_id: str, buckets: dict | None, package_p1: str, pac
                     d_java_text=buckets["D"]["java"], d_xsql_text=buckets["D"]["xsql"],
                 )
             except Exception as e:
-                st.error(f"차등 테스트 실행 실패: {e}")
+                st.error(f"SQL 결과 비교 실행 실패: {e}")
 
     results = st.session_state.get(result_key)
     if results:
@@ -984,7 +984,7 @@ def _render_conversion_plan(plan: dict | None, plan_path: str | None) -> None:
 
     if plan.get("unsupported_db_verbs"):
         st.error(
-            "이 화면의 D 계층에 **이 변환기가 다루지 못하는 verb**가 있습니다: "
+            "이 화면의 데이터 접근 계층(D)에 **이 변환기가 다루지 못하는 verb**가 있습니다: "
             + ", ".join(f"{m}({', '.join('db' + v for v in vs)})"
                         for m, vs in plan["unsupported_db_verbs"].items())
             + " — 변환기는 dbSelect만 지원해서 Store 코드가 selectOne으로 생성됩니다(맞지 않음). "
@@ -1049,7 +1049,7 @@ def _render_batch_screen_detail(
     (단일 화면 흐름과 동일한 방식, 파이프라인 모드라고 다르게 만들지 않는다).
     """
     if not files:
-        st.warning("이 화면은 골격 생성 단계에서 실패해서 볼 수 있는 산출물이 없습니다 - 위 오류 메시지를 확인하세요.")
+        st.warning("이 화면은 코드 뼈대 생성 단계에서 실패해서 볼 수 있는 산출물이 없습니다 - 위 오류 메시지를 확인하세요.")
         return
 
     blocker_n = sum(1 for r in validation_results if not r.passed)
@@ -1061,9 +1061,9 @@ def _render_batch_screen_detail(
         f"🔍 정적 검증 ({len(validation_results) - blocker_n}/{len(validation_results)} 통과)",
         f"🛡️ 품질/취약점 스캔 ({review_n}건)",
         "🎨 AI 추천",
-        "🔀 D계층 재구성",
-        "📐 카디널리티 수정",
-        "🧪 차등 테스트",
+        "🔀 데이터 접근 재구성",
+        "📐 결과 건수 수정",
+        "🧪 SQL 결과 비교",
     ])
 
     with tab_plan:
@@ -1156,7 +1156,7 @@ def _render_batch_screen_detail(
 st.title("G-SCM AS-IS → TO-BE 변환 (v0)")
 st.caption(
     "P/F/D BizUnit(.java/.bizunit) + XSQL을 화면 1개 단위로 업로드하세요. "
-    "결정론적 규칙으로 먼저 변환하고, LLM은 선택했을 때만 Service 로직 포팅에 씁니다."
+    "규칙 기반 규칙으로 먼저 변환하고, LLM은 선택했을 때만 Service 로직 포팅에 씁니다."
 )
 
 input_mode = st.radio(
@@ -1573,7 +1573,7 @@ if input_mode == "폴더 경로 지정":
 
                     st.markdown("#### 🎯 영향도 분석 대시보드 (기존 저장 화면 기준)")
                     st.caption(
-                        "미사용 함수(콜그래프에서 한 번도 안 불림)와 오류 함수(BLOCKER 이슈·원본 버그 "
+                        "미사용 함수(호출 관계도에서 한 번도 안 불림)와 오류 함수(BLOCKER 이슈·원본 버그 "
                         "보존)를 한 표로 합쳐 위험도 순으로 정렬했습니다 - 위험도 = BLOCKER건수*3 + "
                         "WARNING건수*1 + (미사용이면 +2) + (원본 버그 보존이면 +1). 확정 판정이 아니라 "
                         "검토 우선순위 신호이며, 삭제/수정은 사람이 원본을 보고 직접 판단하세요(자동 "
@@ -1744,7 +1744,7 @@ if screen_id:
         """
         progress = st.progress(0, text="변환 시작...")
 
-        progress.progress(15, text="1/4 골격(Api/Service/Store) 생성 중...")
+        progress.progress(15, text="1/4 코드 뼈대(Api/Service/Store) 생성 중...")
         # 폴더 모드(파이프라인)와 같은 공통 메서드 레지스트리를 쓴다. 한쪽만 넘기면 같은 화면을
         # 어느 경로로 변환했느냐에 따라 산출물이 달라진다 - 이 프로젝트가 이미 여러 번 겪은
         # "두 개의 병렬 구현, 하나는 잊혀짐" 패턴이라 여기서 같이 맞춘다.
@@ -1819,7 +1819,7 @@ if screen_id:
 
     c1, c2 = st.columns([3, 2])
     with c1:
-        if st.button("1단계: 규칙 기반 변환 실행 (골격 + MyBatis Mapper + Dto)", type="primary"):
+        if st.button("1단계: 규칙 기반 변환 실행 (코드 뼈대 + MyBatis Mapper + Dto)", type="primary"):
             _run_conversion()
             st.rerun()
     with c2:
@@ -1829,8 +1829,8 @@ if screen_id:
                 st.rerun()
     if "skeleton_files" in st.session_state:
         st.caption(
-            "⚠️ 재수행하면 골격/Mapper/Dto를 처음부터 다시 만들고, LLM으로 포팅한 Service 로직도 "
-            "스텁으로 초기화됩니다(2단계에서 다시 포팅해야 함). 원본 파일(폴더 경로 모드)이나 "
+            "⚠️ 재수행하면 코드 뼈대/Mapper/Dto를 처음부터 다시 만들고, LLM으로 포팅한 Service 로직도 "
+            "빈 껍데기 코드으로 초기화됩니다(2단계에서 다시 포팅해야 함). 원본 파일(폴더 경로 모드)이나 "
             "패키지 p1/p2 입력을 고친 뒤 다시 반영할 때 쓰세요."
         )
 
@@ -2130,7 +2130,7 @@ if screen_id:
             ):
                 st.caption(
                     "실제 Maven/Spring 빌드 환경이 아직 없어 진짜 컴파일은 못 합니다 - 대신 중괄호 균형, "
-                    "LLM 포팅 미완료 스텁, 계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), "
+                    "LLM 포팅 미완료 빈 껍데기 코드, 계층 간 실제 호출 대상 존재 여부(Api→Service→Store→Mapper), "
                     "Mapper.xml well-formed 여부를 정적으로 확인합니다. PASS는 \"돌아간다\"가 아니라 "
                     "\"이 정적 검사를 통과했다\"는 뜻입니다."
                 )
@@ -2217,21 +2217,21 @@ if screen_id:
                             "소스가 길어 변환 결과를 한눈에 보기 어려우니 필요할 때만 위 '펼치기'를 누르세요."
                         )
 
-            with st.expander("🎨 AI 추천 (opt-in, 비교용)", expanded=False):
+            with st.expander("🎨 AI 추천 (선택 실행, 비교용)", expanded=False):
                 _render_ai_recommendation(screen_id, to_prefix(screen_id), files, buckets)
 
-            with st.expander("🔀 D계층 재구성 (opt-in, 검토용)", expanded=False):
+            with st.expander("🔀 데이터 접근 재구성 (선택 실행, 검토용)", expanded=False):
                 _render_d_orchestration_recommendation(screen_id, buckets)
 
-            with st.expander("📐 카디널리티 수정 (opt-in, 검토용)", expanded=False):
+            with st.expander("📐 결과 건수 수정 (선택 실행, 검토용)", expanded=False):
                 _render_cardinality_fix_recommendation(screen_id, to_prefix(screen_id), files, buckets)
 
-            with st.expander("🧪 차등 테스트 (더미 데이터 자동 생성)", expanded=False):
+            with st.expander("🧪 SQL 결과 비교 (더미 데이터 자동 생성)", expanded=False):
                 _render_diff_test(screen_id, buckets, package_p1, package_p2)
 
         with tab_porting:
             st.caption(
-                "F BizUnit의 실제 계산/분기 로직을 메서드 단위로 LLM Gateway에 보내, Service 파일의 스텁 "
+                "F BizUnit의 실제 계산/분기 로직을 메서드 단위로 LLM Gateway에 보내, Service 파일의 빈 껍데기 코드 "
                 "(`throw new UnsupportedOperationException`)을 실제 포팅된 코드로 바로 교체합니다. "
                 "메서드가 크면(예: 500줄 넘는 로직) 한 번에 정확히 옮겨진다는 보장이 없으니, "
                 "포팅 후 반드시 원본과 줄 단위로 대조해서 검토하세요 - 이 앱은 자동으로 완료 처리하지 않습니다."
@@ -2245,7 +2245,7 @@ if screen_id:
                     st.rerun()
 
                 for method in f_methods:
-                    status = "✅ 포팅됨 (검토 필요)" if method in ported else "⏳ 스텁"
+                    status = "✅ 포팅됨 (검토 필요)" if method in ported else "⏳ 빈 껍데기 코드"
                     pc1, pc2 = st.columns([5, 1])
                     pc1.write(f"`{method}` — {status} ({len(f_bodies.get(method, ''))}자)")
                     if pc2.button("포팅", key=f"port_{screen_id}_{method}"):
@@ -2262,7 +2262,7 @@ if screen_id:
             if not porting_complete:
                 st.warning(
                     f"⏳ 2단계 포팅이 아직 끝나지 않았습니다({len(ported)}/{len(f_methods)}개 메서드 완료) - "
-                    "F 메서드를 전부 포팅해야 저장 버튼이 활성화됩니다. 원본 F 로직 없이 스텁 상태로 저장하면 "
+                    "F 메서드를 전부 포팅해야 저장 버튼이 활성화됩니다. 원본 F 로직 없이 빈 껍데기 코드 상태로 저장하면 "
                     "포팅했다는 착각을 줄 수 있어서 막아뒀습니다."
                 )
             save_to_db = st.checkbox(

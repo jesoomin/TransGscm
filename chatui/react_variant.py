@@ -199,7 +199,7 @@ def recommend_react_variant(
     """Api/Service/Store/Mapper/Dto 5개 파일 단위로 AI 추천을 만든다.
 
     request_fields/response_fields는 chatui/skeleton_gen.py의 extract_dto_fields()가 이미
-    뽑아둔 값을 그대로 받는다 - 필드 자체를 여기서 새로 추출하지 않는다(결정론적 추출과 AI
+    뽑아둔 값을 그대로 받는다 - 필드 자체를 여기서 새로 추출하지 않는다(규칙 기반 추출과 AI
     추천을 분리 - 변환기/검증기 분리 원칙의 연장). api_java(선택)를 주면 실제 위임 메서드
     이름을 찾아 Api 추천에 그대로 쓴다 - 없으면 플레이스홀더로 대체한다(추측 안 함).
     """

@@ -32,7 +32,7 @@ _GUIDANCE: dict[str, str] = {
         "많으니(`// FIXME(원본 버그)` 표시 확인), 원본과 대조해 의도를 확인한 뒤 고치세요."
     ),
     "PORTING_INCOMPLETE": (
-        "LLM 포팅이 끝나지 않아 `UnsupportedOperationException` 스텁이 남아 있습니다. 원본 F 메서드 "
+        "LLM 포팅이 끝나지 않아 `UnsupportedOperationException` 빈 껍데기 코드이 남아 있습니다. 원본 F 메서드 "
         "로직을 직접 옮기거나 파이프라인을 다시 실행하세요."
     ),
     "UNRESOLVED_SERVICE_CALL": (
@@ -111,7 +111,7 @@ def _issue_rows(issues, source: str) -> list[dict]:
 def collect_issue_rows(entry: dict) -> list[dict]:
     """배치 entry 하나에서 모든 이슈를 한 줄씩으로 모은다(판정을 새로 하지 않고 모으기만)."""
     rows: list[dict] = []
-    rows += _issue_rows(entry.get("skel_issues"), "골격 생성(skeleton_gen)")
+    rows += _issue_rows(entry.get("skel_issues"), "코드 뼈대 생성(skeleton_gen)")
     rows += _issue_rows(entry.get("mapper_issues"), "Mapper 변환(converters)")
     rows += _issue_rows(entry.get("dto_issues"), "DTO 생성(skeleton_gen)")
     for vr in entry.get("validation_results") or []:
@@ -167,7 +167,7 @@ def build_handoff_report(entry: dict) -> str:
         out += [
             "## ⛔ 이 화면은 자동 변환을 신뢰하면 안 됩니다",
             "",
-            "D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기는 `dbSelect`만 지원):",
+            "데이터 접근 계층(D)에 이 변환기가 다루지 못하는 verb가 있습니다(변환기는 `dbSelect`만 지원):",
             "",
         ]
         for method, verbs in plan["unsupported_db_verbs"].items():
@@ -186,7 +186,7 @@ def build_handoff_report(entry: dict) -> str:
         ]
 
     if port_errors:
-        out += ["## 🔴 LLM 포팅 실패 (스텁이 그대로 남음)", ""]
+        out += ["## 🔴 LLM 포팅 실패 (빈 껍데기 코드이 그대로 남음)", ""]
         for _sid, method, err in port_errors:
             out.append(f"- `{method}`: {err}")
         out += ["", "→ 파이프라인을 다시 실행하거나, 원본 F 메서드 로직을 직접 옮기세요.", ""]
