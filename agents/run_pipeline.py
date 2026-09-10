@@ -40,6 +40,14 @@ for _p in (str(_PROJECT_ROOT), str(_PROJECT_ROOT / "chatui")):
 
 
 def main(argv: list[str] | None = None) -> int:
+    # 도움말과 오류 메시지에도 한글·기호가 들어간다. Windows 기본 코드페이지(cp949)에서는
+    # argparse가 출력하다 UnicodeEncodeError로 죽는다 - 인자 파싱 전에 먼저 잡아둔다.
+    for _s in (sys.stdout, sys.stderr):
+        try:
+            _s.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            pass
+
     ap = argparse.ArgumentParser(prog="python -m agents.run_pipeline")
     ap.add_argument("folder", help="AS-IS 소스 폴더 (P/F/D .java, .bizunit, .xsql)")
     ap.add_argument("--screens", default="", help="쉼표로 구분한 대상 화면 ID")
@@ -48,9 +56,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repair-rounds", type=int, default=2)
     ap.add_argument("--no-color", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="LLM 호출 없이 규칙 기반 경로만")
+    ap.add_argument("--fast", action="store_true",
+                    help="빠른 반복 모드 — 동작 일치 검증(javac 실행)을 건너뛴다")
+    ap.add_argument("--cache", action="store_true",
+                    help="같은 프롬프트의 LLM 응답을 재사용한다(tracking/llm-cache/)")
+    ap.add_argument("--concurrency", type=int, default=16,
+                    help="LLM 호출 동시 실행 수(기본 16). CPU 수가 아니라 대기 시간이 병목이다")
     ap.add_argument("--snapshot", action="store_true",
                     help="생성 결과를 tracking/generated-snapshots/에 기록(사람 수정 측정 기준선)")
     args = ap.parse_args(argv)
+
+    if args.cache:
+        import os
+        os.environ["GSCM_LLM_CACHE"] = "1"
 
     if args.no_color:
         import os
@@ -109,6 +127,8 @@ def main(argv: list[str] | None = None) -> int:
         include_ai_recommend=not args.no_ai_recommend,
         max_repair_retries=args.repair_rounds,
         all_paths=all_paths,
+        max_concurrency=args.concurrency,
+        include_equivalence=not args.fast,
     )
 
     if args.snapshot:

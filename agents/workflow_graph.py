@@ -646,6 +646,7 @@ class PipelineState(TypedDict, total=False):
     # select_repair_node가 채점 후 빈 리스트로 덮어써서 회차 간 누적을 끊는다.
     repair_candidates: Annotated[list[tuple[str, str, str, str]], _replace_list]
     repair_candidates_n: int
+    include_equivalence: bool
 
     # Stage 6 (equivalence_check_all: 단일 노드, agents/equivalence_test.py를 임시 사본에서 실행)
     equivalence_result: dict  # agents.equivalence_test.run()의 반환값 그대로(오류 시 {"error": str})
@@ -1169,6 +1170,12 @@ def repair_gate_node(state: PipelineState) -> dict:
 def route_after_repair_gate(state: PipelineState):
     targets = state.get("repair_targets") or []
     if not targets:
+        # 동작 일치 검증은 javac/java를 실제로 돌려 몇 초에서 수십 초가 걸린다. 프롬프트를
+        # 고쳐가며 반복 실행할 때는 끄고, 제출·시연 실행에서는 켠 채로 둔다(기본 켜짐).
+        if state.get("include_equivalence", True) is False:
+            log.stage(6, 8, "DECIDE", "동작 일치 검증 건너뜀 (빠른 반복 모드)")
+            log.end_stage("동작 일치 미실행")
+            return "scan_all"
         return "equivalence_check_all"
     return _dispatch_repairs(targets, state)
 
@@ -1377,6 +1384,8 @@ def run_pipeline_part_a(
     repair_candidates_n: int = 2,
     all_paths: dict[str, dict] | None = None,
     progress_cb=None,
+    max_concurrency: int = 16,
+    include_equivalence: bool = True,
 ) -> PipelineState:
     """폴더 안 화면 전체를 1~6단계까지 LangGraph로 진행한다(저장 안 함 - 사람 승인 후 app.py가
     별도로 저장 + Part B(7~8단계)를 실행한다).
@@ -1401,6 +1410,7 @@ def run_pipeline_part_a(
         "max_repair_retries": max_repair_retries,
         "port_results": [], "port_errors": [], "ported_methods": [], "ai_recommend_results": [],
         "repair_candidates": [], "repair_candidates_n": repair_candidates_n,
+        "include_equivalence": include_equivalence,
     }
     log.banner(
         "G-SCM 차세대 전환 Agent — 추론 로그",
@@ -1409,7 +1419,9 @@ def run_pipeline_part_a(
     )
     graph = get_pipeline_graph()
     final_state: PipelineState = dict(initial)  # type: ignore[assignment]
-    for mode, chunk in graph.stream(initial, stream_mode=["updates", "values"]):
+    for mode, chunk in graph.stream(
+            initial, stream_mode=["updates", "values"],
+            config={"max_concurrency": max_concurrency}):
         if mode == "values":
             final_state = chunk
         elif progress_cb:

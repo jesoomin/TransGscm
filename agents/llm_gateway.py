@@ -5,6 +5,12 @@ CLAUDE.md "로컬 개발 환경" 참고.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
+import json
+
+import hashlib
+
 import os
 from functools import lru_cache
 
@@ -62,6 +68,45 @@ def get_client() -> AzureOpenAI:
     )
 
 
+# ── 응답 캐시 ────────────────────────────────────────────────────────────
+# 같은 프롬프트에 같은 응답을 돌려준다. 파이프라인을 반복 실행할 때(시연 리허설, 프롬프트
+# 조정) 매번 같은 호출을 다시 하느라 몇 분씩 쓰는 걸 없애려는 것이다.
+#
+# 기본은 꺼짐 - 제출용 실행이 조용히 옛 응답을 재사용하면 안 된다. GSCM_LLM_CACHE=1 로 켠다.
+# 키는 모델 + 프롬프트 전문의 해시라, 프롬프트 템플릿을 고치면 자동으로 무효가 된다.
+_CACHE_DIR = Path(__file__).resolve().parent.parent / "tracking" / "llm-cache"
+
+
+def _cache_on() -> bool:
+    return os.environ.get("GSCM_LLM_CACHE") == "1"
+
+
+def _cache_key(model: str, messages: list[dict]) -> str:
+    blob = json.dumps({"model": model, "messages": messages},
+                      ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _cache_get(model: str, messages: list[dict]):
+    if not _cache_on():
+        return None
+    p = _CACHE_DIR / f"{_cache_key(model, messages)}.txt"
+    try:
+        return p.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def _cache_put(model: str, messages: list[dict], out: str) -> None:
+    if not _cache_on() or out is None:
+        return
+    try:
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        (_CACHE_DIR / f"{_cache_key(model, messages)}.txt").write_text(out, encoding="utf-8")
+    except OSError:
+        pass  # 캐시는 편의 기능이다 - 못 써도 실행을 막지 않는다
+
+
 def chat(
     messages: list[dict],
     model: str = DEFAULT_CHAT_MODEL,
@@ -69,9 +114,14 @@ def chat(
 ) -> str:
     """단발 채팅 완성. messages는 OpenAI chat 포맷([{"role": ..., "content": ...}, ...])."""
     _require_model(model)
+    cached = _cache_get(model, messages)
+    if cached is not None:
+        return cached
     client = get_client()
     resp = client.chat.completions.create(model=model, messages=messages, **kwargs)
-    return resp.choices[0].message.content
+    out = resp.choices[0].message.content
+    _cache_put(model, messages, out)
+    return out
 
 
 def chat_stream(

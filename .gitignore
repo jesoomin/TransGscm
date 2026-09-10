@@ -29,3 +29,6 @@ Thumbs.db
 TransGscm.zip
 tracking/generated-snapshots/
 tracking/reviewed/
+
+# LLM 응답 캐시 - 재실행 속도용 로컬 산출물(커밋 대상 아님)
+tracking/llm-cache/
