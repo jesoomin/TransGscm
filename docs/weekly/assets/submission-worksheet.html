@@ -1,0 +1,1922 @@
+<title>전환 Agent 제출 워크시트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#EEF1EF;
+  --surface:#FFFFFF;
+  --surface-2:#F6F8F6;
+  --ink:#151C1A;
+  --ink-2:#3F4A47;
+  --ink-3:#6B7773;
+  --line:#D3DAD7;
+  --line-2:#E3E8E5;
+  --rule:#0E6B5A;
+  --rule-soft:#DCEBE6;
+  --llm:#6B4E9E;
+  --llm-soft:#E8E2F2;
+  --block:#A9501B;
+  --block-soft:#F4E5D8;
+  --code-bg:#131A19;
+  --code-ink:#D8E3DF;
+  --focus:#0E6B5A;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101614;
+    --surface:#18211E;
+    --surface-2:#1D2724;
+    --ink:#E7EDEA;
+    --ink-2:#B3BFBB;
+    --ink-3:#849490;
+    --line:#2C3835;
+    --line-2:#232E2B;
+    --rule:#4FBFA3;
+    --rule-soft:#12302A;
+    --llm:#B197E0;
+    --llm-soft:#241E36;
+    --block:#DE9257;
+    --block-soft:#33220F;
+    --code-bg:#0B100F;
+    --code-ink:#CBD8D4;
+    --focus:#4FBFA3;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101614;
+  --surface:#18211E;
+  --surface-2:#1D2724;
+  --ink:#E7EDEA;
+  --ink-2:#B3BFBB;
+  --ink-3:#849490;
+  --line:#2C3835;
+  --line-2:#232E2B;
+  --rule:#4FBFA3;
+  --rule-soft:#12302A;
+  --llm:#B197E0;
+  --llm-soft:#241E36;
+  --block:#DE9257;
+  --block-soft:#33220F;
+  --code-bg:#0B100F;
+  --code-ink:#CBD8D4;
+  --focus:#4FBFA3;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans KR","Malgun Gothic",system-ui,sans-serif;
+  font-size:15px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:18px;padding-block:0 72px}
+
+/* ---------- masthead ---------- */
+.mast{padding-block:44px 28px;border-bottom:2px solid var(--ink);display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end;justify-content:space-between}
+.mast h1{
+  font-family:"Gothic A1","Malgun Gothic",sans-serif;font-weight:800;
+  font-size:clamp(28px,4.6vw,44px);line-height:1.12;margin:0;letter-spacing:-.02em;text-wrap:balance;
+}
+.mast .sub{margin:10px 0 0;color:var(--ink-2);max-width:56ch;font-size:14.5px}
+.stamp{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);text-align:right;line-height:1.9;white-space:nowrap;
+}
+.stamp b{color:var(--ink);font-weight:600}
+
+/* ---------- how-to ---------- */
+.howto{
+  margin-top:26px;border:1px solid var(--line);background:var(--surface);
+  padding:18px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px 26px;
+}
+.howto h2{font-family:"Gothic A1",sans-serif;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--rule);margin:0 0 6px;font-weight:700}
+.howto p{margin:0;font-size:13.5px;color:var(--ink-2)}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);margin-top:30px}
+.navrow{display:flex;gap:4px;overflow-x:auto;padding-block:9px;scrollbar-width:thin}
+nav a{
+  flex:0 0 auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.04em;
+  color:var(--ink-2);text-decoration:none;padding:6px 11px;border:1px solid transparent;white-space:nowrap;
+}
+nav a:hover{border-color:var(--line);color:var(--ink);background:var(--surface)}
+nav a:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+
+/* ---------- sections ---------- */
+section{padding-block:52px 8px;scroll-margin-top:58px}
+.shead{display:flex;gap:14px;align-items:baseline;border-bottom:1px solid var(--ink);padding-bottom:9px;margin-bottom:24px;flex-wrap:wrap}
+.shead .idx{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--rule);letter-spacing:.1em;font-weight:600}
+.shead h2{font-family:"Gothic A1",sans-serif;font-weight:800;font-size:clamp(20px,2.6vw,27px);margin:0;letter-spacing:-.015em}
+.shead .note{margin-left:auto;font-size:12.5px;color:var(--ink-3)}
+.lede{margin:0 0 22px;max-width:70ch;color:var(--ink-2)}
+
+/* ---------- field block ---------- */
+.field{border:1px solid var(--line);background:var(--surface);margin-bottom:14px}
+.fhead{
+  display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line-2);
+  background:var(--surface-2);flex-wrap:wrap;
+}
+.fhead .flabel{font-family:"Gothic A1",sans-serif;font-weight:700;font-size:14px;letter-spacing:-.01em}
+.fhead .fhint{font-size:12px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+.copy{
+  margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.05em;
+  border:1px solid var(--rule);color:var(--rule);background:transparent;padding:5px 12px;cursor:pointer;
+  transition:background .12s,color .12s;
+}
+.copy:hover{background:var(--rule);color:var(--surface)}
+.copy:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.copy[data-done="1"]{background:var(--rule);color:var(--surface);border-color:var(--rule)}
+.field pre{
+  margin:0;padding:15px 16px;font-family:"IBM Plex Mono","D2Coding",monospace;font-size:12.6px;line-height:1.72;
+  white-space:pre-wrap;word-break:break-word;color:var(--ink);max-height:none;
+}
+.field.term pre{background:var(--code-bg);color:var(--code-ink)}
+
+/* ---------- pills / tags ---------- */
+.pill{
+  display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.07em;
+  padding:2px 7px;border:1px solid currentColor;vertical-align:middle;
+}
+.p-rule{color:var(--rule);background:var(--rule-soft)}
+.p-llm{color:var(--llm);background:var(--llm-soft)}
+.p-block{color:var(--block);background:var(--block-soft)}
+
+/* ---------- callout ---------- */
+.call{border-left:3px solid var(--rule);background:var(--surface);padding:16px 18px;margin:0 0 20px}
+.call.warn{border-left-color:var(--block)}
+.call.new{border-left-color:var(--llm)}
+.call h3{font-family:"Gothic A1",sans-serif;font-size:15px;margin:0 0 7px;font-weight:700}
+.call p{margin:0 0 8px;color:var(--ink-2);font-size:14px}
+.call p:last-child{margin-bottom:0}
+.call ul{margin:8px 0 0;padding-left:18px;color:var(--ink-2);font-size:14px}
+.call li{margin-bottom:5px}
+
+/* ---------- slide grid ---------- */
+.slides{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.slide{border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column}
+.slide .sn{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;color:var(--ink-3);
+  padding:10px 14px 0;
+}
+.slide h4{font-family:"Gothic A1",sans-serif;font-size:15.5px;margin:2px 0 0;padding:0 14px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.slide .role{padding:6px 14px 0;font-size:12px;color:var(--rule);font-family:"IBM Plex Mono",monospace}
+.slide pre{
+  margin:10px 0 0;padding:12px 14px;border-top:1px solid var(--line-2);background:var(--surface-2);
+  font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.68;white-space:pre-wrap;word-break:break-word;
+  color:var(--ink-2);flex:1;
+}
+
+/* ---------- timeline ---------- */
+.tl{border-top:1px solid var(--line)}
+.tlrow{display:grid;grid-template-columns:96px 1fr;gap:0;border-bottom:1px solid var(--line)}
+.tlrow .t{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink);padding:14px 12px 14px 0;
+  border-right:1px solid var(--line-2);font-variant-numeric:tabular-nums;
+}
+.tlrow .b{padding:14px 0 14px 16px}
+.tlrow .b h4{font-family:"Gothic A1",sans-serif;font-size:15px;margin:0 0 4px;font-weight:700}
+.tlrow .b p{margin:0 0 6px;font-size:13.5px;color:var(--ink-2)}
+.tlrow .b .say{border-left:2px solid var(--line);padding-left:12px;font-size:13.5px;color:var(--ink);margin:8px 0 0}
+.tlrow.key{background:var(--surface)}
+.tlrow.key .t{color:var(--block);font-weight:600}
+
+/* ---------- table ---------- */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);background:var(--surface);margin-bottom:20px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.5px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-family:"Gothic A1",sans-serif;font-weight:700;font-size:12.5px;background:var(--surface-2);white-space:nowrap}
+td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+
+footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--ink);font-size:13px;color:var(--ink-3)}
+footer p{margin:0 0 6px}
+
+@media (max-width:560px){
+  .tlrow{grid-template-columns:1fr}
+  .tlrow .t{border-right:0;border-bottom:1px solid var(--line-2);padding:10px 0}
+  .tlrow .b{padding-left:0}
+  .stamp{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <h1>G-SCM 전환 Agent 제출 워크시트</h1>
+    <p class="sub">시연 대본에서 역산한 발표 장표와, 플랫폼 입력칸에 그대로 붙여넣는 주차별 본문. 모든 수치는 <code>docs/weekly/00-종합산출물.md</code>의 실측값만 씁니다.</p>
+  </div>
+  <div class="stamp">
+    기준일 <b>2026-09-10</b><br>
+    파이프라인 <b>8단계</b><br>
+    스코어카드 <b>80.9 / 100</b>
+  </div>
+</header>
+
+<div class="howto">
+  <div>
+    <h2>붙여넣기 규칙</h2>
+    <p>각 칸의 <b>복사</b>를 누르면 <b>마크다운 기호가 없는 순수 텍스트</b>가 복사됩니다. <code>#</code>·<code>|</code>·<code>**</code>를 쓰지 않아 플랫폼에서 깨지지 않습니다.</p>
+  </div>
+  <div>
+    <h2>읽는 순서</h2>
+    <p>시연 대본이 척추입니다. 장표는 대본의 각 구간을 한 장으로 받아내도록 만들었고, 주차별 본문은 그 장표의 근거를 담습니다.</p>
+  </div>
+  <div>
+    <h2>색이 뜻하는 것</h2>
+    <p><span class="pill p-rule">규칙</span> LLM을 쓰지 않는 결정론 영역 · <span class="pill p-llm">LLM</span> 판단이 필요한 좁은 영역 · <span class="pill p-block">BLOCKER</span> 사람이 봐야 하는 것</p>
+  </div>
+</div>
+
+<nav>
+  <div class="navrow">
+    <a href="#demo">시연 대본</a>
+    <a href="#deck">발표 장표</a>
+    <a href="#w1">1주 역량·스택</a>
+    <a href="#w2">2주 문제정의</a>
+    <a href="#w3">3주 시나리오</a>
+    <a href="#w4">4주 상세설계</a>
+    <a href="#w5">5주 PoC 구현</a>
+    <a href="#w6">6주 테스트·고도화</a>
+    <a href="#w7">7주 E2E</a>
+    <a href="#w8">8주 최종제출</a>
+    <a href="#future">향후 확장</a>
+  </div>
+</nav>
+
+<!-- ============ DEMO SCRIPT ============ -->
+<section id="demo">
+  <div class="shead">
+    <span class="idx">SPINE</span>
+    <h2>시연 대본 5분 — 장표를 역산한 원본</h2>
+    <span class="note">콘솔 로그가 주인공, UI는 30초 이내</span>
+  </div>
+  <p class="lede">제출 가이드가 <b>"UI에서 처리 결과만 보여주면 평가에 불리"</b>, <b>"Agent의 추론 과정이 보여지는 로그로 증명"</b>이라고 못 박았습니다. 그래서 대본의 40%(1:30~3:30)를 계획 수립과 자기 수정 구간에 씁니다. 아래 장표 10장은 이 여섯 구간을 한 장씩 받아내도록 만든 것입니다.</p>
+
+  <div class="call">
+    <h3>한 문장 시나리오</h3>
+    <p>결함이 의도적으로 심어진 레거시 화면 5개를 투입해, Agent가 계획을 세우고 → 규칙과 LLM을 나눠 처리하고 → 검증에서 실패를 잡아 → 스스로 고치고 → 못 고치는 것은 사람에게 넘기는 과정을, <b>정답키 대조 수치로</b> 증명합니다.</p>
+  </div>
+
+  <div class="tl">
+    <div class="tlrow">
+      <div class="t">0:00–0:30</div>
+      <div class="b">
+        <h4>투입할 것과 정답키를 먼저 보여준다</h4>
+        <p>화면: <code>ls</code>로 P/F/D java + xsql, 정답키 CSV 한 줄.</p>
+        <p class="say">"오늘 보실 것은 결과 화면이 아니라, Agent가 단계마다 무엇을 왜 그렇게 판단했는지의 추론 로그입니다."</p>
+      </div>
+    </div>
+    <div class="tlrow">
+      <div class="t">0:30–1:30</div>
+      <div class="b">
+        <h4>STAGE 1 — 코드를 만들기 전에 계획을 파일로 고정</h4>
+        <p>메서드마다 <span class="pill p-rule">규칙</span>인지 <span class="pill p-llm">LLM</span>인지 판단하고 근거를 남깁니다. 46%를 규칙으로 처리해 호출 자체를 회피. 원본이 컴파일 안 되는 화면은 변환 <em>전에</em> 잡습니다.</p>
+      </div>
+    </div>
+    <div class="tlrow key">
+      <div class="t">1:30–2:00</div>
+      <div class="b">
+        <h4>STAGE 3 — 피호출자 계약을 JSON으로 주입</h4>
+        <p>콜그래프에서 뽑은 실제 Store 메서드명·반환 타입·카디널리티 불일치 여부를 프롬프트에 명시적 계약 객체로 넣습니다. LLM이 이름을 지어내지 못하게 막는 장치입니다.</p>
+      </div>
+    </div>
+    <div class="tlrow key">
+      <div class="t">2:00–2:30</div>
+      <div class="b">
+        <h4>STAGE 4 — 변환기와 분리된 검증기가 결함을 잡는다</h4>
+        <p>정답키에 심어둔 결함 2건을 정확히 검출: 존재하지 않는 메서드 호출, XML 태그 누락.</p>
+      </div>
+    </div>
+    <div class="tlrow key">
+      <div class="t">2:30–3:30</div>
+      <div class="b">
+        <h4>STAGE 5 — 자기 수정 게이트 ★ 가장 확대할 구간</h4>
+        <p>BLOCKER 2건 중 <b>1건만</b> 수리 대상으로 고릅니다. XML 태그 누락은 규칙 기반 산출물이라 LLM이 고칠 문제가 아니므로 의도적으로 제외 — Agent가 "내가 고칠 것"과 "사람이 봐야 할 것"을 구분합니다.</p>
+        <p class="say">화면을 둘로 나눠 정답키와 대조합니다. 정답키에 "정상 메서드명은 dPLA08701"이라 적혀 있고, 수리된 코드가 정확히 그 이름을 씁니다 — 검증만 통과한 게 아니라 정답과 일치합니다.</p>
+      </div>
+    </div>
+    <div class="tlrow">
+      <div class="t">3:30–4:30</div>
+      <div class="b">
+        <h4>실행 요약과 승인 게이트</h4>
+        <p>요약 마지막 줄: <b>"미반영 — 사람이 승인하고 저장을 눌러야 기록됨"</b>. 여기까지 자동으로 왔지만 아무것도 저장하지 않았습니다.</p>
+      </div>
+    </div>
+    <div class="tlrow">
+      <div class="t">4:30–5:00</div>
+      <div class="b">
+        <h4>정답키 대조 성과와 반증된 가설</h4>
+        <p>결함 탐지 10/10·오탐 0, 스코어카드 80.9점, 기능 동등성 F 48/48. 그리고 가장 중요한 결과 — <b>"정적 검증만으로 정확성을 보증할 수 있다"는 가설이 반증됐다</b>는 것.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="field term">
+    <div class="fhead">
+      <span class="flabel">녹화 명령 (8단계 현행)</span>
+      <span class="fhint">터미널 폭 100컬럼 이상 · 14pt 이상</span>
+      <button class="copy" type="button">복사</button>
+    </div>
+<pre># 리허설 — LLM 호출 없이 계획~검증 구간 그대로 재현
+python -m agents.run_pipeline PLA081-110_migration_sample \
+    --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend --dry-run
+
+# 본 녹화 — 실 LLM, 5화면 약 30초
+python -m agents.run_pipeline PLA081-110_migration_sample \
+    --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend
+
+# 성과 수치 — 정답키 대조
+python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더>
+python -m agents.scorecard <폴더> --screens PLA087,PLA089,PLA093,PLA096,PLA100</pre>
+  </div>
+
+  <div class="call new">
+    <h3>로그 강화 — 모델의 판단을 콘솔에 되돌려 출력한다 (2026-09-10 구현)</h3>
+    <p>"LLM이 생각하는 모드"를 지어내지 않고 보여줄 방법이 있었습니다. 포팅 프롬프트가 이미 모델에게 <b>본문 첫 줄에 <code>// AI 변경 요약:</code> 한 줄을 남기라고 요구</b>하고 있습니다. 그 문장은 우리가 쓴 해설이 아니라 <b>모델 자신의 말</b>이므로, 그대로 콘솔에 되돌려 출력하면 판단 과정이 진짜로 보입니다.</p>
+    <ul>
+      <li><b><code>THINK</code> 이벤트 신설</b> — 모델이 밝힌 근거를 따옴표로 인용해 출력합니다. 로그의 나머지가 "코드가 내린 결정"인 것과 시각적으로 구분됩니다. 모델이 스스로 남긴 <code>FIXME</code>/<code>TODO</code>도 함께 싣습니다.</li>
+      <li><b>호출별 소요 시간</b> — 응답 수신 줄에 응답 길이와 초를 함께 찍습니다.</li>
+      <li><b>계획 → 도구 호출 인과</b> — 1단계가 "도구 호출 계획"을 확정하고, 3단계가 그 계획을 참조해 호출한다는 것이 로그 두 줄로 드러납니다.</li>
+      <li><b>녹화 중 인코딩 크래시 방어</b> — Windows 기본 코드페이지(cp949)에서 로그의 박스 문자가 <code>UnicodeEncodeError</code>를 내며 파이프라인 전체를 죽이는 걸 확인해 고쳤습니다. 표시용 로그가 실행을 멈추게 두지 않습니다.</li>
+    </ul>
+  </div>
+
+  <div class="field term">
+    <div class="fhead">
+      <span class="flabel">강화된 로그 — 실제 출력</span>
+      <span class="fhint">THINK 줄이 모델 자신의 문장</span>
+      <button class="copy" type="button">복사</button>
+    </div>
+<pre>[  0.2s] │  PLAN     도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
+         │           ↳ 변환기 12건 대상 → 규칙 변환기 4건(LLM 미사용) · LLM Gateway 8건
+         │             · 검증기 전건 · 수리 루프는 검증 실패 시에만
+
+[  0.8s] ┌─ STAGE 3/8  TOOL  LLM 포팅 — 8건 병렬 디스패치 (fan-out)
+[  0.8s] │  PLAN     1단계 계획이 지목한 8건에만 LLM Gateway를 호출한다
+         │           ↳ 대상은 계획 단계에서 이미 확정됐다 — 모델이 무엇을 부를지 스스로 고르지 않는다
+[  0.8s] │  CONTEXT  PLA047.fPLA047QrySelectMainList ← 피호출자 계약 4건 주입:
+         │           dPLA04702, dPLA04703, dPLA04704, dPLA04705
+         │           (카디널리티 불일치: dPLA04703, dPLA04704, dPLA04705)
+         │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정
+[  0.8s] │  TOOL     LLM Gateway(PLA047.fPLA047QrySelectMainList)
+         │           ↳ 최초 포팅 · 프롬프트 29,483자
+[  4.2s] │  PASS     PLA047.fPLA047QrySelectMainList 응답 수신 (1,204자 · 3.4초)
+[  4.2s] │  THINK    PLA047.fPLA047QrySelectMainList — 모델이 밝힌 근거
+         │           "IDataSet 기반 조회를 store 호출로 치환하고 권한 게이트 분기는 원본
+         │             순서를 그대로 유지했다 / FIXME(카디널리티 불일치, 사람 확인 필요):
+         │             원본은 dPLA04703 결과를 다건 recordset으로 받는다"</pre>
+  </div>
+
+  <div class="call warn">
+    <h3>대본에서 고칠 곳 — 단계 번호</h3>
+    <p>기존 대본은 <code>STAGE N/7</code>로 적혀 있는데, 기능 동등성 검증(L3)이 필수 단계로 승격되면서 파이프라인이 <b>8단계</b>가 됐습니다. 녹화 전 자막을 <code>STAGE N/8</code>로 맞추고, 3:30~4:30 구간에 <b>"STAGE 6 기능 동등성 — F 계층 48/48 일치"</b> 로그 5초를 추가하면 반증 서사(H3)가 대본 안에서 완결됩니다.</p>
+  </div>
+</section>
+
+<!-- ============ DECK ============ -->
+<section id="deck">
+  <div class="shead">
+    <span class="idx">DECK</span>
+    <h2>발표 장표 10장</h2>
+    <span class="note">각 장 = 대본의 한 구간</span>
+  </div>
+  <p class="lede">장표를 먼저 만들고 대본을 끼워 맞추면 "기능 나열"이 됩니다. 반대로 했습니다 — 대본이 증명해야 하는 것을 먼저 정하고, 그 증명을 받아낼 장만 남겼습니다. 숫자가 없는 장은 넣지 않았습니다.</p>
+
+  <div class="slides">
+
+    <div class="slide">
+      <div class="sn">01 / 표지</div>
+      <h4>10년 운영한 시스템을, 운영한 사람이 전환한다</h4>
+      <div class="role">대본 0:00 — 문제의 당사자성</div>
+<pre>G-SCM 차세대 전환 Agent
+1단계 · 서버(Java/XSQL → Spring/MyBatis)
+
+화면 1,416개에 대응하는 P/F/D BizUnit과 XSQL을
+Spring/MyBatis로 자동 전환하는 파이프라인
+
+발표자는 이 시스템의 개발·유지보수 실무 담당자</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">02 / 문제</div>
+      <h4>병목은 변환이 아니라 추적이었다</h4>
+      <div class="role">대본 0:00–0:30 — 왜 이 도구인가</div>
+<pre>화면-서비스 매핑(nctRid)이 명명 규칙과 일치하지 않는다.
+서버 로직 하나를 옮기려면 화면마다 사람이
+P / F / D / XSQL 4종 파일을 직접 추적해야 한다.
+
+이 추적이 1,416회 반복된다.
+
+그리고 원본 자체에 결함이 섞여 있다
+ · Java 중괄호 누락 — 컴파일 불가
+ · XML 태그 불일치
+ · SQL 문법 오류
+
+이 마지막 항목이 설계를 좌우했다.
+전환 도구가 "정상 원본"을 전제하면 첫 화면에서 멈춘다.</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">03 / 설계 원칙</div>
+      <h4>결정론으로 풀리는 변환에 LLM을 쓰지 않는다</h4>
+      <div class="role">대본 0:30–1:30 — 계획 단계의 근거</div>
+<pre>규칙이 하는 일 (LLM 호출 0회)
+ · iBatis → MyBatis 문법 변환
+ · BizUnit 시그니처 → Api/Service/Store 골격
+ · .BIZUNIT → DTO
+ · 매핑 그래프, 영향도, 중복·미사용 함수
+
+LLM이 하는 일 (좁게)
+ · 계산·분기가 있는 업무 로직 포팅
+ · P 계층 오케스트레이션 포팅
+ · 검증 실패 시 자기 수정
+
+실측 — 포팅 대상 46건 중 21건을 규칙으로 회피(46%)
+LLM 호출 낭비도 화면당 5건 → 1건으로 제거</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">04 / 파이프라인</div>
+      <h4>8단계 고정 파이프라인과 사람 승인 게이트</h4>
+      <div class="role">대본 전 구간 — 화면 하단 상시 노출</div>
+<pre>0 계획 수립      규칙, 코드 생성 전에 파일로 고정
+1 규칙 기반 변환   LLM 미사용
+2 LLM 포팅       병렬 디스패치, 피호출자 계약 주입
+3 정적 검증       변환기와 분리된 검증기
+  └ 자기 수정 게이트 (라운드 상한 2)
+4 기능 동등성 L3   AS-IS/TO-BE 실제 실행 비교
+5 품질·취약점 스캔
+6 AI 추천        opt-in, 채택은 사람
+7 교차 분석       엔드포인트 충돌, 중복·미사용
+8 Maven 빌드 검증
+
+  ═══ 사람 승인 게이트 ═══
+  승인 전에는 산출물·DB에 아무것도 쓰지 않는다</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">04b / 오케스트레이션</div>
+      <h4>Planning이 도구 호출을 지휘한다</h4>
+      <div class="role">대본 0:30–1:30 + 1:30–2:00</div>
+<pre>모델이 도구를 스스로 고르지 않는다.
+계획 단계가 "무엇을, 어떤 도구로, 왜" 부를지 먼저 확정하고
+이후 단계는 그 계획대로만 호출한다.
+
+[STAGE 1] PLAN — 정적 분석만, LLM 호출 0회
+  메서드마다 판단하고 근거를 남긴다
+    fCommonCodeQry     → 규칙 기반 생성 (LLM 호출 안 함)
+                         ↳ 단순 위임 — store 호출 1건으로 결정론적 생성 가능
+    fPLA087QrySelect…  → LLM 포팅
+                         ↳ 계산·분기가 있어 기계적 1:1 치환 불가
+    pPLA08701          → LLM 포팅 (Api 계층)
+                         ↳ P가 순수 위임이 아님 — 권한 게이트·레코드셋 선별
+
+  PLAN  도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
+        ↳ 규칙 변환기 21건(LLM 미사용) · LLM Gateway 25건
+          · 검증기 전건 · 수리 루프는 검증 실패 시에만
+
+[STAGE 2] TOOL  규칙 변환기       계획이 지목한 21건
+[STAGE 3] TOOL  LLM Gateway      계획이 지목한 25건, 병렬 fan-out
+          CONTEXT 호출 직전 피호출자 계약을 JSON으로 주입
+[STAGE 4] TOOL  검증기            변환기와 분리, 전건
+[STAGE 5] REFLECT 수리 루프        검증이 실패시킨 것만, 상한 2
+
+계획 파일은 tracking/conversion-plans/ 에 남는다.
+리뷰·재현·재실행이 가능하다.</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">05 / 핵심 장면</div>
+      <h4>Agent가 "내가 고칠 것"과 "사람이 볼 것"을 가른다</h4>
+      <div class="role">대본 2:30–3:30 ★ 배점 40% 구간</div>
+<pre>검증 결과 — BLOCKER 2건
+
+ [1] UNRESOLVED_STORE_CALL
+     존재하지 않는 store.dPLA08710(...) 호출
+     → LLM 포팅 산출물이다. 수리 대상으로 채택.
+
+ [2] XML_PARSE_ERROR
+     Mapper 닫는 태그 누락
+     → 규칙 기반 산출물이다. LLM이 고칠 문제가 아니다.
+       의도적으로 제외하고 사람에게 넘긴다.
+
+1라운드 만에 해결 — BLOCKER 2건 → 1건
+정답키 대조: "정상 메서드명은 dPLA08701"
+수리 결과:   store.dPLA08701(...)   ← 정답과 일치</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">06 / 고급 기법</div>
+      <h4>Tree-of-Thoughts의 채점자를 LLM에서 떼어냈다</h4>
+      <div class="role">대본 3:00–3:30 보조</div>
+<pre>일반적인 ToT의 약점 — 모델이 자기 가지를 자기가 평가한다.
+이 프로젝트에는 결정론적 검증기가 이미 있다.
+
+ 1. BLOCKER 1건마다 방침을 달리한 후보 N개 병렬 생성
+    (최소수정 / 계약우선)
+ 2. 후보마다 실제로 splice한 사본을 만들어 검증기 실행
+ 3. 잔여 BLOCKER 수로 채점, 동점이면 원본에서 덜 벗어난 쪽
+ 4. 채택·탈락 근거를 로그에 남김
+
+실측에서는 두 후보 모두 0건이라 결과가 바뀌지 않았다.
+가지치기가 이번엔 수정을 확인했을 뿐 개선하진 않았다 —
+그 사실을 그대로 보고한다.</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">06b / 선행 연구</div>
+      <h4>차용한 것과, 버린 것과, 그 이유</h4>
+      <div class="role">Q&amp;A 대비 · 상세는 docs/10-prior-art.md</div>
+<pre>차용                          구현 위치
+ AlphaTrans      fragment 분해 · 콜그래프 역순
+                 · 스켈레톤 우선 · 조각별 콜러/콜리 계약
+                 → skeleton_gen.py, _callee_note()
+ ReCodeAgent     역할 분리 · 계획 파일 영속화 · 경량 파서
+                 → conversion_plan.py, nctrid_graph.py
+ MatchFixAgent   검증·수리를 변환기와 분리 (최대 차용점)
+ / ACToR         → validators.py, repair_gate_node
+ AWS Transform   Refactor / Reimagine 이원화
+                 → track_signals (신호만, 결정은 사람)
+ C2SaferRust     트랜스파일러 먼저 · Strangler Fig
+ RepoTransBench  자체 벤치마크 선행 · 사람 수정 라인 비율
+                 → benchmark.py, review.py, scorecard.py
+
+의도적으로 버린 것
+ 학습 기반 변환      병렬 데이터 없음, 규칙성 높음 — 학습할 이유가 없다
+ 자율 탐색 에이전트   1,416회 반복엔 고정 파이프라인이 낫다
+ 범용 다국어 전환기   단일 쌍 특화가 훨씬 효율적이다
+ RAG               파일럿 결과물이 코퍼스다 — 파일럿이 먼저다
+                   (구현 안 했으므로 구현 기능으로 적지 않는다)
+
+수치는 출처를 구분한다
+ AlphaTrans 원문 직접 확인 — 문법 96.40% vs 기능 25.14%
+ (멘토 코멘트 인용본은 99.1 / 25.8. 검증 없이 옮기지 않았다)</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">07 / 반증</div>
+      <h4>정적 검증을 전부 통과한 코드가 실행에서는 33%만 맞았다</h4>
+      <div class="role">대본 4:30–5:00 — 이 PoC의 최대 성과</div>
+<pre>가설 H3 — 정적 검증만으로 변환 정확성을 보증할 수 있다
+결과   — 반증됨. 추론이 아니라 실증으로.
+
+"실행할 수단이 없다"는 전제 자체가 틀렸다.
+필요한 건 애플리케이션 기동이 아니라
+F 메서드를 부를 최소 환경이었고,
+AS-IS가 쓰는 프레임워크 API는 10개 남짓의 닫힌 집합이었다.
+
+하네스를 만들어 돌리자 27건 중 9건만 일치(33%).
+원인 — 배관 규칙이 Store 반환값을 통째로 담아
+       원본의 getRecordSet(name) 추출 단계를 빠뜨림.
+고쳐서 100%.
+
+AlphaTrans(FSE 2025)가 보고한
+문법 96.40% vs 테스트 통과 25.14%의 간극을
+우리 코드에서 직접 재현하고 닫았다.</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">08 / 지표</div>
+      <h4>측정 범위를 넓히면 점수는 내려간다. 되돌리지 않았다</h4>
+      <div class="role">대본 4:30–5:00 — 성과 요약</div>
+<pre>전환 스코어카드  80.9 / 100   (직전 88.2에서 하향)
+
+ A 전환 성공률   생성률 100% · 정적 검증 96.7%
+ B 사용자 체감   리뷰 축소 87.3% · 결정론 45.6% · 수정 0.20%
+ C 탐지 정확성   원본 결함 10/10 · 오탐 0 · 중복 F1 66.7%
+ D 기능 동등성   F 48/48 · Api 페이로드 9/9 · 커버리지 3/5
+
+점수가 내려간 이유는 도구가 나빠져서가 아니다.
+ ① Api(HTTP) 계층을 처음 재보니 P 오케스트레이션이
+    통째로 빠져 있었다 — 정적 검증은 전부 통과했었다.
+ ② 결정론 처리 비중의 분모가 틀렸다 (75% → 46%).
+
+리뷰 축소율도 스스로 깎았다 — 99.7%는 과장이었다.
+LLM 포팅 라인은 이슈가 없어도 사람이 전부 읽어야 하므로
+포함해 다시 재니 87.3%.
+유리한 정의를 버리고 방어 가능한 정의를 택했다.</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">09 / 가드레일</div>
+      <h4>자율성을 주지 않는 것이 설계다</h4>
+      <div class="role">대본 3:30–4:30 — 승인 게이트</div>
+<pre>승인 게이트     승인 전엔 산출물·DB에 아무것도 쓰지 않음
+임시 사본 격리   승인 전 검증은 사본에서, 종료 시 항상 삭제
+생성 식별자 대조  LLM이 원본에 없는 필드를 만들면 자동 차단
+미지원 명시     본 적 없는 패턴에 규칙을 만들지 않는다
+원본 결함 보존   임의 수정 금지, ORIGINAL_BUG으로 구분
+수리 라운드 상한  무한 루프 / 자율 탐색화 차단
+
+MCP도 같은 원칙으로 갈랐다
+ 변환 실행 → 노출하지 않음 (승인 게이트 우회 경로를 열지 않는다)
+ 분석 조회 → 노출함 (부작용 없는 결정론적 그래프 조회)
+읽기 전용 4종을 실제 MCP 클라이언트로 연결해 검증했다.</pre>
+    </div>
+
+    <div class="slide">
+      <div class="sn">10 / 다음</div>
+      <h4>다음 단계 1순위는 실행 수단이다</h4>
+      <div class="role">대본 5:00 — 마무리 + 확장</div>
+<pre>당장의 1순위
+ 포팅 결과를 실행할 수단 확보.
+ 수리 루프를 아무리 고도화해도 개선되는 건 이미 높은
+ 문법 층이다. 낮은 기능 층을 건드리려면 실행이 필요하다.
+
+내년 차세대 전환 프로젝트로의 확장 — 두 축
+
+ [축 1] 전환 속도와 정확도
+        Agent가 화면 단위 전환을 수행하고 사람은 승인만
+
+ [축 2] 표준화 리뷰 — 이번에 새로 넣는 축
+        10년 이상 누적된 원본을 그대로 옮기면
+        낡은 네이밍과 개발 편차까지 함께 이관된다.
+        전환 직후 LLM이 표준 개발 형식(네이밍 규칙,
+        계층 책임, 예외·응답 규약)에 비추어 한 번 더
+        검토하고 표준화 제안을 낸다.
+        전환을 "이관"이 아니라 "정비"로 만든다.</pre>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ WEEK 1 ============ -->
+<section id="w1">
+  <div class="shead">
+    <span class="idx">TASK 1</span>
+    <h2>역량 및 기술 스택 확인</h2>
+    <span class="note">스토리라인 제안 포함</span>
+  </div>
+
+  <div class="call new">
+    <h3>제안하는 스토리라인 — "역전된 출발점"</h3>
+    <p>이 항목은 보통 "무엇을 할 줄 아는가"의 목록으로 채워집니다. 그러면 Python 초급~중급이 약점으로만 읽힙니다. 대신 <b>출발점의 역전</b>을 축으로 잡기를 제안합니다.</p>
+    <p>보통 AI 프로젝트는 <em>AI 개발자가 도메인을 배워서</em> 시작합니다. 이 프로젝트는 <em>도메인 담당자가 AI를 배워서</em> 시작합니다. 그래서 "nctRid가 명명 규칙과 안 맞아 화면마다 소스를 추적해야 한다"는 병목을 문서가 아니라 <b>경험으로</b> 알고 있었고, 그 결과 8주를 병목이 아닌 곳에 쓰지 않았습니다.</p>
+    <ul>
+      <li><b>성장 축 1 — 암묵지를 검증 가능한 규칙으로.</b> "P는 그냥 위임이죠"라는 통념을 코퍼스 30화면 전수 확인으로 뒤집어 30/30이 권한 게이트를 갖고 있음을 확인했습니다. 아는 것과 증명하는 것을 구분하게 됐습니다.</li>
+      <li><b>성장 축 2 — LLM을 쓰는 사람에서, LLM의 경계를 긋는 사람으로.</b> 결정론/LLM 경계표를 세우고 포팅 46건 중 21건을 규칙으로 회피했습니다.</li>
+      <li><b>성장 축 3 — 만든 것을 스스로 의심하는 능력.</b> 스코어카드를 88.2에서 80.9로 자진 하향했고, 자기 가설 H3를 스스로 반증했습니다.</li>
+    </ul>
+    <p>성장 목표를 <b>"동작하는 Agent"가 아니라 "틀렸을 때 틀렸다고 말하는 Agent를 만들 수 있는 개발자"</b>로 잡으면, 위 세 축이 그대로 근거가 됩니다.</p>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">보유 역량</span><span class="fhint">현재 수준과 근거</span><button class="copy" type="button">복사</button></div>
+<pre>도메인 지식 — 상
+  G-SCM Nexacro14 + NEXCORE(PU/FU/DU/XSQL) 개발·유지보수 실무 담당자.
+  전환 대상 시스템을 직접 운영해 온 사람이 그 전환 도구를 만든다.
+
+LLM Agent 구축 — 유
+  사내 GaiA LLM 프레임워크로 Analysis / Simulation / Validation Agent 구축.
+  P-MIX Simulation Agent에서 Multi-Agent + Orchestrator 설계 경험
+  (자연어 질의 → Agent 할당 → 실행 → 결과 구조화).
+  Domain Knowledge를 문서로 구축해 프롬프트에 주입하는 방식 사용.
+
+Python — 초급~중급
+  프레임워크 기반 Agent 구성·활용 위주. 직접 구현 경험은 적다.
+  이 항목이 이 계획의 최대 리스크이며, 대응은 야심을 키우는 것이 아니라
+  범위를 좁히는 것이다.
+
+이 프로젝트에서의 위치
+  일반적인 AI 과제는 AI 개발자가 도메인을 배워서 시작한다.
+  이 과제는 도메인 담당자가 AI를 배워서 시작한다.
+  그래서 "화면마다 소스를 추적해야 한다"는 진짜 병목을
+  문서가 아니라 경험으로 알고 있었고, 8주를 병목이 아닌 곳에 쓰지 않았다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">학습 필요 영역</span><span class="fhint">우선순위 구분</span><button class="copy" type="button">복사</button></div>
+<pre>1순위 (필수)
+  Python 실무 구현 — 파일 파싱, 코드 생성, 문자열/AST 처리
+    → 파이프라인 전 구간의 기반
+  Java 코드 파싱 — tree-sitter
+    → 오류 복구 파서가 필요하다. AS-IS 원본이 컴파일되지 않는 경우가
+      실제로 있어(확보한 실소스에서 확인) 엄격한 파서는 그 파일에서 멈춘다
+  XML 파싱 — lxml
+    → .BIZUNIT(입출력 메타), XSQL(iBatis) 구조 분석
+
+2순위 (필수)
+  빌드 검증 자동화 — Maven 연동
+    → "변환됐다"를 주장하려면 실제로 컴파일돼야 한다
+  코드 변환 프롬프트 엔지니어링 — 구조화 출력 강제, 계약 주입
+
+3순위 (대안)
+  리뷰 UI — Streamlit
+
+4순위 (있으면 좋음)
+  RAG 고도화 — 파일럿 결과물이 코퍼스가 된 이후
+  FastAPI 서비스화 — 파일럿 이후
+
+리스크 대응
+  필수 항목을 "파싱 → 생성 → 검증" 최소 단위 기능으로 좁혀 학습한다.
+  서비스화와 RAG는 파일럿 완료 전까지 착수하지 않는다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">기술 스택</span><span class="fhint">필수 / 대안 / 있으면 좋은 것</span><button class="copy" type="button">복사</button></div>
+<pre>필수
+  Java 파싱      tree-sitter        오류 복구 파싱
+  XML 파싱       lxml               .BIZUNIT, XSQL
+  LLM 호출       사내 LLM Gateway    소스 외부 전송 보안 정책 대응
+  빌드 검증      Maven (mvn compile)
+  DB            Oracle (로컬)       매핑 그래프 적재 + 차등 테스트 실행
+  형상관리       Git 브랜치/PR       계층별 단위 커밋
+
+대안
+  오케스트레이션   사내 GaiA 우선 → 한계 확인 시 LangGraph
+                 (상태 그래프·병렬 분기·조건부 라우팅이 필요해져 실제로 전환)
+  리뷰 UI        Streamlit (로컬 전용)
+
+있으면 좋음
+  벡터 검색      FAISS / Chroma     파일럿 이후
+  서비스화       FastAPI            파일럿 이후
+
+범위 밖
+  ESLint / tsc / AG-Grid 등 프론트엔드 검증·라이브러리는
+  2단계 UI 트랙의 도구다. 1단계(서버 전환)에는 해당 사항이 없다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">관심 도메인</span><button class="copy" type="button">복사</button></div>
+<pre>1순위 — 제조/유통(SCM). 담당 업무와 직결된다.
+2순위 — 개발자 생산성 / DevTools.
+
+사유
+  1,416개 화면이라는 실제 과제로 학습 내용을 즉시 실무에 적용하고
+  정량 검증할 수 있다. 가상의 예제가 아니라 내가 매일 보는 코드가
+  그대로 입력 데이터이자 평가셋이 된다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">8주 목표 및 성장 목표</span><span class="fhint">제안한 스토리라인 반영본</span><button class="copy" type="button">복사</button></div>
+<pre>8주 안에 검증 가능한 최소 단위
+  화면 유형별 대표 20~30개의 서버 로직 전환. 1,416개 전체를 대상으로 하지 않는다.
+
+최종 데모에서 반드시 보여줄 것
+  폴더를 지정하면 계획 수립 → 규칙 기반 변환 → LLM 포팅 → 정적 검증 →
+  자기 수정 → 기능 동등성 검증 → 영향도 분석까지 자동 진행되고,
+  사람이 승인해야만 산출물이 반영되는 전 과정.
+
+성공 판단 핵심 지표 3개
+  1. nctRid 매핑 자동 확정률   목표 80% 이상
+  2. 1차 자동변환 커버리지     목표 70% 이상 (컴파일 통과율)
+  3. 사람 수정 라인 비율       목표 30% 이하
+
+기술 목표
+  "분석 → 계획 → 생성 → 검증 → 수리" End-to-End 파이프라인 PoC.
+  변환기와 검증기를 분리된 모듈로 구축한다 —
+  변환기를 바꿔도 검증 자산이 살아남게 하기 위함이다.
+
+비즈니스 목표
+  대상 화면 서버 로직 1차 자동 변환율 70% 이상, 사람 수정 라인 비율 30% 이하.
+
+성장 목표
+  Lv.3 Middle AI 개발자로서, "동작하는 Agent"가 아니라
+  "틀렸을 때 틀렸다고 말하는 Agent"를 만들 수 있는 개발자가 되는 것.
+
+  세 가지로 나눠 검증한다.
+   (1) 암묵지를 검증 가능한 규칙으로 옮길 수 있는가
+       — 운영 경험으로 아는 것을 정적 분석 규칙과 벤치마크로 증명한다
+   (2) LLM을 쓰는 것이 아니라 LLM의 경계를 그을 수 있는가
+       — 결정론으로 풀리는 영역에 LLM을 쓰지 않는 선을 직접 긋는다
+   (3) 내가 만든 것을 내가 의심할 수 있는가
+       — 유리한 지표 정의를 버리고 방어 가능한 정의를 택한다
+
+이번 주 가장 큰 불확실성
+  "Python 초급~중급인 사람이 8주 안에 코드 변환 파이프라인을 만들 수 있는가."
+  대응은 야심을 키우는 것이 아니라 범위를 좁히는 것이다.
+   1. 결정론적으로 풀리는 변환에 LLM을 쓰지 않는다 — 난이도와 비용을 동시에 낮춘다
+   2. 1,416개가 아니라 유형별 20~30개로 시작한다
+   3. UI 전환을 1단계에 넣지 않는다 — 검증 방법이 전혀 다른 두 문제를 동시에 풀지 않는다</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 2 ============ -->
+<section id="w2">
+  <div class="shead">
+    <span class="idx">TASK 2</span>
+    <h2>문제 정의 및 서비스 기획</h2>
+    <span class="note">플랫폼 예시(장바구니·PDF QA)를 이 내용으로 대체</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">해결하려는 문제</span><span class="fhint">한 문장 + 근거</span><button class="copy" type="button">복사</button></div>
+<pre>화면-서비스 매핑(nctRid)이 명명 규칙과 일치하지 않아,
+서버 로직을 전환하려면 화면마다 사람이 P / F / D / XSQL 4종 파일을
+직접 추적해야 한다.
+
+1,416개 화면 규모에서 이 추적 작업이 선행 작업으로 반복 발생한다.
+
+시간   화면마다 4종 파일 추적·분석이 매번 선행된다
+비용   패턴이 동일한데 화면 수만큼 중복 작업이 발생한다
+품질   개발자별로 응답 형태·예외 처리가 이원화되어 구조 편차가 생긴다
+리스크 원본 자체에 결함이 섞여 있다 —
+       확보한 실제 소스에서 Java 중괄호 누락(컴파일 불가),
+       XML 태그 불일치, SQL 문법 오류를 확인했다
+
+마지막 항목이 설계를 좌우했다.
+전환 도구가 "정상 원본"을 전제하면 첫 화면에서 멈춘다.
+원본 결함을 예외가 아니라 정상 입력의 일부로 취급해야 한다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">목표 사용자와 사용 맥락</span><button class="copy" type="button">복사</button></div>
+<pre>전환 투입 백엔드 개발자
+  폴더 지정 → 파이프라인 실행 → 자동 생성물 검토 → 수동 보완 지점만 처리
+  가장 원하는 것: "내가 읽어야 할 코드가 얼마나 줄었는가"
+
+PL / PM
+  화면별 상태·이슈·위험도 확인, 승인 게이트에서 저장 승인
+  가장 원하는 것: "이 화면을 완료로 봐도 되는가"의 근거
+
+QA
+  정적 검증·차등 테스트 결과와 화면별 인수인계 문서로 확인
+  가장 원하는 것: "자동으로 안 된 것이 무엇이고 무엇을 봐야 하는가"</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">서비스 개요와 8주 범위</span><button class="copy" type="button">복사</button></div>
+<pre>Nexacro14 + NEXCORE로 구축된 G-SCM의 서버 계층을
+Spring/MyBatis 구조로 자동 전환하는 파이프라인이다.
+
+폴더를 지정하면 계획 수립 → 규칙 기반 변환 → LLM 포팅 → 정적 검증 →
+자기 수정 → 기능 동등성 검증 → 품질 스캔 → 교차 분석·빌드 검증까지
+자동 진행되고, 사람이 승인해야만 결과가 반영된다.
+
+핵심 설계는 하나다.
+  결정론적으로 풀리는 변환에는 LLM을 쓰지 않는다.
+그 결과 화면당 LLM 호출을 최소로 억제하면서도
+생성 코드가 실제 컴파일을 통과한다.
+
+8주 PoC 범위                     장기 비전
+  계층  1단계 서버만               1단계 + 2단계 화면(React)
+  규모  유형별 대표 20~30화면       1,416화면
+  검증  정적 검증 + 빌드           HTTP 레벨 차등 테스트
+        + SQL 계층 차등 테스트      + 운영 트래픽 섀도잉
+  배포  로컬 도구 + 사람 승인       서비스화, CI 연동
+
+전환 프로그램은 처음부터 2단계다.
+1단계(서버)와 2단계(화면)는 확정 시점과 검증 방법이 달라
+같은 시점에 바꾸지 않는다. 두 단계는 nctRid 계약으로 이어진다 —
+1단계가 "nctRid 1개 = 엔드포인트 1개"를 유지하므로
+2단계 React 화면은 1단계가 만든 API를 그대로 호출한다(Strangler Fig).
+
+8주 안에 하지 않는 것
+  UI 전환, RAG, 서비스화, 운영 배포, DB 스키마 변경, 무인 자동 커밋</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">핵심 가설과 검증 결과</span><span class="fhint">H3은 반증됨</span><button class="copy" type="button">복사</button></div>
+<pre>H1  nctRid 매핑 그래프를 선행 정적 분석으로 구축하면
+    화면별 소스 추적 병목이 사라진다
+    → 검증됨. 세트 A에서 nctRid 150/150 자동 확정.
+      역방향 영향도 추적이 2홉까지 정확히 도달.
+
+H2  결정론적 변환이 대부분을 커버하고 LLM은 좁은 영역만 필요하다
+    → 검증됨. 포팅 대상 46건 중 21건을 규칙으로 회피(46%).
+      남은 것은 분기·계산이 있거나 원본이 깨진 것뿐.
+
+H3  정적 검증만으로 변환 정확성을 보증할 수 있다
+    → 반증됨. 추론이 아니라 실증으로.
+      최소 실행 환경을 만들어 AS-IS/TO-BE를 돌려보니
+      정적 검증을 전부 통과한 코드가 27건 중 9건만 일치(33%)했다.
+      원인을 고쳐 100%가 됐다.
+
+H3의 반증이 이 PoC의 가장 큰 성과다.
+처음엔 "실행할 수단이 없다"는 이유로 미측정이었는데 그 전제가 틀렸다.
+필요한 건 애플리케이션 기동이 아니라 F 메서드를 부를 최소 환경이었고,
+AS-IS가 쓰는 프레임워크 API는 10개 남짓의 닫힌 집합이었다.
+AlphaTrans(FSE 2025)가 보고한 문법 96.40% vs 테스트 통과 25.14%의 간극을
+우리 코드에서 직접 재현하고 닫은 셈이다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">성공 지표</span><span class="fhint">단일 지표로 판단하지 않는다</span><button class="copy" type="button">복사</button></div>
+<pre>"구조가 생성됐나 → 컴파일되나 → 동작이 같나 → 사람이 얼마나 고쳤나"는
+층이 다르고, 각 층이 통과해도 다음 층은 별개다.
+
+L1 구조   nctRid 자동 확정률     목표 80%+   실적 150/150 (100%, 세트 A)   초과
+L1 구조   골격 생성 성공률       목표 95%+   실적 대상 화면 전건 생성      달성
+L2 문법   컴파일 통과율          목표 95%+   실적 실패 1건 외 전부 통과    달성
+L2 문법   정적 검증 통과율       목표 90%+   실적 25파일 중 잔여 1건       달성
+L2 문법   LLM 의존 최소화        목표 30%-   실적 46건 중 21건 규칙 회피   달성
+L3 기능   실행 결과 일치율       기준 수립   실적 F 계층 48/48 (100%)      부분 달성
+                                            단 화면 3/5만 실행 가능
+L3 기능   SQL 계층 diff          —          실적 S001 PASS, 원본 결함 2건 검출
+L4 공수   사람 수정 라인 비율    목표 30%-   실적 0.20% (1,960줄 중 4줄)   달성(하한값)
+L4 공수   화면당 공수 절감률     목표 65~70% 실적 미측정 (기준선 미실측)  미달
+
+측정 규칙
+  화면 유형 분류 — 트랜잭션 개수 + D 메서드 수 + 동적 SQL 태그 유무로 자동 분류
+  샘플 수 — 유형별 4~5개, 총 20~30개
+  "전환 전후 작업"의 정의 — AS-IS 소스 확보 시점부터 TO-BE 코드가 리뷰 승인될 때까지.
+    소스 추적·리뷰·수정 시간을 전부 포함한다
+  사람 개입 시간 — 포함한다. 자동 생성 시간만 재면 절감률이 과대평가된다
+  어느 세트 기준인지 반드시 함께 적는다
+
+미측정으로 남은 것은 화면당 공수 절감률 하나다.
+기준선(수작업 공수)이 실측되지 않아 파일럿에서 확정한다.
+여기에 추정치를 채우지 않았다. 90% 절감 같은 수치는 약속하지 않는다.</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 3 ============ -->
+<section id="w3">
+  <div class="shead">
+    <span class="idx">TASK 3</span>
+    <h2>시나리오 수립</h2>
+    <span class="note">입력 / 기대 출력 / 성공 기준 + 예외 흐름</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">시나리오 1 — 폴더를 지정해 화면 묶음을 전환한다</span><button class="copy" type="button">복사</button></div>
+<pre>사용자   전환 투입 백엔드 개발자
+상황     이번 스프린트에 배정된 화면 5개를 전환해야 한다
+
+입력
+  AS-IS 소스 폴더. 화면당 P / F / D BizUnit(.java), 입출력 메타(.bizunit),
+  SQL 매핑(.xsql). 대상 화면은 사용자가 직접 골라 좁힐 수 있다.
+
+기대 출력
+  화면별 변환 계획 파일 (코드 생성 전에 확정)
+  Api / Service / Store / Dto / Mapper.xml 5종
+  화면별 인수인계 문서 (자동으로 안 된 것과 사람이 할 일)
+  단계별 판정 결과 (PASS / WARNING / BLOCKER / SKIPPED)
+
+성공 기준
+  대상 화면 전건에 대해 산출물 5종이 생성된다
+  잔여 BLOCKER가 0건이거나, 남은 것의 사유가 문서에 명시된다
+  승인 버튼을 누르기 전까지 산출물과 DB에 아무것도 기록되지 않는다
+
+예외 흐름
+  AS-IS 원본이 컴파일되지 않는다
+    → 변환 전 계획 단계에서 검출해 표시한다. 임의로 고치지 않고 보존한다.
+  본 적 없는 DB 동작(프로시저 등)이 나온다
+    → 규칙을 지어내지 않고 미지원으로 표시하고 사람에게 넘긴다.
+  LLM Gateway 호출이 실패한다
+    → 재시도 상한까지 시도하고, 실패하면 해당 메서드를 스텁으로 남긴 뒤
+      BLOCKER로 보고한다. 성공한 것처럼 요약하지 않는다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">시나리오 2 — 이 함수를 고치면 어디가 영향을 받는지 묻는다</span><button class="copy" type="button">복사</button></div>
+<pre>사용자   PL / 전환 담당 개발자
+상황     특정 데이터 접근 함수를 수정해야 하는데 파급 범위를 모른다
+
+입력     함수 이름 하나
+
+기대 출력
+  그 함수를 직접·간접적으로 호출하는 모든 함수와 홉 수
+  그로 인해 영향받는 화면 목록과 트랜잭션 ID
+  값의 출처 표시 (확정된 메타 파일 기준인지, 매핑표 폴백인지)
+
+성공 기준
+  독립적으로 답을 아는 사례와 대조해 일치한다
+  (검증 사례: dPLA04702 → fPLA047QrySelectMainList(1홉)
+   → pPLA04701(2홉, RPLA04701))
+  호출자가 0인 함수는 "미사용 후보"로 표시하되 한계 문구를 함께 보여준다
+
+예외 흐름
+  콜그래프에 없는 함수 이름을 입력한다 → 안내 문구. 추측해서 답하지 않는다.
+  트랜잭션 ID가 비어 있다 → 폴백 출처를 밝혀 표시한다. 빈칸을 채우지 않는다.
+
+이 질의에는 LLM을 쓰지 않는다.
+그래프 순회로 정확히 답이 나오는 질문이라, 답에 근거를 그대로 붙일 수 있다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">시나리오 3 — 자동으로 안 된 것만 골라 처리한다</span><button class="copy" type="button">복사</button></div>
+<pre>사용자   전환 투입 개발자 / QA
+상황     파이프라인은 돌았고, 이제 사람이 무엇을 봐야 하는지 알아야 한다
+
+입력     파이프라인 실행 결과
+
+기대 출력 — 화면별 인수인계 문서 (읽는 순서대로 구성)
+  1. 자동 변환을 신뢰하면 안 되는 이유 (미지원 동작)
+  2. AS-IS 원본이 컴파일되지 않는 상태 경고
+  3. LLM 포팅 실패로 스텁이 남은 메서드
+  4. BLOCKER
+  5. WARNING
+  6. 자동 변환 산출물 표
+  7. LLM이 포팅해 반드시 사람 리뷰가 필요한 메서드
+
+성공 기준
+  이슈 유형마다 "확인된 조치"가 붙는다.
+  표에 없는 유형은 없는 처리법을 지어내지 않고 원본 메시지만 보여준다.
+  이 문서 하나로 UI를 클릭하지 않고도 할 일을 파악할 수 있다.
+
+예외 흐름
+  이슈가 0건이다 → 그래도 LLM 포팅 메서드 목록은 남긴다.
+    이슈가 없다고 리뷰가 필요 없는 것은 아니다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">시나리오 4 — 승인 게이트에서 저장 여부를 판단한다</span><button class="copy" type="button">복사</button></div>
+<pre>사용자   PL / PM
+상황     이 배치를 실제 산출물로 반영해도 되는지 결정해야 한다
+
+입력     저장 전 상태의 배치 결과 전체
+
+기대 출력
+  화면별 판정 요약과 위험도 정렬 대시보드
+  엔드포인트 충돌 등 화면을 나란히 놓아야만 보이는 결함
+  임시 사본에서 실행한 실제 빌드 결과
+
+성공 기준
+  승인 전 검증이 실제 산출물 폴더를 전혀 건드리지 않는다
+  (실행 전후 스냅샷이 완전히 동일함을 확인)
+  BLOCKER가 하나라도 있으면 완료로 집계되지 않는다
+  승인은 자동으로 부여되지 않는다
+
+예외 흐름
+  검증 중 예외가 발생한다 → 파이프라인 전체를 막지 않고
+    WARNING으로 기록한 뒤 다음 단계로 진행한다.
+  임시 사본 정리에 실패한다 → 종료 시 항상 삭제를 보장한다.</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 4 ============ -->
+<section id="w4">
+  <div class="shead">
+    <span class="idx">TASK 4</span>
+    <h2>상세 설계 및 개발 환경 구축</h2>
+    <span class="note">화면 캡처 미확인 — 필드명은 조정 필요</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">아키텍처 개요</span><button class="copy" type="button">복사</button></div>
+<pre>AS-IS 요청 흐름
+  Nexacro 화면 → UIAdapter → nctRid 공통 디스패처
+    → P BizUnit (권한 게이트 · 여러 F 순서 호출 · 결과 레코드셋 선별)
+    → F BizUnit (계산 · 분기 등 업무 로직)
+    → D BizUnit (dbSelect/dbInsert/... 호출)
+    → XSQL(iBatis) → Oracle
+
+TO-BE 요청 흐름
+  (2단계 React 화면 자리) / 기존 Nexacro 화면 — 1단계 기간 중 공존
+    → {화면}Api        P의 오케스트레이션을 포팅
+    → {화면}Service    F의 계산·분기를 포팅
+    → {화면}Store      데이터 접근
+    → {화면}Mapper.xml MyBatis 문법, SQL 로직은 원본 그대로
+    → Oracle (스키마 변경 없음)
+
+계층 매핑
+  P BizUnit          → {화면}Api      Controller/ 폴더
+  F BizUnit          → {화면}Service  service/ 폴더
+  D BizUnit + XSQL   → {화면}Store + {화면}Mapper.xml
+  .BIZUNIT XML       → {화면}Dto      dto/ 폴더
+  하드코딩 메시지 코드 → errors.properties (국제화 대비, AS-IS엔 없던 신규)
+
+핵심 계약
+  nctRid 1개 = REST 엔드포인트 1개.
+  범용 CRUD/그리드 API로 재설계하지 않는다.
+  이 계약이 있어야 2단계 React 화면이 1단계 API를 그대로 호출할 수 있다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">결정론 / LLM 경계</span><span class="fhint">이 프로젝트의 중심 설계</span><button class="copy" type="button">복사</button></div>
+<pre>100% 규칙 기반 — LLM을 쓰지 않는다
+  iBatis → MyBatis 문법 변환
+    #var# → #{var}, $var$ → ${var},
+    isEqual/isNotEqual → if, isNotEmpty + iterate → if + foreach
+  P/F/D 메서드 시그니처 → Api/Service/Store 골격
+  .BIZUNIT 필드 → DTO 골격
+    (비어 있으면 실사용 코드의 getField/putField에서 역추출. 추측하지 않는다)
+  매핑 그래프, 영향도 분석, 중복·미사용 함수 탐지
+
+LLM이 필요한 것
+  P BizUnit의 오케스트레이션을 Api 메서드 본문으로 포팅
+    (여러 F 호출 순서, 권한 게이트 조기 반환, 반환할 레코드셋 선별)
+    순수 위임인 P는 여전히 규칙 기반 한 줄이다
+  F BizUnit 내부의 실제 계산·분기 로직을 Service 본문으로 포팅
+  검증 실패 시 자기 수정
+
+절대 자동화하지 않는 것
+  공통 응답/예외 처리 규약, 공통 Store/Mapper 패턴.
+  사람이 먼저 확정해야 한다. 화면마다 에이전트가 제각각 만들면
+  지금의 "개발자별 이원화" 문제가 그대로 재현된다.
+  실제로 이 규약이 아직 미확정이라, 확정 전까지 생성기에 주입하지 않았다.
+
+경계를 긋는 이유
+  결정론적으로 풀리는 변환에 LLM을 쓰면 비용은 비용대로 쓰고 품질은 안 나온다.
+  실측 — 포팅 대상 46건 중 21건을 규칙으로 회피(46%).</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">개발 환경</span><button class="copy" type="button">복사</button></div>
+<pre>오케스트레이션   LangGraph StateGraph
+                (사내 GaiA를 우선 검토했으나 상태 그래프·병렬 분기·
+                 조건부 라우팅이 필요해 전환)
+LLM             사내 LLM Gateway (Azure OpenAI 호환)
+                소스 외부 전송 보안 정책 대응
+파싱             lxml (XML), 경량 Java 파서
+DB              로컬 Oracle. 매핑 그래프 적재 + 차등 테스트 실행
+빌드 검증        Maven (mvn compile) — 실제 컴파일까지 수행
+UI              Streamlit (로컬 전용 리뷰 대시보드)
+연동             MCP 읽기 전용 조회 서버
+형상관리         Git, 계층별 단위 커밋
+
+자격증명 관리
+  DB 접속정보와 LLM Gateway API 키는 .env에만 둔다.
+  .env는 커밋 제외 처리하고, .env.example에 키 이름과 더미 값만 공유한다.
+  문서·코드·커밋 메시지 어디에도 값을 적지 않는다.
+
+추적 DB 스키마
+  파일 단위(CONV_FILE)에서 함수 단위(CONV_METHOD)까지 세분화하고,
+  콜그래프 엣지(CONV_METHOD_CALL)와 이슈(CONV_ISSUE)를 메서드에 귀속시킨다.
+  이슈가 파일 어디가 아니라 정확히 어느 메서드에서 났는지까지 연결된다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">참고한 선행 연구와 차용 지점</span><button class="copy" type="button">복사</button></div>
+<pre>AlphaTrans (FSE 2025)
+  차용 — 프로그램을 fragment로 분해, 콜그래프 역순 번역,
+        스켈레톤 우선 구성, 조각마다 콜러/콜리 메타데이터를 명시적으로 전달
+  이 프로젝트 — 화면을 5개 fragment로 분해(.BIZUNIT / P / F / D / XSQL),
+        XSQL → Store → Service → Api 역순 진행,
+        피호출자 계약을 JSON 객체로 프롬프트에 주입
+  경고 수치 — 문법 96.40% vs 테스트 통과 25.14%.
+        이 간극이 그대로 우리 리스크였고, 실제로 재현됐다.
+
+ReCodeAgent
+  차용 — Analyzer / Planner / Translator / Validator 역할 분리,
+        계획을 파일로 고정해 리뷰·재현·재실행 가능하게
+  이 프로젝트 — 코드 생성 전에 화면별 변환 계획 파일을 확정한다
+
+MatchFixAgent / ACToR
+  차용 — 검증·수리를 변환기와 분리해 재사용 가능하게
+  이 프로젝트 — 가장 중요한 차용 지점. 검증기가 별도 모듈이라
+        변환기를 바꿔도 검증 자산이 살아남는다
+
+AWS Transform
+  차용 — Refactor(구조 보존) / Reimagine(재설계) 이원화
+  이 프로젝트 — 트랙을 자동으로 정하지 않고 판단 근거만 채운 뒤 사람이 결정한다
+
+의도적으로 버린 것
+  학습 기반 변환 모델 — 병렬 데이터가 없고 규칙성이 높아 불필요
+  완전 자율 탐색형 에이전트 — 1,416회 반복 작업엔 고정 파이프라인이 낫다
+  범용 다국어 전환기 — 단일 쌍에 특화하는 것이 훨씬 효율적이다
+  RAG — 파일럿 결과물이 코퍼스가 되므로 파일럿이 먼저다.
+        구현하지 않았으므로 구현 기능으로 적지 않는다.
+
+수치는 출처를 구분한다
+  AlphaTrans 원문을 직접 확인한 값은 문법 96.40% vs 기능 25.14%다.
+  멘토 코멘트가 인용한 값(99.1 / 25.8)과 다르다.
+  결론은 같지만 인용 수치를 검증 없이 옮기지 않는다.
+
+차용·기각 판단의 전체 목록과 근거는 별도 문서로 정리했다
+  docs/10-prior-art.md</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 5 ============ -->
+<section id="w5">
+  <div class="shead">
+    <span class="idx">TASK 5</span>
+    <h2>PoC 모듈 구현</h2>
+    <span class="note">8단계 현행</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">구현한 파이프라인</span><button class="copy" type="button">복사</button></div>
+<pre>0  계획 수립         규칙. 코드 생성 전에 무엇을 만들지 파일로 확정
+1  규칙 기반 변환     LLM 미사용. 문법 변환 + 골격 + DTO
+2  LLM 포팅          병렬 디스패치. 피호출자 계약 주입
+3  정적 검증         변환기와 분리된 검증기
+   └ 자기 수정 게이트  검증 실패를 프롬프트에 피드백, 라운드 상한 2
+4  기능 동등성 검증    AS-IS/TO-BE를 실제로 실행해 결과 비교 (L3)
+5  품질·취약점 스캔
+6  AI 추천           opt-in. 채택은 사람이 판단
+7  전체 화면 교차 분석  엔드포인트 충돌, 중복·미사용 함수
+8  Maven 빌드 검증    임시 사본에서 실제 mvn compile
+
+   ═══ 사람 승인 게이트 ═══
+   승인 전에는 산출물 폴더와 DB에 아무것도 쓰지 않는다
+
+7~8단계는 승인 전에 실행된다.
+실제 산출물 트리를 임시 폴더에 복사한 뒤 이번 배치를 그 위에 겹쳐 써서
+검증하고, 종료 시 임시 폴더를 항상 삭제한다.
+실행 전후 스냅샷이 완전히 동일함을 확인해 격리를 검증했다.
+
+화면 여러 개는 단계 단위로 함께 진행한다.
+화면 A를 끝까지 다 하고 B로 넘어가지 않는다 —
+"전체 화면 규칙 기반 변환" 다음에 "전체 화면 중 포팅 대상 LLM 포팅"으로 넘어간다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">핵심 구현 1 — 피호출자 계약 주입</span><button class="copy" type="button">복사</button></div>
+<pre>문제
+  LLM이 Store 메서드 이름을 추측해 지어내면 컴파일이 깨지고,
+  수리 루프가 그걸 고치느라 호출을 낭비한다.
+
+구현
+  콜그래프에서 그 F 메서드가 실제로 호출하는 D 메서드 목록을 뽑아
+  프롬프트에 명시적 JSON 계약 객체로 넣는다.
+
+  {"name": "dPLA04606",
+   "return_type": "Map<String, Object>",
+   "cardinality_mismatch": true}
+
+  name                  콜그래프에서 뽑은 실제 이름. 추측 금지
+  return_type           DML은 int, 조회는 Map. 타입을 추측하다 나는
+                        컴파일 에러와 수리 낭비를 사전에 막는다
+  cardinality_mismatch  원본은 다건인데 Store는 단건 계약이다.
+                        임의로 봉합하지 말고 FIXME만 남기라고 지시한다
+
+단일 진실 공급원
+  카디널리티 판정은 골격 생성기에서 한 번만 하고,
+  워크플로는 그 결론을 읽기만 한다.
+  처음엔 워크플로가 독립적으로 다시 판정했는데,
+  DML 피호출자에까지 "Store가 Map을 반환한다"는 틀린 문구를 달 뻔했다.
+  두 곳이 각자 판정하면 반드시 어긋난다.
+
+실 LLM 검증
+  LLM이 계약의 불일치를 인지해
+  "FIXME(카디널리티 불일치, 사람 확인 필요)" 주석을 정확히 남겼고,
+  같은 계약의 DML 피호출자 6건에는 이 주석을 달지 않았다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">핵심 구현 2 — 자기 수정 루프와 ToT 채점</span><button class="copy" type="button">복사</button></div>
+<pre>루프 구조
+  정적 검증 → 수리 게이트 → 재포팅 → 결합 → 정적 검증 (라운드 상한)
+
+수리 대상 선별
+  LLM이 포팅한 메서드에 귀속된 BLOCKER만 대상이다.
+  규칙 기반 생성물은 제외한다 — LLM이 고칠 문제가 아니다.
+  포팅 실패로 스텁이 남은 경우도 제외한다 —
+  "포팅된 코드의 오류를 고쳐라"는 프롬프트에 스텁을 넣으면
+  고칠 대상이 없어 무의미한 호출이 된다.
+
+Tree-of-Thoughts 방식의 후보 채점
+  일반적인 ToT의 약점은 모델이 자기 가지를 자기가 평가한다는 것이다.
+  이 프로젝트에는 결정론적 검증기가 이미 있으므로 그 약점을 피할 수 있다.
+
+  1. BLOCKER 1건마다 방침을 달리해 후보 N개를 병렬 생성 (최소수정 / 계약우선)
+  2. 후보마다 실제로 splice한 사본을 만들어 검증기를 돌린다
+  3. 잔여 BLOCKER 수로 채점, 동점이면 원본에서 덜 벗어난 쪽
+  4. 채택·탈락 근거를 로그에 남긴다
+
+  실측에서는 두 후보 모두 0건이라 결과가 바뀌지 않았다.
+  가지치기가 이번엔 수정을 확인했을 뿐 개선하진 않았다.
+  후보가 갈릴 때 효과가 나는 구조이며, 이 사실을 그대로 보고한다.
+
+상한을 두는 이유
+  무한 재시도는 자율 탐색형 에이전트가 되어버린다.
+  예산을 넘기면 포기하고 사유를 남긴다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">핵심 구현 3 — 추론 로그와 CLI</span><button class="copy" type="button">복사</button></div>
+<pre>계기
+  파이프라인이 판단은 하는데 그게 UI 진행 바로만 흘러가서
+  터미널에는 아무것도 남지 않았다.
+  추론이 없는 게 아니라 안 보이는 것이었다.
+
+구현
+  단계/이벤트 종류별로 정렬된 구조화 로그를 콘솔에 출력한다.
+  PLAN / OBSERVE / DECIDE / CONTEXT / TOOL / VALIDATE /
+  REFLECT / REPAIR / PASS / BLOCK
+
+원칙 — 없는 추론을 지어내지 않는다
+  로그 문구를 만들어내는 게 아니라 이미 코드가 내린 결정을 그대로 받아 적는다.
+  호출부가 전부 실제 분기 지점에 있고, 인자는 그 시점의 실제 값이다.
+
+모델의 판단을 콘솔에 되돌려 출력한다 — THINK 이벤트
+  포팅 프롬프트가 모델에게 본문 첫 줄에 "// AI 변경 요약: ..." 한 줄을 요구한다.
+  그 문장은 우리가 쓴 해설이 아니라 모델 자신의 말이므로,
+  따옴표로 인용해 콘솔에 되돌려 출력한다.
+  모델이 스스로 남긴 FIXME / TODO도 함께 싣는다 —
+  "사람이 봐야 할 것"을 모델이 직접 표시한 것이기 때문이다.
+  없으면 대신 문장을 지어내지 않고 아무것도 출력하지 않는다.
+
+계획과 도구 호출의 인과를 로그에 드러낸다
+  1단계가 "도구 호출 계획"을 확정하고,
+  3단계가 "1단계 계획이 지목한 N건에만 호출한다"를 명시한다.
+  모델이 무엇을 부를지 스스로 고르지 않는다는 것이 로그로 보인다.
+
+녹화 환경 방어
+  Windows 기본 코드페이지에서 로그의 박스 문자가 인코딩 오류를 내며
+  파이프라인 전체를 죽이는 것을 확인해 고쳤다.
+  표시용 로그가 실행을 멈추게 두지 않는다.
+
+CLI 진입점
+  python -m agents.run_pipeline <폴더> --screens A,B,C [--dry-run]
+  UI와 동일한 함수를 부르고 저장은 하지 않는다(승인 게이트 앞에서 멈춤).
+  --dry-run은 LLM을 호출하지 않아 키·네트워크 없이
+  계획 → 규칙 기반 변환 → 검증 → 게이트 경로를 그대로 재현한다.
+
+로그를 붙이자마자 드러난 실제 결함 2건
+  1. 포팅 전량 실패가 "성공"으로 보고되고 있었다.
+     스텁 잔존이 WARNING이라 요약이 "잔여 BLOCKER 0건"으로 나왔다.
+     스텁은 컴파일되지만 런타임에 예외를 던지므로 BLOCKER로 승격했다.
+     수정 후 같은 실행이 정직하게 "잔여 BLOCKER 6건"으로 바뀌었다.
+  2. 병렬 브랜치가 서로의 로그를 깨뜨렸다.
+     이벤트 하나를 원자적으로 내보내도록 고쳤다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">핵심 구현 4 — MCP 읽기 전용 조회 서버</span><button class="copy" type="button">복사</button></div>
+<pre>MCP는 Model Context Protocol이다.
+
+도입 판단
+  MCP의 핵심 가치는 모델이 도구를 동적으로 고르는 것인데,
+  그건 "자율 탐색형 에이전트를 만들지 않는다"는 원칙과 정면으로 충돌한다.
+  그래서 도입하되 표면을 갈랐다.
+
+  변환 실행   노출하지 않음   승인 게이트를 우회할 경로를 열지 않는다
+  분석 조회   노출함         부작용 없는 결정론적 그래프 조회.
+                            답에 근거를 붙일 수 있다
+
+노출 도구 4종 (전부 조회)
+  영향도 역추적 / 미사용 함수 / 중복 함수 / 트랜잭션 매핑
+  모든 응답에 한계 문구를 함께 실어 보낸다.
+
+실제 MCP 클라이언트로 연결해 검증했다.
+  stdio로 서버 프로세스를 띄우고 클라이언트 세션에서
+  list_tools / call_tool을 프로토콜 너머로 주고받아 4종 전부 응답을 확인했다.
+  이 과정에서 설치된 SDK 버전 차이로 서버가 뜨지도 않는다는 걸 발견해 고쳤다.
+  "만들었다"와 "붙여봤다"는 다르다.
+
+즉 MCP를 "에이전트에게 자율성을 준다"가 아니라
+"사람이 쓰는 조회 창구를 표준 프로토콜로 연다"로 썼다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">AI 추천 — 파이프라인 바깥의 opt-in 제안</span><button class="copy" type="button">복사</button></div>
+<pre>규칙 기반 변환기가 다루지 못하거나 다루지 않기로 판단한 경우,
+LLM이 대안을 제안만 하고 사람이 검토해야만 채택되는 별도 산출물을 만든다.
+기존 파이프라인은 전혀 건드리지 않는다.
+
+응답 DTO 재설계
+  응답 DTO를 프론트가 쓰기 편한 모양(타입·페이지네이션 래핑)으로 제안
+  지어내면 차단: 원본에 없는 필드 → BLOCKER
+
+D 계층 재구성
+  D 메서드 하나가 statement를 2개 이상 순서대로/조건부로 실행하는 경우,
+  그 오케스트레이션을 Service로 옮기는 안을 제안
+  지어내면 차단: 존재하지 않는 Store 메서드 호출 → BLOCKER
+
+카디널리티 수정
+  Store를 단건에서 다건으로 바꾸고 그 위 Service까지 연쇄 반영하는 안을 제안
+  지어내면 차단: 원본과 무관한 Store 호출 → BLOCKER
+
+분리 원칙은 여기서도 유지된다.
+이미 결정론적으로 아는 사실(어떤 statement가 있는지, 이 메서드가 다건인지)은
+규칙 기반으로 만들고, LLM은 원본을 읽어야만 아는 부분
+(실행 순서, 조건 분기, 타입 변경에 따른 코드 적응)에만 쓴다.
+
+실 LLM 검증에서 가장 우려했던 조건부 분기 사례도
+원본 분기 구조를 그대로 보존하면서 조회만 교체했고, 지어낸 호출은 0건이었다.</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 6 ============ -->
+<section id="w6">
+  <div class="shead">
+    <span class="idx">TASK 6</span>
+    <h2>테스트 및 고도화</h2>
+    <span class="note">정답키 대조 · 발견하고 고친 결함</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">자체 벤치마크 — 정답키 대조 채점</span><button class="copy" type="button">복사</button></div>
+<pre>그동안 탐지 기능은 "돌려보니 N건 나왔다"까지만 말할 수 있었다.
+정답을 몰라 그 N건이 맞는지, 놓친 게 몇 건인지 말할 수 없었다.
+
+세트 B — 30화면 × 5도메인, 정답키 포함
+  의도적으로 심은 결함 10건, 화면×멤버별 중복 유형 330행
+
+원본 결함 탐지 — 10건 중 10건 (100%), 오탐 0건   [탐지기 보강 전 5/10]
+  XSQL_SYNTAX     2/2
+  XSQL_LOGIC      1/1
+  JAVA_REFERENCE  2/2
+  JAVA_SYNTAX     4/4
+  JAVA_LOGIC      1/1
+
+놓친 5건의 "유형"을 보고 탐지기 5종을 추가해 100%가 됐다.
+정답키를 보고 개별 규칙을 맞춘 게 아니라 탐지기 범주를 넓혔고,
+후보 중 오탐 54건이 난 것은 폐기했다.
+
+만점이 과적합인지 확인하려 다른 세트에 교차 검증한 결과,
+이 프로젝트가 처음부터 써온 원본에서 여태 보고되지 않은 실제 결함
+(파라미터명 누락, 계층 조회 오용)을 찾아냈다. 과적합이 아니라는 근거다.
+
+중복 함수 탐지 — 정규화 수준에 따른 실제 트레이드오프
+  Type-1 본문 원문 해시    완전중복 재현율 105/210 (50%)   고유 오탐 0/60 (0%)
+  Type-2 화면 ID 정규화    완전중복 재현율 209/210 (100%)  고유 오탐 29/60 (48%)
+
+  Type-1이 정확히 절반에서 멈추고 놓친 게 전부 F 메서드인 게 단서였다 —
+  F 메서드는 본문에 자기 D 클래스명을 담아 복붙된 로직도 해시가 갈린다.
+  어느 한쪽이 정답이 아니라 재현율과 정밀도의 트레이드오프이므로
+  두 수치를 항상 함께 보고한다.
+
+부수 발견 — 모든 파일에 균일하게 뜨는 신호는 결함 신호가 아니다.
+  첫 실행의 "정답키에 없는 탐지 28건"은 전부 변환 정보성 알림이었다.
+  결함 채점에서 제외해 오탐 0건이 됐다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">기능 동등성 — 전제가 틀렸음을 확인하고 측정했다</span><span class="fhint">H3 반증</span><button class="copy" type="button">복사</button></div>
+<pre>"포팅된 Service를 실행할 수단이 없다"는 전제로 오래 미측정으로 뒀는데,
+그 전제가 틀렸다. 필요한 건 애플리케이션 기동이 아니라
+F 계층 메서드를 호출할 최소 환경이고,
+AS-IS가 실제로 쓰는 프레임워크 API는 10개 남짓의 닫힌 집합이었다.
+
+설계
+  데이터 접근 계층을 양쪽 동일한 캔드 데이터로 고정한다.
+  그러면 두 실행 결과의 차이는 오직 포팅 차이에서만 나온다.
+  각 메서드를 0행 / 1행 / 3행으로 돌려 분기 경로를 훑는다.
+
+결과
+  3개 화면   일치 9/9 (100%)
+  2개 화면   실행 불가 — AS-IS 원본이 컴파일되지 않음(주입 결함)
+  합계       화면 3/5 실행 · F 계층 48/48 일치 (100%)
+
+하네스가 잡아낸 실제 결함 4건
+  여태 아무도 생성된 Service를 컴파일해본 적이 없어 드러나지 않았다.
+  1. Service가 Store를 import 없이 참조 (다른 패키지)        컴파일 불가
+  2. 위임 메서드가 생성되지 않는 DTO 클래스 참조             컴파일 불가
+  3. 포팅 본문이 예외 클래스를 import 없이 사용              컴파일 불가
+  4. 배관 규칙이 Store 반환값을 통째로 담음                  의미 불일치
+     원본은 레코드셋을 이름으로 꺼내서 담는다
+
+4번은 컴파일도 정적 검증도 통과하는 진짜 기능 차이였고,
+고치자 33% → 100%가 됐다. 이것이 H3 반증의 직접 증거다.
+
+범위 한계
+  캔드 데이터는 합성값이라 운영 데이터 분포를 대표하지 않는다.
+  SQL 정확성은 별개 층(차등 테스트)이 담당한다.
+  이 검증은 이번에 파이프라인의 필수 단계로 승격했다 —
+  더 이상 사람이 따로 돌리는 opt-in 스크립트가 아니다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">측정 사각지대를 스스로 찾아 좁혔다</span><span class="fhint">100%의 분모가 3/5였다</span><button class="copy" type="button">복사</button></div>
+<pre>사각지대 1 — "F 계층 100%"의 분모가 틀렸다
+  하네스가 AS-IS와 TO-BE 메서드를 이름으로 짝짓는데,
+  규칙 기반 단순 위임은 생성 시 이름이 바뀐다.
+  그래서 그 메서드들이 비교에서 통째로 빠지고 있었다.
+  한 화면은 F 메서드가 5개인데 3개만 재고 "100%"라고 보고했다.
+
+  빠진 둘이 하필 문제 있는 쪽이었다. 개명을 풀어 짝지어 재보니
+  규칙 기반 위임이 결과 Map을 통째로 되돌려줘서
+  원본이 반환하지 않던 레코드셋이 전부 새어 나가고 있었다.
+  "규칙 기반이라 안전하다"고 말해 온 경로에서 나온 결함이라 더 뼈아프다.
+
+  27/27 (메서드 3/5) → 48/48 (메서드 5/5).
+  같은 100%지만 분모가 진짜다. 하네스는 이제 짝짓지 못한 메서드 수도 보고한다.
+
+사각지대 2 — Api(HTTP) 계층은 아무도 검증하지 않았다
+  AS-IS P 메서드와 TO-BE Api 메서드를 같은 입력으로 실행해 비교했더니
+  Api 계층 0/9가 나왔다.
+
+  생성된 Api가 "처음 만나는 F 호출 하나만" 위임하고 나머지를 버리고 있었다.
+  권한 게이트도, 결과 메시지도, 어느 레코드셋을 돌려줄지도 전부 사라진 상태였고,
+  정적 검증은 전부 통과했다.
+
+  원인은 표본 1건짜리 가정이었다. 설계 문서에 "P는 순수 위임"이라 적혀 있었고
+  근거는 한 화면이었다. 코퍼스 30화면을 전수 확인하니
+  30/30이 권한 게이트를 갖고 있고, 결과 메시지 설정 호출이 195건,
+  레코드셋 선별이 165건이었다. 가정이 코퍼스 전체에서 거짓이었다.
+
+  고친 뒤 페이로드 0/9 → 9/9 (100%).
+  엄격 일치는 여전히 0/9이고 이건 의도한 상태다 —
+  남은 차이가 전부 결과 메시지 코드인데, 이걸 어떤 키로 실을지는
+  아직 확정되지 않은 공통 규약이다. 규약 없이 키를 지어내지 않는다.
+  하네스도 페이로드 일치와 메시지 일치를 나눠 보고해서
+  "우리가 못 옮긴 것"과 "아직 아무도 정하지 않은 것"이 한 칸에 섞이지 않게 했다.
+
+  이 층을 열자 같이 드러난 결함 3건
+   1. 생성된 Api에 필요한 import가 없었다 — Api는 여태 컴파일된 적이 없었다
+   2. 공통 예외 클래스에 실사용 형태의 생성자가 없었다
+      (문서는 "실사용 패턴은 하나뿐"이라 적었는데, 코퍼스에선 60개 파일 105회)
+   3. 화면 5개가 전부 같은 엔드포인트 경로를 주장하고 있었다.
+      두 화면은 패키지까지 같아 기동 시점에 죽는다.
+      화면 하나씩만 보는 정적 검증기로는 원리적으로 못 보는 결함이라
+      화면을 나란히 놓는 교차 분석 단계를 신설했다. 충돌 4건 → 0건.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">개발 중 발견하고 고친 결함</span><button class="copy" type="button">복사</button></div>
+<pre>1  포팅 전량 실패가 "성공"으로 보고
+   스텁 잔존이 WARNING이라 요약이 "잔여 BLOCKER 0건"으로 나왔다.
+   스텁은 컴파일되므로 문법 검사를 통과한다.
+   → BLOCKER로 승격, 정직하게 6건 보고
+
+2  자기 수정 루프가 코드를 못 본 채 동작
+   AS-IS 전용 파서를 TO-BE 파일에 써서 "현재 코드"가 빈 문자열이었다.
+   목 테스트는 프롬프트와 무관하게 고정 코드를 반환해 드러나지 않았다.
+   → TO-BE 추출기 신설. 악화 후 포기 → 1라운드 해결로 바뀜
+
+3  LLM 호출 80% 낭비
+   재시도 루프가 성공할 수 없는 대상을 반복 호출했다.
+   단순 위임 메서드는 이미 규칙 기반 코드가 있어 결합에서 버려지는데,
+   버려지니 "미완료"로 남아 라운드마다 또 호출됐다.
+   → 화면당 5건 → 1건
+
+4  수리 결과가 조용히 버려짐 — 결합이 마커를 삭제해 재수리가 불가능했다
+   → 마커 유지
+
+5  중괄호 오류가 엉뚱한 함수에 귀속
+   파일 전체 스택 방식의 구조적 한계.
+   → 함수 단위 검사. 이게 없으면 가장 흔한 BLOCKER가 수리 루프에 아예 안 잡힌다
+
+6  스캐너가 자기 자신의 주석을 오탐
+   생성기가 남긴 TODO 주석의 API 이름 언급을 코드로 오인했다.
+   → 주석 줄 제외
+
+7  모든 파일에 뜨는 신호를 결함으로 집계 — 벤치마크가 없어 드러나지 않았다
+   → 정보성 알림 제외, 오탐 0건
+
+8  변환기가 원본의 속성 표기 차이에 깨짐
+   새 원본은 등호 앞뒤에 공백을 쓴다(XML상 유효).
+   → 입력 시 한 번 표기를 정규화. 태그 선언 안쪽만 바꿔 SQL 본문은 건드리지 않는다
+
+9  반쪽 변환이 XML을 깨뜨림
+   닫는 태그만 변환돼 여는 태그와 어긋나 파싱 불가 상태가 나왔다.
+   → 태그 쌍은 전부 바꾸거나 전부 그대로 둔다.
+     못 고치는 것보다 망가뜨리는 게 나쁘다.
+
+3·4·5는 계획 파일이, 1·2는 추론 로그가, 7은 벤치마크가 드러냈다.
+도구가 자기 자신을 검사하게 만든 결과다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">사람 리뷰 — 측정만 있고 절차가 없었다</span><button class="copy" type="button">복사</button></div>
+<pre>"사람 수정 라인 비율"은 가장 중요한 대리 지표인데,
+측정 함수는 있었지만 "현재 파일"이 어디서 오는지 관리하는 주체가 없었다.
+리뷰 폴더는 손으로 채운 폴더였고, 파이프라인을 다시 돌리면
+옛 리뷰본과 새 생성물을 비교해 엉뚱한 값이 나왔다
+(실제로 4.34% → 15.3% → 4.34%로 오갔고 원인을 찾는 데 시간을 썼다).
+
+절차를 만들었다 — status / open / measure / accept 네 단계. LLM을 쓰지 않는다.
+  open이 생성 스냅샷을 작업본으로 펼치면서 파일별 해시를 기준선으로 박아둔다.
+  이후 생성분이 바뀌면 measure가 그 화면을 미측정으로 표시한다.
+  기준선 기록이 아예 없는 리뷰본도 미측정이다.
+  accept는 낡은 리뷰를 완료로 찍는 것을 거부한다.
+
+"안 고쳤다" / "못 쟀다" / "낡은 기준으로 쟀다"는 서로 다른 상태이고,
+보고서가 어느 쪽인지 말한다.
+
+실제로 5화면을 한 바퀴 돌렸다.
+잔여 BLOCKER·WARNING 0건, 수정 비율 0.20% (생성 1,960줄 중 4줄).
+
+이 0.20%를 "리뷰가 할 일이 거의 없었다"로 읽으면 안 된다.
+이번 리뷰가 찾은 결함 3건 중 2건은 산출물이 아니라 생성기를 고쳐 해소했다 —
+그러면 수정 라인으로 잡히지 않는다.
+지표가 리뷰의 가치를 과소평가하는 구조라는 걸 그대로 적어둔다.
+그리고 이 값은 AI 리뷰어 1차 기준이라 하한값이다.
+사람 개발자 리뷰로 재측정이 필요하다.</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 7 ============ -->
+<section id="w7">
+  <div class="shead">
+    <span class="idx">TASK 7</span>
+    <h2>E2E 서비스 개발</h2>
+    <span class="note">전체 흐름 · 스코어카드 · 향후 확장</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">End-to-End 실행 결과</span><span class="fhint">5화면, 실 LLM</span><button class="copy" type="button">복사</button></div>
+<pre>처리 화면 / 생성 파일   5건 / 25종
+LLM 포팅 호출          25건 (규칙 기반으로 21건 회피, 결정론 처리 46%)
+                       F 계층 7건 + Api 계층 18건(P 오케스트레이션 포팅)
+자기 수정 라운드        1회 — 주입된 결함을 실제로 해결
+잔여 BLOCKER           1건 (XSQL 태그 누락 — 규칙 기반 산출물이라 의도적으로 수리 제외)
+소요                   약 30초
+
+자기 수정이 실제로 동작한 사례
+  세트 B에 심어진 결함 중 하나는 존재하지 않는 데이터 메서드를 호출하는 것이다.
+  파이프라인이 이를 BLOCKER로 잡아 오류 메시지와 실재하는 메서드 목록을
+  프롬프트에 피드백했고, 1라운드 만에 해결했다.
+  정답키가 명시한 정상 메서드명과 수리 결과가 일치했다 —
+  검증만 통과한 게 아니라 정답과 일치한다.
+
+  반면 XSQL 태그 누락은 규칙 기반 산출물이라 수리 대상에서 제외하고
+  사람에게 넘겼다. 에이전트가 "내가 고칠 것"과 "사람이 봐야 할 것"을 구분한다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">전환 스코어카드</span><span class="fhint">80.9 / 100</span><button class="copy" type="button">복사</button></div>
+<pre>기존 성과 수치(매핑 확정률·LLM 호출 감소·탐지율)는 전부
+"도구가 잘 돈다"는 얘기였지 "전환이 됐다"가 아니었다.
+전환 Agent인데 전환 성공률이 없었고, "개발자가 얼마나 편해졌나"도 없었다.
+두 구멍을 지표로 메우고 점수화했다.
+
+A 전환 성공률                          배점 30
+  산출물 생성률        100.0% (25/25종)        12.00 / 12
+  정적 검증 통과율      96.7% (29/30건)        17.40 / 18
+
+B 사용자 체감                          배점 25
+  리뷰 대상 축소율      87.3%                   9.60 / 11
+  결정론 처리 비중      45.6% (21/46건)         3.20 / 7
+  사람 수정 수용률      99.8% (수정 0.20%)      6.99 / 7
+
+C 탐지 정확성                          배점 20
+  원본 결함 재현율     100.0%                  10.00 / 10
+  중복 탐지 F1         66.7%                    6.67 / 10
+
+D 기능 동등성                          배점 25
+  F 계층 실행 일치율   100.0% (48/48)           9.00 / 9
+  Api 계층 실행 일치율   0.0% (0/9, 페이로드 9/9) 0.00 / 6
+  동등성 검증 커버리지  60.0% (화면 3/5)         6.00 / 10
+
+  합계                                          80.86 / 100
+
+배점 근거
+  A 30점 — 도구의 존재 이유. 산출물이 안 나오거나 안 컴파일되면 나머지는 의미 없다
+  B 25점 — 공수 절감의 대리 지표
+  C 20점 — 정답키로 채점 가능한 부수 가치
+  D 25점 — "맞게 옮겼는가"라는 최종 질문
+
+점수가 88.2에서 내려온 이유는 도구가 나빠져서가 아니다.
+안 재던 두 가지를 재기 시작했다.
+  ① Api 계층을 처음 측정했더니 P 오케스트레이션이 통째로 빠져 있었다
+  ② 결정론 처리 비중의 분모가 틀렸다 (75% → 46%)
+측정 범위를 넓히면 점수는 내려간다. 그 방향이 맞다고 보고 되돌리지 않았다.
+
+미측정은 0점이 아니라 분모에서 제외한다.
+못 잰 것을 0점으로 깎으면 "낮은 점수"가 되고, 만점으로 치면 거짓이 된다.
+다만 Api 계층 0%는 미측정이 아니라 측정된 실패라 그대로 0점을 매겼다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">한계 — 숨기지 않는 것</span><button class="copy" type="button">복사</button></div>
+<pre>1  기능 동등성이 완결이 아니다
+   F 계층 48/48 일치하지만 화면 3/5만 실행 가능하다
+   (나머지는 AS-IS 원본이 컴파일 불가).
+   Api 계층은 페이로드 9/9지만 응답 규약 미확정으로 메시지 코드 0/9.
+
+2  사람 수정 라인 비율 0.20%는 AI 리뷰어 1차 기준이라 하한값이다.
+   사람 개발자 리뷰로 재측정이 필요하다.
+
+3  중복 탐지 정밀도 — Type-2 정규화 시 오탐 48%. 신뢰 수준 구분이 필요하다.
+
+4  공통 응답 규약이 아직 생성기에 주입되지 않았다.
+   규약 자체가 미확정이라 사람 결정 대기 상태다.
+   확정 전에 주입하면 화면마다 다른 규약이 생기는 걸 막으려던 원칙이 뒤집힌다.
+
+5  화면과 트랜잭션의 자동 추출이 미완이다. 프론트 스크립트 샘플을 확보하지 못했다.
+
+6  프로시저 호출은 여전히 미지원이다.
+   확인된 변환 규칙이 없어 추측으로 만들지 않았다.
+
+7  파일럿 유형 다양성이 부족하다.
+   변환 파이프라인을 통과시킨 것은 5화면이고, 30화면은 정적 분석 채점 전용이다.
+   두 수치를 섞지 않는다.
+
+8  화면당 공수 절감률은 미측정이다. 기준선(수작업 공수)이 실측되지 않았다.
+   추정치를 채우지 않았다.</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">향후 확장</span><span class="fhint">두 축 — 전환 자동화 + 표준화 리뷰</span><button class="copy" type="button">복사</button></div>
+<pre>[축 1] 내년 차세대 전환 프로젝트에서의 전환 자동화
+
+  이번 PoC가 5화면에서 증명한 파이프라인을 유형별 대표 화면으로 넓히고,
+  실측 공수를 확보해 전체 계획을 재산정한다.
+  Agent가 화면 단위 전환을 수행하고 사람은 승인과 예외 처리에 집중한다.
+
+  선행 조건 (우선순위)
+   1. 포팅 결과를 실제로 실행할 수단 확보
+      — 이것 없이는 기능 동등성이 영원히 부분 달성이고,
+        다른 어떤 개선도 문법 층만 건드린다. 가장 큰 병목에 자원을 쓴다
+   2. 유형별 대표 화면으로 파일럿 → 사람 수정 라인 비율 실측
+   3. 공통 응답 규약 확정 → 생성 템플릿에 주입
+
+
+[축 2] 레거시 소스 표준화 리뷰 — 전환을 "이관"이 아니라 "정비"로
+
+  전환 자동화만으로는 풀리지 않는 문제가 하나 남는다.
+  10년 이상 사용한 소스를 빠르고 정확하게 옮기면,
+  그 안에 누적된 비표준 네이밍과 개발자별 편차까지 함께 정확하게 이관된다.
+  "확장성 제약으로 기능 추가에 한계가 있다"는 원래 문제가
+  새 프레임워크 위에서 그대로 재현된다.
+
+  그래서 전환 파이프라인 뒤에 표준화 리뷰 단계를 하나 더 둔다.
+  LLM이 전환 결과를 표준 개발 형식에 비추어 한 번 더 검토하고
+  표준화 안을 제안한다.
+
+  검토 대상
+   · 네이밍 규칙 — 클래스·메서드·변수·SQL statement ID·엔드포인트 경로가
+     전사 표준 명명 규칙과 어긋나는 지점
+   · 계층 책임 — 업무 로직이 데이터 접근 계층에 섞여 있는 등
+     계층 분리 원칙에서 벗어난 코드
+     (이번 PoC에서 실제로 발견했다. 데이터 계층 메서드가 조건 분기를 갖고
+      두 번째 SQL을 조건부로 실행하는 사례가 6화면 중 3건 있었다)
+   · 예외·응답 규약 — 화면마다 제각각인 응답 형태와 예외 처리를
+     확정된 공통 규약으로 수렴
+   · 중복 로직 — 화면마다 복제된 공통 함수를 공통 모듈 후보로 제시
+     (이번 PoC에서 30화면이 동일한 인증·코드조회 함수를 각자 갖고 있음을 측정했고,
+      본문이 "어느 정규화 단계에서 하나로 수렴하는지"로 공통화 가능 여부를 판정했다)
+
+  이번 PoC가 이 축을 이미 검증했다 — 세 가지가 그대로 재사용된다
+   1. 제안만 하고 사람이 채택한다는 AI 추천 패턴
+      (규칙 기반 파이프라인은 건드리지 않는다)
+   2. LLM이 원본에 없는 것을 지어내면 자동 차단하는 대조 검증
+   3. 무엇이 공통이고 무엇이 다른지를 추측이 아니라 측정으로 판정하는 수렴 분석
+      (겉보기에 같아 보이던 함수가 도메인마다 다른 SQL을 쓴다는 걸
+       이 안전선이 실제로 잡아냈다)
+
+  기대 효과
+   전환 시점이 표준화를 적용할 수 있는 유일한 시점이다.
+   운영 중에는 "돌아가는 코드를 왜 건드리냐"가 항상 이긴다.
+   전환하면서 함께 정비하면, 다음 10년의 유지보수 비용 자체가 달라진다.
+
+  전제 — 표준화 제안은 자동 적용하지 않는다.
+   "무엇이 표준인가"는 조직이 정하는 것이고,
+   이번 PoC 전체가 지켜온 원칙(사람 승인 게이트)이 여기에도 그대로 적용된다.
+   Agent는 표준 위반 지점을 찾아 제시하고, 채택은 사람이 한다.</pre>
+  </div>
+</section>
+
+<!-- ============ WEEK 8 ============ -->
+<section id="w8">
+  <div class="shead">
+    <span class="idx">TASK 8</span>
+    <h2>최종 산출물 제출</h2>
+    <span class="note">화면 캡처 미확인 — 필드명은 조정 필요</span>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">산출물 목록</span><button class="copy" type="button">복사</button></div>
+<pre>파이프라인   상태 그래프 오케스트레이션
+             (계획 → 변환 → 포팅 → 검증 → 수리 → 동등성 → 스캔 → 교차분석 → 빌드)
+
+분석         매핑 그래프 구축기
+             영향도 분석 (미사용 · 중복 · 오류 함수 · 역방향 blast radius)
+             공통함수 수렴 분석
+
+변환기       SQL 문법 변환기, 골격 생성기, DTO 생성기, LLM 포팅기
+
+검증기       정적 검증기, 품질 스캐너, 빌드 검증
+             차등 테스트 + 테스트 데이터 자동 생성
+             기능 동등성 실행 하네스
+
+평가         정답키 대조 벤치마크 (결함 탐지 / 중복 탐지 채점)
+             전환 스코어카드 (전환 성공률 · 사용자 체감 · 탐지 정확성 · 기능 동등성)
+
+관측         구조화 추론 로그 + CLI 진입점
+
+연동         MCP 읽기 전용 조회 서버 (영향도 · 미사용 · 중복 · 매핑)
+
+산출 문서     화면별 변환 계획 파일, 화면별 인수인계 문서
+
+UI           리뷰 대시보드 (진행 상황, 소스 비교, 영향도 질의, 승인 게이트)</pre>
+  </div>
+
+  <div class="field term">
+    <div class="fhead"><span class="flabel">실행 명령</span><button class="copy" type="button">복사</button></div>
+<pre>python -m agents.run_pipeline <폴더> --screens A,B,C [--dry-run]   # 추론 로그와 함께 실행
+python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더>      # 정답키 대조 채점
+python -m agents.scorecard <폴더> --screens A,B,C                   # 지표 점수 산출
+python -m agents.mcp_server                                        # MCP 조회 서버(읽기 전용)
+streamlit run chatui/app.py                                        # 리뷰 UI</pre>
+  </div>
+
+  <div class="field">
+    <div class="fhead"><span class="flabel">프로젝트 회고 — 한 문장으로</span><button class="copy" type="button">복사</button></div>
+<pre>이 PoC에서 가장 큰 성과는 도구가 잘 돈다는 증명이 아니라,
+"정적 검증만으로 변환 정확성을 보증할 수 있다"는 내 가설이
+내가 만든 도구에 의해 반증됐다는 것이다.
+
+정적 검증을 전부 통과한 코드가 실행에서는 33%만 일치했다.
+그 사실을 알기 위해 필요했던 것은 더 똑똑한 LLM이 아니라
+실제로 돌려보는 최소 환경 하나였다.
+
+그래서 다음 단계의 1순위를 "수리 루프 고도화"가 아니라
+"포팅 결과를 실행할 수단 확보"로 잡았다.
+수리 루프를 아무리 고도화해도 개선되는 건 이미 높은 문법 층이다.
+가장 큰 병목에 자원을 쓴다.
+
+같은 이유로, 점수가 88.2에서 80.9로 내려간 것도 되돌리지 않았다.
+측정 범위를 넓히면 점수는 내려간다. 그 방향이 맞다.</pre>
+  </div>
+</section>
+
+<!-- ============ FUTURE ============ -->
+<section id="future">
+  <div class="shead">
+    <span class="idx">NEXT</span>
+    <h2>향후 확장 — 표준화 리뷰 축을 왜 넣었나</h2>
+  </div>
+
+  <div class="call new">
+    <h3>전환 자동화만으로는 남는 문제</h3>
+    <p>Agent로 빠르고 정확하게 옮기면, <b>10년치 비표준 네이밍과 개발자별 편차까지 정확하게 옮겨집니다.</b> "확장성 제약으로 기능 추가에 한계가 있다"는 원래 문제가 새 프레임워크 위에서 그대로 재현됩니다. 그대로 옮기면 제약도 같이 옮겨집니다.</p>
+    <p>그래서 전환 파이프라인 뒤에 <b>LLM 표준화 리뷰</b> 단계를 둡니다. 전환 시점이 표준화를 적용할 수 있는 유일한 시점입니다 — 운영 중에는 "돌아가는 코드를 왜 건드리냐"가 항상 이깁니다.</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead>
+        <tr><th>검토 대상</th><th>무엇을 보나</th><th>이번 PoC에서 확보한 근거</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>네이밍 규칙</td>
+          <td>클래스·메서드·SQL statement ID·엔드포인트 경로가 표준 명명 규칙과 어긋나는 지점</td>
+          <td class="num">엔드포인트 충돌 4건 → 0건<br>교차 분석 단계 신설</td>
+        </tr>
+        <tr>
+          <td>계층 책임</td>
+          <td>업무 로직이 데이터 접근 계층에 섞인 코드</td>
+          <td class="num">6화면 중 3건<br>D 메서드가 조건 분기 보유</td>
+        </tr>
+        <tr>
+          <td>예외·응답 규약</td>
+          <td>화면마다 제각각인 응답 형태를 확정 규약으로 수렴</td>
+          <td class="num">30/30 화면이 권한 게이트<br>결과 메시지 195건</td>
+        </tr>
+        <tr>
+          <td>중복 로직</td>
+          <td>화면마다 복제된 공통 함수를 공통 모듈 후보로</td>
+          <td class="num">30화면 동일 함수 4종<br>수렴 단계로 판정</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="call">
+    <h3>재사용되는 것 — 새로 만들 게 거의 없다</h3>
+    <ul>
+      <li><b>AI 추천 패턴</b> — 제안만 하고 사람이 채택. 규칙 기반 파이프라인은 건드리지 않습니다. 이미 3회 인스턴스화해 실 LLM으로 검증했습니다.</li>
+      <li><b>지어내면 차단하는 대조 검증</b> — 원본에 없는 필드나 호출을 만들면 BLOCKER로 자동 차단합니다.</li>
+      <li><b>수렴 분석</b> — 무엇이 공통인지 추측하지 않고 측정합니다. 겉보기에 같던 함수가 도메인마다 다른 SQL을 쓴다는 걸 이 안전선이 실제로 잡아냈습니다.</li>
+    </ul>
+  </div>
+
+  <div class="call warn">
+    <h3>전제 — 표준화 제안은 자동 적용하지 않는다</h3>
+    <p>"무엇이 표준인가"는 조직이 정하는 것입니다. 이번 PoC 전체가 지켜온 원칙(사람 승인 게이트)이 여기에도 그대로 적용됩니다. Agent는 표준 위반 지점을 찾아 제시하고, <b>채택은 사람이 합니다.</b></p>
+  </div>
+</section>
+
+<footer>
+  <p>모든 수치의 출처는 <code>docs/weekly/00-종합산출물.md</code>이며, 세트 A(50화면 복제)와 세트 B(30화면 5도메인)를 섞지 않았습니다.</p>
+  <p>TASK 4와 TASK 8은 플랫폼 화면 캡처를 받지 못해 일반적인 구조로 작성했습니다 — 실제 입력칸과 다르면 캡처를 받아 필드 단위로 다시 맞춥니다.</p>
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll(".copy").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var field = btn.closest(".field");
+    var pre = field ? field.querySelector("pre") : null;
+    if(!pre) return;
+    var text = pre.innerText;
+    var done = function(){
+      btn.textContent = "복사됨";
+      btn.setAttribute("data-done","1");
+      window.setTimeout(function(){
+        btn.textContent = "복사";
+        btn.removeAttribute("data-done");
+      }, 1600);
+    };
+    var fallback = function(){
+      try{
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly","");
+        ta.style.position = "fixed";
+        ta.style.top = "-1000px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        done();
+      }catch(e){
+        var range = document.createRange();
+        range.selectNodeContents(pre);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        btn.textContent = "직접 복사";
+        window.setTimeout(function(){ btn.textContent = "복사"; }, 2200);
+      }
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    }else{
+      fallback();
+    }
+  });
+});
+
+document.querySelectorAll('nav a').forEach(function(a){
+  a.addEventListener('click', function(e){
+    var t = document.querySelector(a.getAttribute('href'));
+    if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth', block:'start'}); }
+  });
+});
+</script>

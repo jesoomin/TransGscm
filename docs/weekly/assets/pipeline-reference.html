@@ -1,0 +1,273 @@
+<title>전환 파이프라인 워크플로우</title>
+<meta name="description" content="G-SCM AS-IS→TO-BE 서버 전환 8단계 파이프라인과 오늘 반영한 변경점을 한눈에 보는 참조 자료">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg:#f5f6f9;
+    --surface:#ffffff;
+    --surface-2:#eef1f6;
+    --border:#dde2ea;
+    --ink:#1a2233;
+    --ink-soft:#5b6472;
+    --ink-faint:#8890a0;
+    --accent:#2f6690;
+    --accent-ink:#1c4a68;
+    --accent-soft:#e7f0f7;
+    --new:#b3660a;
+    --new-soft:#fbeedd;
+    --found:#a13d3d;
+    --found-soft:#f9e7e5;
+    --shadow: 0 1px 2px rgba(23,32,50,.04), 0 6px 16px rgba(23,32,50,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151c;
+      --surface:#1a1e28;
+      --surface-2:#20242f;
+      --border:#2c3140;
+      --ink:#e7eaf1;
+      --ink-soft:#a7aebc;
+      --ink-faint:#767e8f;
+      --accent:#6ba3cc;
+      --accent-ink:#bcdcf2;
+      --accent-soft:#1f3547;
+      --new:#e0a458;
+      --new-soft:#3a2c18;
+      --found:#e08787;
+      --found-soft:#3a2020;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151c;
+    --surface:#1a1e28;
+    --surface-2:#20242f;
+    --border:#2c3140;
+    --ink:#e7eaf1;
+    --ink-soft:#a7aebc;
+    --ink-faint:#767e8f;
+    --accent:#6ba3cc;
+    --accent-ink:#bcdcf2;
+    --accent-soft:#1f3547;
+    --new:#e0a458;
+    --new-soft:#3a2c18;
+    --found:#e08787;
+    --found-soft:#3a2020;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+  }
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif;
+    padding: 28px 22px 60px;
+  }
+  *{box-sizing:border-box;}
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+
+  header{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+    flex-wrap:wrap;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 18px;
+    margin-bottom: 26px;
+  }
+  h1{
+    font-size: 1.7rem; font-weight:700; letter-spacing:-0.01em;
+    margin:0 0 6px; text-wrap:balance;
+  }
+  header p{ margin:0; color:var(--ink-soft); font-size:.92rem; max-width:56ch; }
+  .scope-tag{
+    font-family:'IBM Plex Mono',monospace; font-size:.72rem; font-weight:600;
+    color:var(--accent-ink); background:var(--accent-soft);
+    border:1px solid var(--border); border-radius:999px;
+    padding:5px 12px; white-space:nowrap;
+  }
+
+  .layout{
+    display:grid; grid-template-columns: 1.55fr 1fr; gap: 26px;
+    align-items:start;
+  }
+  @media (max-width: 880px){ .layout{ grid-template-columns: 1fr; } }
+
+  h2{
+    font-size:.78rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-faint); margin: 0 0 14px;
+  }
+
+  /* ---- pipeline stepper ---- */
+  .stepper{ position:relative; }
+  .stepper::before{
+    content:""; position:absolute; left:19px; top:8px; bottom:8px; width:2px;
+    background:var(--border);
+  }
+  .step{
+    position:relative; display:grid; grid-template-columns: 40px 1fr; gap:14px;
+    padding: 12px 0;
+  }
+  .step + .step{ border-top: 1px dashed var(--border); }
+  .num{
+    position:relative; z-index:1;
+    width:40px; height:40px; border-radius:50%;
+    background:var(--surface); border:2px solid var(--accent);
+    color:var(--accent-ink); font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.95rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step.pre .num{ border-color:var(--ink-faint); color:var(--ink-faint); background:var(--surface); font-size:1.05rem; }
+  .step.gate .num{ border-color:var(--found); color:var(--found); }
+  .body-row{ min-width:0; padding-top:2px; }
+  .title-row{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:3px; }
+  .step-title{ font-weight:600; font-size:.98rem; }
+  .step-desc{ color:var(--ink-soft); font-size:.86rem; line-height:1.5; }
+  .badge{
+    font-family:'IBM Plex Mono',monospace; font-size:.66rem; font-weight:600;
+    padding: 2px 8px; border-radius:999px; letter-spacing:.02em; white-space:nowrap;
+  }
+  .badge.new{ background:var(--new-soft); color:var(--new); border:1px solid color-mix(in srgb, var(--new) 35%, transparent); }
+  .badge.llm{ background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--border); }
+
+  .gate-card{
+    background:var(--found-soft); border:1px solid color-mix(in srgb, var(--found) 30%, transparent);
+    border-radius:12px; padding:14px 16px; margin-top:6px;
+  }
+  .gate-card .step-title{ color:var(--found); }
+
+  /* ---- highlights panel ---- */
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding: 18px 18px 6px; box-shadow: var(--shadow);
+  }
+  .find{
+    border-radius:10px; padding:13px 14px; margin-bottom:12px;
+    background:var(--surface-2); border:1px solid var(--border);
+  }
+  .find .kicker{
+    font-family:'IBM Plex Mono',monospace; font-size:.68rem; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase; color:var(--found);
+    margin-bottom:4px; display:block;
+  }
+  .find.fix .kicker{ color:var(--accent-ink); }
+  .find.promote .kicker{ color:var(--new); }
+  .find h3{ margin:0 0 5px; font-size:.92rem; font-weight:600; }
+  .find p{ margin:0; color:var(--ink-soft); font-size:.84rem; line-height:1.55; }
+  .find code{ font-family:'IBM Plex Mono',monospace; font-size:.82em; background:var(--bg); padding:1px 5px; border-radius:5px; }
+
+  footer{
+    margin-top:26px; padding-top:16px; border-top:1px solid var(--border);
+    color:var(--ink-faint); font-size:.78rem; display:flex; gap:18px; flex-wrap:wrap; justify-content:space-between;
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>G-SCM 서버 전환 파이프라인</h1>
+      <p>화면 하나를 계획 → 변환 → 검증 → 저장까지 옮기는 8단계 자동 파이프라인. 굵은 항목은 오늘(2026-09-10) 새로 반영된 부분.</p>
+    </div>
+    <span class="scope-tag">1단계 범위 · Java/XSQL → Spring/MyBatis</span>
+  </header>
+
+  <div class="layout">
+    <section>
+      <h2>파이프라인 8단계</h2>
+      <div class="stepper">
+        <div class="step pre">
+          <div class="num">0</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">변환 계획 수립</span><span class="badge llm">LLM 미사용</span></div>
+            <div class="step-desc">화면별 fragment·nctRid·예상 산출물을 <span class="mono">conversion-plan.json</span>으로 먼저 고정. 코드부터 짜지 않는다.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">1</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">규칙 기반 변환</span><span class="badge llm">LLM 미사용</span></div>
+            <div class="step-desc">iBatis→MyBatis 문법 치환, Controller/Service/Store/Dto 골격 생성.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">LLM 포팅</span><span class="badge new">오늘 · 계약 객체 강화</span></div>
+            <div class="step-desc">F/P의 계산·분기·오케스트레이션을 이식. 콜리 이름·<b>카디널리티 일치 여부</b>·<b>반환 타입(int/Map)</b>을 JSON 계약으로 프롬프트에 명시 — 추측 대신 이미 확정된 사실을 준다.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">정적 검증</span></div>
+            <div class="step-desc">컴파일 가능성·계층 간 참조 무결성 확인. BLOCKER면 수리 루프(최대 2라운드) 후 재검증.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">기능 동등성 검증 (L3)</span><span class="badge new">오늘 신설</span></div>
+            <div class="step-desc">AS-IS/TO-BE를 실제로 <span class="mono">javac/java</span>로 컴파일·실행해 결과를 비교. 이전엔 사람이 따로 돌리는 opt-in 스크립트였고, 이제 매 실행마다 자동으로 돈다.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">5</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">품질·취약점 스캔</span></div>
+            <div class="step-desc">SQL 인젝션 위험, 원본 결함(ORIGINAL_BUG) 등을 규칙 기반으로 탐지 — 검증기와 분리된 별도 스캐너.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">6</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">AI 추천 (opt-in)</span><span class="badge new">오늘 2건 추가</span></div>
+            <div class="step-desc">규칙 기반 파이프라인 밖에서 LLM이 대안만 제안, 사람이 검토 후 채택. 오늘 추가: <b>D계층 재구성</b>(다중 statement 분리) · <b>카디널리티 수정</b>(selectOne→selectList) 제안.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">7</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">교차 분석</span></div>
+            <div class="step-desc">임시 사본에서 화면 간 중복·미사용 함수 탐지 — 실제 pilot/은 아직 안 건드림.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">8</div>
+          <div class="body-row">
+            <div class="title-row"><span class="step-title">Maven 빌드 검증</span></div>
+            <div class="step-desc">같은 임시 사본을 <span class="mono">mvn compile</span>로 마지막 확인.</div>
+          </div>
+        </div>
+        <div class="gate-card">
+          <div class="title-row"><span class="step-title">🔒 사람 승인 → 저장</span></div>
+          <div class="step-desc">여기까지는 전부 미리보기. "승인하고 저장"을 눌러야만 <span class="mono">pilot/</span>과 DB에 실제로 반영된다.</div>
+        </div>
+      </div>
+    </section>
+
+    <aside>
+      <h2>오늘의 핵심 발견</h2>
+      <div class="panel">
+        <div class="find">
+          <span class="kicker">발견</span>
+          <h3>Store 카디널리티 결함</h3>
+          <p>모든 select문을 단건(<code>selectOne</code>)으로 생성하는데, 원본이 다건(recordset)으로 다루는 조회가 섞여 있었다. 실제 행이 2개 이상이면 런타임에 <code>TooManyResultsException</code> — PLA045~050 전 화면에서 재현(화면당 4~10건).</p>
+        </div>
+        <div class="find fix">
+          <span class="kicker">대응</span>
+          <h3>계약을 JSON으로 명시</h3>
+          <p>포팅 프롬프트에 콜리 이름만 주던 걸 <code>{name, cardinality_mismatch, return_type}</code> 구조로 확장. 불일치가 있으면 LLM이 임의로 봉합하지 않고 FIXME로 표시하도록 지시.</p>
+        </div>
+        <div class="find promote">
+          <span class="kicker">승격</span>
+          <h3>동등성 검증 자동화</h3>
+          <p><code>equivalence_test.py</code>를 사람이 따로 돌리던 연구 스크립트에서 파이프라인 필수 단계로 승격. PLA048에서 15/24케이스(62.5%) 일치라는, 이전엔 아무도 자동으로 못 봤던 수치를 처음 확보.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    <span>결정론적 변환기 + 검증기 분리 원칙 — LLM은 확정 안 된 것에만 쓴다</span>
+    <span>docs/03-kickoff-plan.md · 2026-09-10 기준</span>
+  </footer>
+</div>
