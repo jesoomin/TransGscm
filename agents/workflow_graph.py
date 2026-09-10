@@ -1429,12 +1429,22 @@ def run_pipeline_part_a(
         if eq.get("skipped") or "error" in eq:
             eq_line = "미실행 — " + (eq.get("reason") or eq.get("error") or "알 수 없는 사유")
         elif eq.get("cases"):
-            rate = eq.get("match_rate")
-            eq_line = (
-                f"{eq.get('screens_executed', 0)}/{eq.get('screens_total', 0)}화면 실행 · "
-                f"{eq.get('matched', 0)}/{eq.get('cases', 0)}케이스 일치"
-                + (f" ({rate * 100:.1f}%)" if rate is not None else "")
-            )
+            # 계층을 합쳐 한 숫자로 내면 오해를 부른다 - 업무 로직은 전건 일치인데
+            # 화면 요청은 응답 규약이 미확정이라 메시지 키가 비어 0으로 잡힌다.
+            # 두 사정이 다르므로 계층별로 나눠 보고하고, 페이로드 일치를 함께 적는다.
+            by = eq.get("by_layer") or {}
+            parts = []
+            for key, label in (("SERVICE", "업무 로직(F)"), ("API", "화면 요청(Api)")):
+                d = by.get(key)
+                if not d:
+                    continue
+                seg = f"{label} {d.get('matched', 0)}/{d.get('cases', 0)}"
+                pm = d.get("payload_matched")
+                if pm is not None and pm != d.get("matched"):
+                    seg += f"(페이로드 {pm}/{d.get('cases', 0)})"
+                parts.append(seg)
+            head = f"{eq.get('screens_executed', 0)}/{eq.get('screens_total', 0)}화면 실행"
+            eq_line = head + (" · " + " · ".join(parts) if parts else "")
         else:
             eq_line = f"0/{eq.get('screens_total', 0)}화면 실행 — 비교 가능한 케이스 없음(원본 컴파일 실패 등)"
         log.summary([
