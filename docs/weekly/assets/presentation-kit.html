@@ -123,6 +123,7 @@ li b{color:var(--ink)}
 <nav>
   <div class="navrow">
     <a href="#rule">쓰면 안 되는 문장</a>
+    <a href="#shoot">촬영 큐시트</a>
     <a href="#talk">발표 대본 10분</a>
     <a href="#cut">시연 컷·자막 5분</a>
     <a href="#qa">예상 질의 18문항</a>
@@ -164,6 +165,107 @@ li b{color:var(--ink)}
     </table>
     <p style="margin:8px 0 0"><code>0 → 100%</code>는 심사위원이 가장 먼저 파고들 자리입니다. <b>범위를 먼저 말하면 방어가 되고, 감추면 무너집니다.</b></p>
   </div>
+</section>
+
+<section id="shoot">
+  <div class="shead">
+    <span class="idx">SHOOT</span>
+    <h2>촬영 큐시트</h2>
+    <span class="note">영상 2건 · 발표 10분 + 시연 5분</span>
+  </div>
+  <p class="lede">대사는 <a href="#talk">발표 대본</a>과 <a href="#cut">시연 컷</a>에 있습니다. 이 절은 그 옆에 두고 보는 <b>조작 지시</b>입니다 — 몇 분에 무엇을 띄우고, 어디서 멈추고, 무엇을 잘라낼지.</p>
+
+  <div class="ok">
+    <h4>가이드의 “Planning: 5-step plan generated”에 대하여</h4>
+    <p style="margin:0">이 문장은 가이드가 <b>“고수준 로그란 이런 것”을 설명하려고 든 예시</b>입니다. 그대로 쓰라는 뜻이 아니고, 우리 출력에도 없습니다. 가이드가 요구하는 건 <b>단순 <code>Thinking... → Tool Call...</code>이 아니라 판단이 보이는 로그</b>이고, 우리 쪽 대응물은 <code>PLAN</code> · <code>DECIDE</code> · <code>THINK</code> · <code>REFLECT</code> 네 줄입니다. 의도는 충족하되 <b>화면에 실제로 뜨는 문장만</b> 씁니다.</p>
+  </div>
+
+  <h3>0. 공통 준비</h3>
+  <table>
+    <tr><th style="width:22%">항목</th><th>설정</th></tr>
+    <tr><td>터미널</td><td><code>chcp 65001</code>로 UTF-8 확인 · 폭 100컬럼 이상 · 글꼴 14pt 이상 · 배경 어둡게</td></tr>
+    <tr><td>색상</td><td>색이 안 나오면 <code>GSCM_LOG_COLOR=1</code></td></tr>
+    <tr><td>화면 정리</td><td><code>.env</code> · API 키 · DB 접속정보가 스크롤에 남아 있지 않은지 확인. <code>cls</code>로 비우고 시작</td></tr>
+    <tr><td>Streamlit</td><td>미리 띄워두고 <b>파이프라인 실행 완료 상태</b>로 대기 — 부팅·실행 대기는 찍지 않는다</td></tr>
+    <tr><td>리허설</td><td><code>--dry-run</code>으로 전 구간 1회. LLM 없이 계획~검증 경로가 그대로 재현된다</td></tr>
+    <tr><td>녹화 도구</td><td>화면 녹화 + 시스템 음성 없이. 자막은 편집에서 얹는다(가이드상 음성은 선택)</td></tr>
+    <tr><td>파일명</td><td><code>[사번]_[성명]_시연영상.mp4</code> · 500MB 이하 · MP4</td></tr>
+  </table>
+
+  <h3>1. 발표 영상 — 10분</h3>
+  <p>화면은 <b>장표 전체화면</b>. 발표자 얼굴은 선택입니다. 슬라이드는 <b>4장</b>(표지 + 3)뿐이라, 넘기는 시점만 지키면 됩니다.</p>
+  <div class="scroll">
+  <table>
+    <tr><th style="width:13%">시각</th><th style="width:22%">화면</th><th>조작 · 강조</th></tr>
+    <tr><td><code>0:00</code></td><td>표지</td><td>과제명·성명 보이게 2초 정지 후 시작</td></tr>
+    <tr><td><code>0:20</code></td><td>슬라이드 1</td><td>문제 정의 블록을 먼저 짚는다 — <b>규모·품질·리스크</b> 세 줄에 커서</td></tr>
+    <tr><td><code>1:00</code></td><td>슬라이드 1</td><td>에이전트 구성 5줄로 이동. <b>규칙 46% / LLM 54%</b>에서 잠깐 멈춤</td></tr>
+    <tr><td><code>1:40</code></td><td>슬라이드 1</td><td>성과 3개 → Key Message 순으로. Key Message는 <b>읽고 3초 정지</b></td></tr>
+    <tr><td><code>2:00</code></td><td>슬라이드 2</td><td>추론 순환 그림 전체를 먼저 보여준 뒤 <b>REASON → ACT → OBSERVE → REFLECT</b> 순으로 짚는다</td></tr>
+    <tr><td><code>2:40</code></td><td>슬라이드 2</td><td><b>“관찰자가 모델이 아니라 규칙 기반 검증기다”</b> 한 줄에 커서 + 정지 3초 ★</td></tr>
+    <tr><td><code>3:00</code></td><td>슬라이드 2</td><td>기술 3선을 01 → 02 → 03 순서로. 각 <b>강점</b> 줄을 소리내어 읽는다</td></tr>
+    <tr><td><code>5:30</code></td><td>슬라이드 2</td><td>도구 8칸으로 내려와 색 구분(민트=규칙, 네이비=LLM) 언급</td></tr>
+    <tr><td><code>6:00</code></td><td>슬라이드 3</td><td>난제 블록. <b>96.40% vs 25.14%</b> 대비를 짚는다</td></tr>
+    <tr><td><code>7:00</code></td><td>슬라이드 3</td><td>접근 ①~⑤. <b>④ 모델이 원본 버그를 스스로 지적</b>에서 멈춤 ★</td></tr>
+    <tr><td><code>8:40</code></td><td>슬라이드 3</td><td>결과 3수치. <b>※ 범위 주석을 반드시 읽는다</b> — 감추면 질문에서 무너진다</td></tr>
+    <tr><td><code>9:20</code></td><td>슬라이드 3</td><td><b>2차 적용 — 개발 표준 내재화</b> 블록. 여기서 마무리로 이어간다</td></tr>
+    <tr><td><code>9:40</code></td><td>슬라이드 3</td><td>차별점 3가지 → 스코어카드 하향 설명 → 한 줄 마무리</td></tr>
+  </table>
+  </div>
+  <div class="warn">
+    <h4>발표 영상에서 하지 말 것</h4>
+    <ul>
+      <li>장표를 <b>읽지 않습니다</b>. 장표엔 근거만 있고 설명은 말로 채웁니다</li>
+      <li>수치를 <b>범위 없이</b> 말하지 않습니다 — <code>100%</code>는 항상 “실행 가능한 3화면 기준”과 함께</li>
+      <li>10분을 넘기지 않습니다. <b>15분 초과분은 평가 제외</b>이고, 10분이 권장입니다</li>
+    </ul>
+  </div>
+
+  <h3>2. 시연 영상 — 5분</h3>
+  <p>화면은 <b>터미널이 주인공</b>. UI는 마지막에 20초만. 컷별 대사와 로그는 <a href="#cut">시연 컷·자막</a>에 있습니다.</p>
+  <div class="scroll">
+  <table>
+    <tr><th style="width:12%">시각</th><th style="width:16%">컷</th><th style="width:30%">조작</th><th>편집 지시</th></tr>
+    <tr><td><code>0:00</code></td><td>1 · 소개</td><td><code>ls</code>로 대상 파일 → 정답키 CSV 한 줄</td><td>자막만. 30초 안에 끝낸다</td></tr>
+    <tr><td><code>0:30</code></td><td>2 · 계획</td><td>실행 명령을 <b>화면에 직접 입력</b>하고 엔터</td><td>실행이 0.1초라 <b>정지 프레임</b>으로 전환. <code>DECIDE</code> 2줄 + <code>PLAN</code> 2줄에 화살표</td></tr>
+    <tr><td><code>1:30</code></td><td>3 · 계획→도구</td><td>STAGE 3 구간까지 스크롤</td><td><code>PLAN 1단계 계획이 지목한 25건에만</code> 줄 확대 + 박스</td></tr>
+    <tr><td><code>1:50</code></td><td>4 · THINK ★</td><td>THINK 블록으로 스크롤</td><td><b>확대 + 3초 정지.</b> <code>FIXME(원본 버그)</code> 두 곳에 화살표</td></tr>
+    <tr><td><code>2:15</code></td><td>5 · 검증</td><td>STAGE 4 결과</td><td><code>BLOCKER 10건</code> 강조</td></tr>
+    <tr><td><code>2:40</code></td><td>6 · 선별 ★</td><td>STAGE 5 게이트</td><td><b>가장 크게 확대 + 4초 정지.</b> <code>DECIDE … 교정 대상에서 제외</code>와 <code>수리 대상 9건</code>을 나란히 박스</td></tr>
+    <tr><td><code>3:10</code></td><td>7 · 정답 대조</td><td>화면 좌우 분할 — 정답키 CSV / 수리된 java</td><td><code>dPLA08701</code> 양쪽에 같은 색 박스</td></tr>
+    <tr><td><code>3:30</code></td><td>8 · 동작 일치</td><td>STAGE 6 + 실행 요약</td><td>요약표 전체를 한 화면에. <b>마지막 “미반영” 줄에 화살표</b></td></tr>
+    <tr><td><code>4:20</code></td><td>9 · UI</td><td>Streamlit — 단계 체크리스트 → 승인 버튼</td><td><b>20초 이내.</b> 버튼 클릭 직전에 멈춘다</td></tr>
+    <tr><td><code>4:40</code></td><td>10 · 성과</td><td>벤치마크 결과 또는 정지 슬라이드</td><td>수치 4줄. 5:00 정각에 끝낸다</td></tr>
+  </table>
+  </div>
+
+  <h4>오프닝 멘트 (가이드 권장 형태를 우리 실제 구조로)</h4>
+  <div class="say">
+    “이 Agent는 도구를 그때그때 고르는 방식이 아닙니다. <b>먼저 계획을 세워 무엇을 어떤 도구로 처리할지 고정하고</b>, 검증에 실패하면 <b>후보를 여러 개 만들어 규칙 기반 검증기가 채점</b>해 고칩니다. 그 판단 과정이 로그에 그대로 남고, 오늘 보실 것이 그 로그입니다.”
+  </div>
+
+  <h4>LLM 응답 대기를 잘라내는 법</h4>
+  <p>가이드가 <b>“긴 대기 시간은 잘라내거나 빠르게 재생”</b>하라고 합니다. 편집으로 잘라도 되지만, <b>재촬영이 더 깔끔합니다.</b></p>
+  <pre>python -m agents.run_pipeline &lt;평가 세트&gt; --screens PLA087,PLA089,PLA093,PLA096,PLA100     --no-ai-recommend --cache</pre>
+  <p><code>--cache</code>를 켜고 한 번 돌려 응답을 받아두면, 같은 명령의 두 번째 실행이 <b>약 40초 → 약 11초</b>로 줄어듭니다. 대기의 대부분이 LLM 응답이었기 때문입니다. 로그는 동일하게 전부 출력되므로 <b>대기 구간 없는 깨끗한 화면</b>을 그대로 찍을 수 있습니다.</p>
+  <p>남는 11초는 <b>동작 일치 검증이 실제로 javac를 돌리는 시간</b>입니다. 이 단계는 시연의 핵심이라 건너뛰지 않습니다 — <code>--fast</code>는 개발 중 반복 실행용이고, <b>녹화에는 쓰지 않습니다.</b></p>
+  <div class="warn">
+    <h4>다만 정직하게</h4>
+    <p style="margin:0">캐시 실행은 <b>같은 입력에 같은 응답을 재생</b>하는 것이라 결과가 조작되지 않습니다. 그래도 질문이 나오면 그대로 말하면 됩니다 — <b>“응답 캐시를 켜고 두 번째 실행을 녹화했습니다. 로그와 결과는 첫 실행과 동일합니다.”</b> 숨길 이유가 없고, 오히려 반복 실행 비용을 줄인 설계로 읽힙니다.</p>
+  </div>
+
+  <h3>3. 제출 전 최종 확인</h3>
+  <table>
+    <tr><th style="width:8%"></th><th>항목</th></tr>
+    <tr><td>□</td><td>발표 영상 <b>10분 이내</b> · 시연 영상 <b>5분 이내</b></td></tr>
+    <tr><td>□</td><td>파일명 <code>[사번]_[성명]_시연영상.mp4</code> · MP4 · 500MB 이하</td></tr>
+    <tr><td>□</td><td>자막이 화면의 로그와 <b>글자까지 일치</b>하는지 (가장 중요)</td></tr>
+    <tr><td>□</td><td>수치에 <b>측정 범위</b>가 붙어 있는지 — <code>100%</code> 단독 금지</td></tr>
+    <tr><td>□</td><td>두 소스 세트를 <b>말로 구분</b>했는지</td></tr>
+    <tr><td>□</td><td><code>.env</code> · API 키 · DB 접속정보 노출 없음</td></tr>
+    <tr><td>□</td><td>UI 장면이 <b>20초 이내</b>인지</td></tr>
+    <tr><td>□</td><td>핵심 구간(1:30~3:30)이 <b>확대·정지</b>되어 있는지</td></tr>
+  </table>
 </section>
 
 <section id="talk">
