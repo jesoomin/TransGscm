@@ -1,6 +1,6 @@
 # PLA050 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-11T04:43:54
+- 생성 시각: 2026-09-11T09:11:07
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla050Api.java, Pla050Dto.java, Pla050Mapper.xml, Pla050Service.java, Pla050Store.java)
 - 사람이 반드시 처리해야 할 항목: **6건**, 확인 권장: 6건
@@ -10,26 +10,26 @@
 ## 🔴 반드시 사람이 처리해야 할 것 (BLOCKER)
 
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05001`) — pPLA05001가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05002`) — pPLA05002가 반환하는 결과 메시지 코드(I0016, W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA05003`) — pPLA05003가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dHistoryQry`) — dHistoryQry: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA05001`) — dPLA05001: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA05002`) — dPLA05002: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 
 ## 🟡 확인이 필요한 것 (WARNING)
 
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA05001`) — pPLA05001는 순수 위임이 아닙니다(F 메서드를 2개 호출(fAuthCheck, fPLA050QrySelectMainList); 권한 게이트(AUTH_YN 확인 후 조기 반환); 결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA05002`) — pPLA05002는 순수 위임이 아닙니다(결과 메시지 코드 I0016, W0024; 레코드셋 선별 반환(DETAIL_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA05003`) — pPLA05003는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(HIST_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **REMAPRESULTS_DROPPED** — remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요
   - 발견: Mapper 변환(converters)
   - 조치: remapResults 속성은 MyBatis에 대응이 없어 제거했습니다. 동작 차이가 없는지 확인하세요.
@@ -52,7 +52,7 @@
 - **FETCH_SIZE_DROPPED** — fetchSize 속성은 MyBatis 변환 시 제거했습니다 - 필요하면 <select>에 수동으로 다시 넣으세요.
   - 발견: Mapper 변환(converters)
   - 조치: fetchSize 속성을 제거했습니다. 성능이 중요하면 MyBatis 설정으로 다시 지정하세요.
-- **ORIGINAL_BUG** (메서드 `fAuthCheck`, 56행) — 56행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 getRecordSet("AUTH_LIST").getRecordCount() 전제이나, 포팅 대상 계약은 Map<String,Object>만 제공되어 AUTH_LIST의 런타임 타입이 불명확함.
+- **ORIGINAL_BUG** (메서드 `fAuthCheck`, 46행) — 46행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 IRecordSet.getRecordCount()에 전적으로 의존하므로 AUTH_LIST의 실제 런타임 타입 계약이 명확하지 않다.
   - 발견: 품질·취약점 스캔(Pla050Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 

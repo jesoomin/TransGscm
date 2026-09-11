@@ -1,6 +1,6 @@
 # PLA045 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-11T04:43:54
+- 생성 시각: 2026-09-11T09:11:07
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla045Api.java, Pla045Dto.java, Pla045Mapper.xml, Pla045Service.java, Pla045Store.java)
 - 사람이 반드시 처리해야 할 항목: **7건**, 확인 권장: 9건
@@ -9,7 +9,7 @@
 
 ## ⛔ 이 화면은 자동 변환을 신뢰하면 안 됩니다
 
-D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기는 `dbSelect`만 지원):
+데이터 접근 계층(D)에 이 변환기가 다루지 못하는 verb가 있습니다(변환기는 `dbSelect`만 지원):
 
 - `dPLA04505`: dbExecuteProcedure
 
@@ -18,31 +18,31 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 ## 🔴 반드시 사람이 처리해야 할 것 (BLOCKER)
 
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `PPLA04502`) — PPLA04502가 반환하는 결과 메시지 코드(W0024)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04501`) — dPLA04501: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04502`) — dPLA04502: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04503`) — dPLA04503: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04504`) — dPLA04504: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **UNSUPPORTED_DB_VERB** (메서드 `dPLA04505`) — dPLA04505가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04505`) — dPLA04505: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 
 ## 🟡 확인이 필요한 것 (WARNING)
 
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04501`) — pPLA04501는 순수 위임이 아닙니다(레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `PPLA04502`) — PPLA04502는 순수 위임이 아닙니다(결과 메시지 코드 W0024; 레코드셋 선별 반환(HEADER_LIST, MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `PPLA04503`) — PPLA04503는 순수 위임이 아닙니다(레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `PPLA04504`) — PPLA04504는 순수 위임이 아닙니다(레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **REMAPRESULTS_DROPPED** — remapresults 속성 발견 - MyBatis에 대응 기능 없음, 제거 예정. 결과 컬럼명 중복 여부 확인 필요
   - 발견: Mapper 변환(converters)
   - 조치: remapResults 속성은 MyBatis에 대응이 없어 제거했습니다. 동작 차이가 없는지 확인하세요.
@@ -70,13 +70,19 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 - **SQL_INJECTION_RISK** (194행) — ${SUM}가 1곳(194행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla045Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 58행) — 58행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 sSum이 아니라 미선언 변수 sSUM을 requestData.putField("SUM", sSUM)로 사용함
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 40행) — 40행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 IRecordSet.getRecordCount()/get(i, ...) 전제이나 store 반환 계약은 Map<String,Object> 단건이라 그대로 포팅 시 컴파일 불가/의미 불명
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 61행) — 61행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 List<Map<String, String>> arrQuaterColMap 로 선언했으나 실제로는 단건 Map처럼 new HashMap 및 put 호출
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 56행) — 56행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - sSUM 미선언 변수 원문 그대로 유지
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 63행) — 63행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 quaterColList 미선언 상태로 add 호출
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 58행) — 58행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 변수 선언 타입은 List<Map<String, String>>인데 HashMap을 대입함
+  - 발견: 품질·취약점 스캔(Pla045Service.java)
+  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 60행) — 60행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 괄호 누락 원문 그대로 의도 보존
+  - 발견: 품질·취약점 스캔(Pla045Service.java)
+  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 62행) — 62행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - quaterColList 미선언 변수 원문 그대로 유지
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 

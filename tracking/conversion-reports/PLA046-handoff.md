@@ -1,6 +1,6 @@
 # PLA046 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-11T04:43:54
+- 생성 시각: 2026-09-11T09:11:07
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla046Api.java, Pla046Dto.java, Pla046Mapper.xml, Pla046Service.java, Pla046Store.java)
 - 사람이 반드시 처리해야 할 항목: **24건**, 확인 권장: 42건
@@ -9,7 +9,7 @@
 
 ## ⛔ 이 화면은 자동 변환을 신뢰하면 안 됩니다
 
-D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기는 `dbSelect`만 지원):
+데이터 접근 계층(D)에 이 변환기가 다루지 못하는 verb가 있습니다(변환기는 `dbSelect`만 지원):
 
 - `dPLA04616`: dbExecuteProcedure
 - `dPLA04624`: dbExecuteProcedure
@@ -20,87 +20,87 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 ## 🔴 반드시 사람이 처리해야 할 것 (BLOCKER)
 
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04601`) — pPLA04601가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04602`) — pPLA04602가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04603`) — pPLA04603가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04604`) — pPLA04604가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04605`) — pPLA04605가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04607`) — pPLA04607가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04609`) — pPLA04609가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04610`) — pPLA04610가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04612`) — pPLA04612가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04613`) — pPLA04613가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **RESPONSE_MESSAGE_CONVENTION_UNDEFINED** (메서드 `pPLA04616`) — pPLA04616가 반환하는 결과 메시지 코드(I0016)를 담을 TO-BE 응답 규약이 아직 확정되지 않았습니다(docs/09-common-response-convention.md 열린 질문 2번). 규약 없이 임의의 키를 만들지 않았으므로 이 메시지는 현재 TO-BE 응답에 실리지 않습니다 - 사람이 규약을 확정해야 해소됩니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04601`) — dPLA04601: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04602`) — dPLA04602: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04603`) — dPLA04603: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04604`) — dPLA04604: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04605`) — dPLA04605: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04606`) — dPLA04606: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04608`) — dPLA04608: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04612`) — dPLA04612: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04615`) — dPLA04615: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **UNSUPPORTED_DB_VERB** (메서드 `dPLA04616`) — dPLA04616가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
 - **STORE_CARDINALITY_MISMATCH** (메서드 `dPLA04623`) — dPLA04623: 원본에서 이 statement 결과를 getRecordSet(...)으로 받아 다건으로 다룹니다(F/P 소스에서 확인). 그런데 Store는 selectOne(단건)으로 생성됐습니다 - 실제로 행이 2개 이상 나오면 런타임에 TooManyResultsException이 납니다. Mapper.xml resultType/Store 반환 타입을 List<Map<String,Object>> + selectList로 바꿀지 사람이 판단하세요(자동 변경 안 함 - 상위 계층 시그니처가 연쇄적으로 바뀝니다).
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **UNSUPPORTED_DB_VERB** (메서드 `dPLA04624`) — dPLA04624가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
 - **UNSUPPORTED_DB_VERB** (메서드 `dPLA04625`) — dPLA04625가 dbExecuteProcedure를 사용하는데 XSQL이 없어 statement 종류를 확정하지 못했습니다 - 조회(selectOne)로 생성했으니 원본을 보고 확인하세요. XSQL을 함께 넣으면 자동으로 맞춰집니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
   - 조치: 이 변환기는 dbSelect만 다룹니다. Store 메서드가 selectOne으로 생성돼 있으니 원본 verb에 맞는 MyBatis 호출(insert/update/delete)로 직접 바꾸고, Mapper.xml의 해당 statement 태그도 `<select>`가 맞는지 확인하세요.
 
 ## 🟡 확인이 필요한 것 (WARNING)
 
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04601`) — pPLA04601는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04602`) — pPLA04602는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(EXR_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04603`) — pPLA04603는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(YLD_PLN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04604`) — pPLA04604는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(REV_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04605`) — pPLA04605는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(REV_LIST, REV_LIST_A, REV_LIST_B)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04606`) — pPLA04606는 순수 위임이 아닙니다(레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04607`) — pPLA04607는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(MEMO_INFO)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04609`) — pPLA04609는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04610`) — pPLA04610는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04612`) — pPLA04612는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(PLN_REV_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04613`) — pPLA04613는 순수 위임이 아닙니다(결과 메시지 코드 I0016) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04614`) — pPLA04614는 순수 위임이 아닙니다(F 메서드를 2개 호출(fPLA046QryUpdateRlsYn, fPLA046QryPlnRevReleasedCheck); 레코드셋 선별 반환(MAIN_LIST, PLN_REV_RELEASED_LIST); 분기 로직) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04616`) — pPLA04616는 순수 위임이 아닙니다(결과 메시지 코드 I0016; 레코드셋 선별 반환(MAX_WEEK)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **P_ORCHESTRATION_PORT_REQUIRED** (메서드 `pPLA04617`) — pPLA04617는 순수 위임이 아닙니다(레코드셋 선별 반환(MAIN_LIST)) - Api를 위임 한 줄로 생성하지 않고 LLM 포팅 대상으로 남겼습니다.
-  - 발견: 골격 생성(skeleton_gen)
+  - 발견: 코드 뼈대 생성(skeleton_gen)
 - **ORIGINAL_XML_ATTR_QUOTE_FIXED** (902행) — 902행: 원본 XSQL의 <insert id="I005...> 속성에 닫는 따옴표가 빠져 있어(원본 결함) 자동으로 채워 넣었습니다 - 값 자체는 바꾸지 않았습니다. 의도한 값이 맞는지 원본과 대조해 확인하세요.
   - 발견: Mapper 변환(converters)
 - **ORIGINAL_XML_ATTR_QUOTE_FIXED** (933행) — 933행: 원본 XSQL의 <insert id="I006...> 속성에 닫는 따옴표가 빠져 있어(원본 결함) 자동으로 채워 넣었습니다 - 값 자체는 바꾸지 않았습니다. 의도한 값이 맞는지 원본과 대조해 확인하세요.
@@ -194,7 +194,13 @@ D 계층에 이 변환기가 다루지 못하는 verb가 있습니다(변환기�
 - **SQL_INJECTION_RISK** (818행) — ${RSL_CNT}가 1곳(818행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla046Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateInfo`, 233행) — 233행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - EXR_PLN_YM가 문자열 리터럴이 아니라 미선언 변수로 사용됨
+- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateMemo`, 121행) — 121행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 du.dPLA04609(...).getIntField("RSL_CNT") 호출을 전제하여 null 반환 가능성을 고려하지 않음
+  - 발견: 품질·취약점 스캔(Pla046Service.java)
+  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
+- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateInfo`, 225행) — 225행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - EXR_PLN_YM가 문자열 리터럴이 아니라 미선언 변수로 사용되어 컴파일 에러가 발생할 수 있음.
+  - 발견: 품질·취약점 스캔(Pla046Service.java)
+  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
+- **ORIGINAL_BUG** (메서드 `fPLA046QryCallProc`, 249행) — 249행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본의 lookupDataUnit(DPLA046.class) 및 onlineCtx 의존은 제거되어 직접 store 필드 사용으로 포팅함.
   - 발견: 품질·취약점 스캔(Pla046Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 
