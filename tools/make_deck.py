@@ -161,14 +161,14 @@ set_text(shp(s2, "Text 10"), [
 ])
 
 set_text(shp(s2, "Text 14"), [
-    ("폴더 지정 → 8단계 자동 진행 → 사람 승인 후에만 반영", True, 9.5, DARK),
+    ("폴더 지정 → 8단계 자동 진행 → 사람 승인 후에만 반영 (Human-in-the-Loop)", True, 9.5, DARK),
     ("", False, 3, GREY),
     ("에이전트 구성", True, 9, MINT),
     ("Planner  계획 파일 고정 (LLM 미사용)", False, 8.5, GREY),
     ("Translator  규칙 46% / LLM 54% 분업", False, 8.5, GREY),
     ("Validator  변환기와 분리", False, 8.5, GREY),
     ("Repairer  검증 기반 자가 교정, 회차 상한 2", False, 8.5, GREY),
-    ("Human Approval  승인 전 저장 0건", False, 8.5, GREY),
+    ("Human-in-the-Loop  승인 게이트 — 승인 전 저장 0건", False, 8.5, GREY),
     ("기술 스택", True, 9, MINT),
     ("LangGraph StateGraph · MCP(Model Context Protocol)", False, 8.5, GREY),
     ("Azure OpenAI 호환 사내 LLM Gateway · Tree-of-Thoughts · Oracle", False, 8.5, GREY),
@@ -176,7 +176,7 @@ set_text(shp(s2, "Text 14"), [
 
 set_text(shp(s2, "Text 17"), [
     ("100%", True, 20, NAVY),
-    ("원본 결함 탐지 탐지율", True, 8, DARK),
+    ("원본 결함 탐지율", True, 8, DARK),
     ("30화면 정답키 · 오탐 0건", False, 7, GREY),
 ])
 set_text(shp(s2, "Text 19"), [
@@ -186,8 +186,8 @@ set_text(shp(s2, "Text 19"), [
 ])
 set_text(shp(s2, "Text 21"), [
     ("0.20%", True, 20, MINT),
-    ("사람 수정 라인 비율  ·  리뷰 대상 87.3% 축소", True, 8, DARK),
-    ("생성 1,960줄 중 4줄 · AI 리뷰어 1차 기준 하한값", False, 7, GREY),
+    ("사람 수정 라인 비율  ·  리뷰 대상 87.6% 축소", True, 8, DARK),
+    ("생성 2,007줄 중 4줄 · AI 리뷰어 1차 기준 하한값", False, 7, GREY),
 ])
 set_text(shp(s2, "Text 24"), [
     ("“규칙 기반 변환에 LLM을 쓰지 않아 호출 46% 절감,", True, 10.5, DARK),
@@ -395,12 +395,19 @@ tbox(s3, X0, y + 16000, W0, 130000,
      "MCP 읽기 전용 조회 4종 — 변환 실행은 노출하지 않는다",
      6.5, GREY, False, PP_ALIGN.RIGHT)
 
+set_text(shp(s3, "Text 9"), [
+    ("1,416회 반복되는 작업이다 — 매번 다른 경로로 가면 리뷰도 재현도 불가능하다.",
+     True, 9, DARK),
+    ("그래서 모델이 도구를 고르지 않는다. 계획을 먼저 파일로 확정하고, 그 계획이 도구 호출을 지휘한다.",
+     False, 8.5, GREY),
+])
+
 set_text(shp(s3, "Text 14"), [("LangGraph StateGraph + 계획 파일 고정", True, 9, DARK)])
 set_text(shp(s3, "Text 15"), [
     [("선택 이유  ", True, 8, MINT),
      ("ReAct 자율 탐색은 1,416회 반복에서 화면마다 경로가 갈림", False, 8, GREY)],
     [("핵심 활용  ", True, 8, MINT),
-     ("계획을 파일로 확정 → 이후 단계는 지목된 대상만 호출. Send() 병렬 분배 병렬",
+     ("계획을 파일로 확정 → 이후 단계는 지목된 대상만 호출, Send()로 병렬 분배",
       False, 8, GREY)],
     [("강점  ", True, 8, NAVY),
      ("계획이 도구 호출을 지휘 — 재현·리뷰·재실행 가능", True, 8, NAVY)],
@@ -428,7 +435,7 @@ set_text(shp(s3, "Text 27"), [
 
 # --------------------------------------------- 슬라이드 3 · 핵심 기술 과제
 set_text(shp(s4, "Text 9"), [
-    ("정적 검증 100% 통과 코드가 실행에서는 동작 불일치 — 검증 수단 자체가 부재",
+    ("검증과 실행의 간극 — 정적 검증 100% 통과 코드가 실행에서는 동작 불일치",
      True, 9.5, DARK),
     ("AlphaTrans(FSE 2025) 동일 간극 보고 : 문법 96.40%  vs  동작 일치 25.14%",
      False, 9, GREY),
