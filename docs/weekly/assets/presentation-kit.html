@@ -1,0 +1,597 @@
+<title>발표 시연 키트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#EEF1EF; --surface:#fff; --surface-2:#F6F8F6;
+  --ink:#151C1A; --ink-2:#3F4A47; --ink-3:#6B7773;
+  --line:#D3DAD7; --line-2:#E3E8E5;
+  --rule:#0E6B5A; --rule-soft:#DCEBE6;
+  --llm:#6B4E9E; --llm-soft:#E8E2F2;
+  --block:#A9501B; --block-soft:#F4E5D8;
+  --code-bg:#131A19; --code-ink:#D8E3DF;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101614; --surface:#18211E; --surface-2:#1D2724;
+  --ink:#E7EDEA; --ink-2:#B6C2BE; --ink-3:#8B9793;
+  --line:#2C3835; --line-2:#232E2B;
+  --rule:#4FC0A8; --rule-soft:#17322C;
+  --llm:#B49BE0; --llm-soft:#241E33;
+  --block:#D9884A; --block-soft:#33241A;
+  --code-bg:#0C1211; --code-ink:#CBD8D4;
+}}
+:root[data-theme="dark"]{
+  --paper:#101614; --surface:#18211E; --surface-2:#1D2724;
+  --ink:#E7EDEA; --ink-2:#B6C2BE; --ink-3:#8B9793;
+  --line:#2C3835; --line-2:#232E2B;
+  --rule:#4FC0A8; --rule-soft:#17322C;
+  --llm:#B49BE0; --llm-soft:#241E33;
+  --block:#D9884A; --block-soft:#33241A;
+  --code-bg:#0C1211; --code-ink:#CBD8D4;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans KR","Gothic A1",system-ui,sans-serif;
+  font-size:15px;line-height:1.72;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding-block:40px 90px;padding-left:20px;padding-right:20px}
+h1{font-family:"Gothic A1",sans-serif;font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+h2{font-family:"Gothic A1",sans-serif;font-size:20px;font-weight:800;margin:0;letter-spacing:-.01em}
+h3{font-size:15px;font-weight:700;margin:26px 0 10px;color:var(--ink)}
+h4{font-size:14px;font-weight:700;margin:18px 0 6px}
+p{margin:0 0 12px}
+.sub{color:var(--ink-3);font-size:13.5px;margin:0}
+.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
+  border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+.stamp{font-size:12px;color:var(--ink-3);text-align:right;line-height:1.85;
+  font-family:"IBM Plex Mono",monospace}
+.stamp b{color:var(--ink);font-weight:600}
+nav{position:sticky;top:0;z-index:5;background:var(--paper);
+  border-bottom:1px solid var(--line);margin-bottom:26px}
+.navrow{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0}
+nav a{font-size:12.5px;color:var(--ink-2);text-decoration:none;padding:5px 11px;
+  border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+nav a:hover{border-color:var(--rule);color:var(--rule)}
+nav a:focus-visible{outline:2px solid var(--rule);outline-offset:2px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:24px 26px;margin-bottom:22px}
+.shead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line-2);padding-bottom:12px;margin-bottom:16px}
+.idx{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.1em;
+  color:var(--surface);background:var(--ink);padding:3px 9px;border-radius:4px}
+.note{font-size:12px;color:var(--ink-3);margin-left:auto}
+.lede{color:var(--ink-2);font-size:14px;margin-bottom:18px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0 16px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-weight:700;font-size:12.5px;color:var(--ink-3);background:var(--surface-2);
+  letter-spacing:.02em;border-bottom:1px solid var(--line)}
+td b{font-weight:700}
+.scroll{overflow-x:auto}
+pre{background:var(--code-bg);color:var(--code-ink);border-radius:8px;padding:15px 17px;
+  overflow-x:auto;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.65;margin:10px 0 14px}
+code{font-family:"IBM Plex Mono",monospace;font-size:.92em;
+  background:var(--surface-2);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+.cut{border-left:3px solid var(--rule);padding:2px 0 2px 16px;margin:20px 0}
+.cut .t{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--rule);font-weight:600}
+.say{background:var(--surface-2);border-left:3px solid var(--line);padding:12px 16px;
+  margin:10px 0 14px;border-radius:0 8px 8px 0;font-size:14px;color:var(--ink-2)}
+.say b{color:var(--ink)}
+.warn{background:var(--block-soft);border:1px solid var(--block);border-radius:8px;
+  padding:15px 18px;margin:14px 0}
+.warn h4{margin-top:0;color:var(--block)}
+.ok{background:var(--rule-soft);border:1px solid var(--rule);border-radius:8px;padding:15px 18px;margin:14px 0}
+.ok h4{margin-top:0;color:var(--rule)}
+.qa{border-top:1px solid var(--line-2);padding-top:16px;margin-top:16px}
+.qa:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.q{font-weight:700;font-size:14.5px;margin:0 0 8px;color:var(--ink)}
+.q span{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--surface);
+  background:var(--ink-2);padding:2px 7px;border-radius:4px;margin-right:8px;font-weight:600}
+.a{color:var(--ink-2);font-size:14px;margin:0 0 6px}
+.a strong{color:var(--ink)}
+ul{margin:6px 0 12px;padding-left:20px}
+li{margin:3px 0;color:var(--ink-2)}
+li b{color:var(--ink)}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;
+  font-family:"IBM Plex Mono",monospace}
+.p-rule{background:var(--rule-soft);color:var(--rule)}
+.p-llm{background:var(--llm-soft);color:var(--llm)}
+.p-block{background:var(--block-soft);color:var(--block)}
+@media(max-width:640px){
+  .wrap{padding-block:26px 60px}
+  h1{font-size:24px}
+  section{padding:18px 16px}
+  .mast{align-items:flex-start}
+  .stamp{text-align:left}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <h1>발표 · 시연 · 예상 질의 키트</h1>
+    <p class="sub">모든 로그 문장은 <code>tracking/demo-run-5screens.log</code>의 <b>실제 출력</b>에서 그대로 옮겼습니다. 수치에는 측정 범위를 함께 적었습니다.</p>
+  </div>
+  <div class="stamp">
+    발표 <b>10분</b> · 시연 <b>5분</b><br>
+    실행 <b>약 40초 / 5화면</b><br>
+    스코어카드 <b>80.9 / 100</b>
+  </div>
+</header>
+
+<nav>
+  <div class="navrow">
+    <a href="#rule">쓰면 안 되는 문장</a>
+    <a href="#talk">발표 대본 10분</a>
+    <a href="#cut">시연 컷·자막 5분</a>
+    <a href="#qa">예상 질의 18문항</a>
+    <a href="#drill">꼬리질문 대응</a>
+  </div>
+</nav>
+
+<section id="rule">
+  <div class="shead">
+    <span class="idx">RULE</span>
+    <h2>쓰면 안 되는 문장 — 먼저 확인</h2>
+    <span class="note">실제 로그와 대조 완료</span>
+  </div>
+  <p class="lede">가이드가 <b>"핵심 로그가 담긴 터미널 화면을 반드시 포함"</b>하라고 요구합니다. 화면에 뜬 로그와 자막이 다르면 그 자리에서 신뢰를 잃습니다. 아래 문장들은 우리 출력에 <b>존재하지 않습니다.</b></p>
+
+  <div class="warn">
+    <h4>⛔ 존재하지 않는 로그 (검색 결과 0건)</h4>
+    <table>
+      <tr><th>쓰면 안 되는 문장</th><th>실제 출력</th></tr>
+      <tr>
+        <td><code>Planning: 5-step plan generated. Simulating plan...</code></td>
+        <td><code>PLAN  LLM 호출 예산 확정: 25건</code><br><code>PLAN  도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다</code></td>
+      </tr>
+      <tr>
+        <td><code>Candidate A rejected (validation fail)</code><br><code>Retry with constraint injected</code></td>
+        <td><code>REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건</code><br><code>DECIDE   수리 후보 2개 → [최소수정] 채택</code></td>
+      </tr>
+    </table>
+    <p style="margin:8px 0 0"><b>후보가 탈락하는 장면은 이번 실행에 없습니다</b> — 두 후보가 0건 동점입니다. 대신 <b>진짜 선별 장면</b>이 따로 있고, 그게 더 강합니다(아래 컷 4).</p>
+  </div>
+
+  <div class="warn">
+    <h4>⚠️ 범위를 빼면 무너지는 수치</h4>
+    <table>
+      <tr><th>이렇게 말하면 안 됨</th><th>이렇게 말해야 방어됨</th></tr>
+      <tr><td>실행 정확도 33% → <b>100%</b></td><td>33% → 100% <b>(실행 가능한 3화면 기준)</b></td></tr>
+      <tr><td>API 완전성 <b>0% → 100%</b></td><td>페이로드 0/9 → 9/9. <b>메시지 키는 0/9</b> — 못 옮긴 게 아니라 응답 규약이 아직 없어서</td></tr>
+      <tr><td>30개 화면 <b>실행</b> 결과 비교</td><td>30화면 = <b>정답키 정적 탐지</b>. 실행 비교는 <b>5화면 중 3</b></td></tr>
+    </table>
+    <p style="margin:8px 0 0"><code>0 → 100%</code>는 심사위원이 가장 먼저 파고들 자리입니다. <b>범위를 먼저 말하면 방어가 되고, 감추면 무너집니다.</b></p>
+  </div>
+</section>
+
+<section id="talk">
+  <div class="shead">
+    <span class="idx">TALK</span>
+    <h2>발표 대본 — 10분</h2>
+    <span class="note">표지 + 3장 / 2분 · 4분 · 4분</span>
+  </div>
+
+  <div class="cut"><span class="t">0:00 ~ 0:20 · 오프닝</span></div>
+  <div class="say">
+    G-SCM 차세대 전환 Agent를 수행한 ○○○입니다.<br>
+    이 프로젝트는 코드를 <b>생성</b>하는 도구가 아니라, 전환 결과를 <b>검증</b>하는 구조를 만든 프로젝트입니다.
+  </div>
+
+  <h3>슬라이드 1 · 프로젝트 개요 <span class="pill p-rule">2분</span></h3>
+  <div class="cut"><span class="t">0:20 ~ 1:00 · 문제</span></div>
+  <div class="say">
+    화면-서비스 매핑이 명명 규칙과 맞지 않습니다. 그래서 서버 로직 하나를 옮기려면 P·F·D BizUnit과 XSQL <b>4종 파일을 사람이 매번 추적</b>해야 합니다. 이게 <b>1,416개 화면에서 반복</b>됩니다.<br><br>
+    문제는 세 가지입니다. <b>규모</b> — 같은 추적이 화면 수만큼 반복됩니다. <b>품질</b> — 개발자마다 응답과 예외 처리가 갈립니다. <b>리스크</b> — 원본 자체에 컴파일 불가, XML 태그 오류, SQL 문법 오류가 섞여 있습니다.<br><br>
+    마지막 항목이 설계를 좌우했습니다. <b>정상 원본을 전제한 도구는 첫 화면에서 멈춥니다.</b> 원본 결함을 정상 입력으로 취급해야 했습니다.
+  </div>
+
+  <div class="cut"><span class="t">1:00 ~ 1:40 · 무엇을 만들었나</span></div>
+  <div class="say">
+    폴더를 지정하면 8단계가 자동으로 진행되고, <b>사람이 승인해야만</b> 반영되는 파이프라인입니다.<br><br>
+    <b>Planner</b>는 코드를 만들기 전에 계획을 파일로 고정합니다. 이 단계엔 LLM을 쓰지 않습니다.<br>
+    <b>Translator</b>는 규칙과 LLM을 나눕니다 — 포팅 대상 46건 중 21건, <b>46%를 규칙으로 처리</b>해 LLM 호출 자체를 회피합니다.<br>
+    <b>Validator</b>는 변환기와 분리돼 있습니다. 만든 쪽이 스스로 채점하지 않게 하려는 설계입니다.<br>
+    <b>Repairer</b>는 검증 실패를 피드백해 교정하되, <b>채점은 규칙 기반 검증기가</b> 합니다. 회차 상한은 2입니다.<br>
+    <b>Human Approval</b> — 승인 전에는 산출물과 DB에 아무것도 쓰지 않습니다.
+  </div>
+
+  <div class="cut"><span class="t">1:40 ~ 2:00 · 성과와 한 줄</span></div>
+  <div class="say">
+    원본 결함 탐지 <b>10/10, 오탐 0건</b>. 정적 검증 통과 <b>96.7%</b>. 사람 수정 라인 <b>0.20%</b> — 자동 생성 1,960줄 중 4줄입니다.<br><br>
+    한 줄로 말씀드리면 — <b>"규칙으로 풀리는 변환에 LLM을 쓰지 않아 호출을 46% 줄이면서, 정적 검증을 통과한 코드가 실행에서는 33%만 맞다는 사실까지 직접 측정해 100%로 닫았습니다."</b>
+  </div>
+
+  <h3>슬라이드 2 · 기술 아키텍처 <span class="pill p-rule">4분</span></h3>
+  <div class="cut"><span class="t">2:00 ~ 3:00 · 추론 순환 구조</span></div>
+  <div class="say">
+    구조는 <b>REASON → ACT → OBSERVE → REFLECT</b> 순환입니다. 다만 두 가지를 <b>순환 밖에</b> 뒀습니다.<br><br>
+    하나는 <b>계획</b>입니다. 실행 전에 고정하고 다시 판단하지 않습니다. 다른 하나는 <b>저장</b>입니다. 승인 게이트 너머에 있습니다. 그 사이에서만 순환이 돕니다.<br><br>
+    그리고 이 그림의 논지는 아래 한 줄입니다 — <b>관찰자가 모델이 아니라 규칙 기반 검증기입니다.</b> 통상 ReAct에서 OBSERVE는 모델이 자기 행동을 스스로 판단하는 것인데, 여기서는 검증기가 합니다. 그 차이 때문에 순환에 <b>상한과 채점</b>이 성립합니다.
+  </div>
+
+  <div class="cut"><span class="t">3:00 ~ 5:30 · 기술 선택 3가지</span></div>
+  <div class="say">
+    <b>첫째, LangGraph StateGraph와 계획 파일 고정.</b><br>
+    ReAct는 단계마다 모델이 다음 행동을 정합니다. 1,416회 반복에서는 화면마다 경로가 갈려 결과 일관성을 보장할 수 없습니다. 그래서 계획을 먼저 파일로 확정하고, 이후 단계는 그 계획이 지목한 대상만 호출하게 했습니다. <b>모델이 무엇을 부를지 스스로 고르지 않습니다.</b>
+  </div>
+  <div class="say">
+    <b>둘째, MCP — Model Context Protocol.</b><br>
+    MCP의 본래 가치는 모델이 도구를 동적으로 고르는 것인데, 그건 방금 말씀드린 원칙과 정면으로 충돌합니다. 그래서 <b>표면을 갈랐습니다</b> — 부작용 없는 조회 4종만 노출하고 변환 실행은 노출하지 않습니다. 승인 게이트를 우회할 경로를 아예 만들지 않았습니다.<br>
+    <b>실제 MCP 클라이언트로 stdio 연결해 검증했습니다.</b> 그 과정에서 설치된 SDK 버전이 달라 서버가 뜨지도 않는다는 걸 발견해 고쳤습니다 — "만들었다"와 "붙여봤다"는 다릅니다.
+  </div>
+  <div class="say">
+    <b>셋째, Tree-of-Thoughts와 Validator-driven Self-Correction.</b><br>
+    통상 ToT의 약점은 모델이 자기 가지를 자기가 평가한다는 것입니다. 이 프로젝트엔 이미 규칙 기반 검증기가 있어 그 약점을 피할 수 있었습니다. BLOCKER마다 방침이 다른 후보를 병렬 생성하고, 사본에 결합해 검증기를 돌린 뒤 <b>잔여 BLOCKER 수로 채점</b>합니다.<br>
+    이름을 <b>Validator-driven Self-Correction</b>이라고 붙인 이유가 여기 있습니다.
+  </div>
+
+  <div class="cut"><span class="t">5:30 ~ 6:00 · 3원칙</span></div>
+  <div class="say">
+    정리하면 세 가지입니다. <b>LLM은 생성만 합니다. 판단은 규칙 기반 검증기가 합니다. 모든 실행은 계획이 통제합니다.</b>
+  </div>
+
+  <h3>슬라이드 3 · 핵심 기술 과제 <span class="pill p-rule">4분</span></h3>
+  <div class="cut"><span class="t">6:00 ~ 7:00 · 난제</span></div>
+  <div class="say">
+    가장 큰 문제는 <b>"컴파일 성공이 실행 성공을 뜻하지 않는다"</b>였습니다.<br><br>
+    정적 검증을 <b>전부 통과한</b> 코드가 실제 실행에서는 동작이 달랐습니다. 그런데 AS-IS 레포에 테스트가 없어 <b>"기능이 맞는지" 검증할 수단 자체가 없었습니다.</b><br><br>
+    AlphaTrans(FSE 2025)도 같은 간극을 보고합니다 — 문법 96.40% 대 기능 동등성 25.14%. 문법을 아무리 개선해도 기능 층은 건드리지 못합니다.
+  </div>
+
+  <div class="cut"><span class="t">7:00 ~ 8:40 · 돌파 4가지</span></div>
+  <div class="say">
+    <b>첫째, 전제를 의심했습니다.</b> "실행할 수단이 없다"가 오판이었습니다. 필요한 건 애플리케이션 기동이 아니라 <b>메서드를 부를 최소 환경</b>이었고, AS-IS가 쓰는 프레임워크 API는 10개 남짓의 닫힌 집합이었습니다. 최소 실행 Harness를 만들었습니다.<br>
+    데이터 계층을 양쪽 <b>동일한 고정 데이터</b>로 대체해, 두 실행의 차이가 오직 포팅 차이에서만 나오게 했습니다. 메서드마다 0행·1행·3행으로 분기 경로를 훑습니다.
+  </div>
+  <div class="say">
+    <b>둘째, 호출 대상 계약을 JSON으로 주입했습니다.</b> 호출 관계도에서 뽑은 실제 메서드명·반환 타입·결과 건수 불일치 여부를 명시합니다. 환각의 주 원인이 <b>이름 추측</b>이라서입니다. 반환 타입까지 넣는 이유는, DML은 int를 돌려주는데 조회처럼 추측하면 컴파일 오류가 나고 교정 회차가 낭비되기 때문입니다.
+  </div>
+  <div class="say">
+    <b>셋째, 채점자를 모델에서 분리했습니다.</b> 앞서 말씀드린 ToT입니다.<br>
+    <b>넷째, 자동화하지 않을 것을 정했습니다.</b> 원본 결함은 고치지 않고 보존·표시하고, 본 적 없는 패턴에는 규칙을 만들지 않습니다.
+  </div>
+
+  <div class="cut"><span class="t">8:40 ~ 9:40 · 결과</span></div>
+  <div class="say">
+    <b>업무 로직 실행 일치율 33% → 100%</b>입니다. 27건 중 9건만 일치하던 것을, 원인이 <b>규칙이 레코드셋 추출 단계를 빠뜨린 것</b>임을 찾아 고쳐 48/48이 됐습니다. 단 <b>실행 가능한 3화면 기준</b>이며, 나머지 2화면은 AS-IS 원본이 컴파일되지 않습니다.<br><br>
+    <b>화면 요청 계층 페이로드 0/9 → 9/9</b>입니다. "P는 순수 위임"이라는 <b>표본 1건짜리 가정</b>이 코퍼스 30화면 전수 확인에서 거짓임을 발견했습니다 — 30/30이 권한 게이트를 갖고 있었습니다. 엄격 일치는 여전히 0/9인데, <b>이건 의도한 상태</b>입니다. 남은 차이가 전부 결과 메시지 코드이고 이걸 어떤 키로 실을지는 아직 정해지지 않은 공통 규약이라, 규약 없이 키를 지어내지 않았습니다.<br><br>
+    <b>화면당 LLM 호출 5건 → 1건</b>입니다. 재시도 루프가 성공할 수 없는 대상을 반복 호출하던 낭비 80%를 제거했습니다.
+  </div>
+
+  <div class="cut"><span class="t">9:40 ~ 10:00 · 차별점과 마무리</span></div>
+  <div class="say">
+    차별점은 세 가지입니다.<br>
+    <b>하나</b>, 실행 기반 검증 체계를 직접 만들었습니다.<br>
+    <b>둘</b>, 모델의 자기 평가를 걷어내고 검증기로 대체했습니다.<br>
+    <b>셋</b>, 정답키로 정량 검증했습니다 — 탐지율 10/10, 오탐 0건. 처음엔 5/10이었는데 놓친 유형을 보고 탐지기 범주를 넓혔고, 만점이 <b>정답에 끼워 맞춘 것인지</b> 확인하려 다른 세트에 교차 적용했더니 이 프로젝트가 처음부터 써온 원본에서 <b>여태 보고되지 않은 실제 결함</b>을 찾아냈습니다.<br><br>
+    끝으로 하나만 덧붙이겠습니다. 전환 스코어카드가 <b>88.2점에서 80.9점으로 내려갔습니다.</b> 도구가 나빠져서가 아니라 <b>안 재던 두 축을 재기 시작</b>했기 때문입니다. 측정 범위를 넓히면 점수는 내려갑니다. 그 방향이 맞다고 보고 되돌리지 않았습니다.<br><br>
+    <b>이 프로젝트는 AI로 코드를 만든 프로젝트가 아니라, AI를 검증 가능한 구조로 통제한 프로젝트입니다.</b> 감사합니다.
+  </div>
+</section>
+
+<section id="cut">
+  <div class="shead">
+    <span class="idx">CUT</span>
+    <h2>시연 컷 · 자막 — 5분</h2>
+    <span class="note">로그는 실제 출력 그대로</span>
+  </div>
+  <p class="lede">가이드 배점: <b>1:30~3:30 구간이 40%</b>. 이 구간은 반드시 <b>확대 + 정지 + 화살표</b>로 강조합니다.</p>
+
+  <div class="cut"><span class="t">컷 1 · 0:00 ~ 0:30 · 무엇을, 왜</span></div>
+  <p><b>화면</b> — 실제 전환 대상 파일 목록 → 평가 세트 정답키 CSV 한 줄</p>
+  <pre>[시나리오]
+NEXCORE 레거시 서버(P·F·D BizUnit + XSQL)를 Spring으로 전환합니다.
+화면 하나당 4종 파일을 사람이 추적해야 하고, 이게 1,416개 화면에서 반복됩니다.
+
+지금 투입할 화면 5개에는 정답키가 있는 결함이 심어져 있습니다.
+실제 전환 대상에는 정답이 없어, 제대로 잡아냈는지 채점하려면 이 세트가 필요합니다.</pre>
+
+  <div class="cut"><span class="t">컷 2 · 0:30 ~ 1:30 · 계획 수립 <span class="pill p-rule">LLM 미사용</span></span></div>
+  <pre>┌─ STAGE 1/8  PLAN  변환 계획 수립 — 대상 화면 5건 (LLM 미사용, 정적 분석)
+│  DECIDE   PLA087.fPLA087QrySelectMainList → LLM 포팅
+│           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 규칙으로 못 만듦
+│  DECIDE   PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+│           ↳ 단순 위임 패턴 — store 호출 1건으로 규칙 생성 가능
+│  BLOCK    PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
+│  PLAN     LLM 호출 예산 확정: 25건
+│           ↳ 21/46건(46%)을 규칙으로 처리 → LLM 호출 회피
+│  PLAN     도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
+└─ 계획 고정 완료 — tracking/conversion-plans/ 에 5건 기록</pre>
+  <pre>[자막] 코드를 만들기 전에 계획을 파일로 고정합니다. 이 단계엔 LLM을 쓰지 않습니다.
+       메서드마다 규칙이냐 LLM이냐를 판단하고 근거를 남깁니다 — 46%가 규칙으로 빠집니다.
+       원본이 컴파일되지 않는 화면은 변환 전에 잡아냅니다.</pre>
+  <p><b>연출</b> — 실행이 0.1초라 <b>정지 프레임 + 화살표</b>로 <code>DECIDE</code> 두 줄과 <code>PLAN</code> 두 줄을 짚습니다.</p>
+
+  <div class="cut"><span class="t">컷 3 · 1:30 ~ 2:10 · 계획이 도구를 지휘 + 계약 주입</span></div>
+  <pre>┌─ STAGE 3/8  TOOL  LLM 포팅 — 25건 병렬 배분
+│  PLAN     1단계 계획이 지목한 25건에만 LLM Gateway를 호출한다
+│           ↳ 대상은 계획 단계에서 이미 확정됐다 — 모델이 무엇을 부를지 스스로 고르지 않는다
+│  CONTEXT  PLA087.fPLA087QrySelectMainList ← 호출 대상 계약 1건 주입: dPLA08710
+│           ↳ 호출 관계도에서 뽑은 실제 메서드명 — LLM이 이름을 추측하지 않게 고정</pre>
+  <pre>[자막] 계획이 도구 호출을 지휘합니다.
+       모델이 무엇을 부를지 스스로 고르지 않습니다.
+       호출 대상은 관계도에서 뽑은 실제 이름을 계약으로 주입합니다. (AlphaTrans 방식)</pre>
+
+  <div class="cut"><span class="t">컷 4 · 2:10 ~ 2:40 · 모델이 남긴 근거 <span class="pill p-llm">THINK</span></span></div>
+  <pre>│  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,204자 · 3.4초)
+│  THINK    PLA087.fPLA087QrySelectMainList — 모델이 밝힌 근거
+│           "NEXCORE IDataSet/IRecordSet 의존을 Map 기반으로 치환하고 데이터 접근 호출을
+│             store.dPLA08701로 변경. / FIXME(원본 버그): lookupFunctionUnit 결과 fu는
+│             선언만 되고 사용되지 않음. / FIXME(원본 버그): if 블록 닫힘 중괄호 누락."</pre>
+  <pre>[자막] 이 줄은 우리가 쓴 해설이 아니라 모델 자신의 문장입니다.
+       프롬프트가 변경 근거를 남기도록 요구하고, 그걸 콘솔로 되돌려 출력합니다.
+       근거가 없으면 지어내지 않고 아무것도 출력하지 않습니다.
+
+       주목할 부분 — 모델이 요구하지 않은 원본 버그 2건을 스스로 지적했습니다.</pre>
+  <div class="ok">
+    <h4>여기가 이 영상의 숨은 강점</h4>
+    <p style="margin:0">"코드를 옮기기만 하는 게 아니라 <b>원본의 결함을 짚는다</b>"를 <b>모델의 출력 자체로</b> 증명하는 유일한 장면입니다. 반드시 확대하고 3초 정지하세요.</p>
+  </div>
+
+  <div class="cut"><span class="t">컷 5 · 2:40 ~ 3:30 · 고칠 것과 넘길 것 <span class="pill p-block">핵심</span></span></div>
+  <pre>┌─ STAGE 4/8  VALIDATE  정적 검증 — 변환기와 분리된 검증기
+│  BLOCK    검증 결과 — BLOCKER 10건 · WARNING 0건
+
+┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 0/2 사용
+│  DECIDE   BLOCKER 1건 → 교정 대상에서 제외 → 다른 검사 영역 —
+│           LLM이 고칠 문제가 아니라 사람에게 넘긴다 (Pla096Mapper.xml [XML_PARSE_ERROR])
+│  REFLECT  수리 대상 9건 확정 → 회차 1 진입
+│  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+│  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+│  DECIDE   PLA087.pPLA08703 수리 후보 2개 → [최소수정] 채택</pre>
+  <pre>[자막] BLOCKER 10건 중 9건만 교정 대상으로 골랐습니다.
+
+       XML 태그 누락은 규칙 기반 산출물이라 LLM이 고칠 문제가 아닙니다.
+       의도적으로 제외하고 사람에게 넘깁니다.
+
+       Agent가 "내가 고칠 것"과 "사람이 봐야 할 것"을 구분합니다.
+
+       그리고 후보를 방침이 다르게 만든 뒤, 검증기가 채점해서 고릅니다.
+       평가자가 모델이 아니라 규칙 기반 검증기입니다.</pre>
+
+  <div class="cut"><span class="t">컷 6 · 3:30 ~ 3:50 · 정답과 대조</span></div>
+  <pre>┌─ STAGE 4/8  VALIDATE  정적 검증 (자가 교정 1회차 후 재검증)
+│  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건        ← 10건 → 1건
+┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 1/2 사용
+│  REFLECT  수리 불필요 → 다음 단계로 진행</pre>
+  <p><b>화면 좌우 분할</b> — 왼쪽 정답키 CSV, 오른쪽 수리된 <code>Pla087Service.java</code></p>
+  <pre>[자막] 정답키에 "정상 메서드명은 dPLA08701"이라고 적혀 있고,
+       수리된 코드가 정확히 그 이름을 씁니다.
+       검증만 통과한 게 아니라 정답과 일치합니다.
+
+       1회차 만에 9건이 해소돼 BLOCKER가 10건에서 1건으로 줄었습니다.
+       회차에는 상한이 있습니다 — 무한 재시도는 자율 탐색이 됩니다.</pre>
+
+  <div class="cut"><span class="t">컷 7 · 3:50 ~ 4:20 · 동작 일치 + 실행 요약</span></div>
+  <pre>┌─ STAGE 6/8  TOOL  동작 일치 검증 — AS-IS/TO-BE를 실제로 실행해 비교
+│  BLOCK    동작 일치 결과 — 3/5화면 실행, 업무 로직(F) 48/48 · 화면 요청(Api) 0/9
+└─ 동작 일치 검증 완료 — 화면 5건
+
+==============================================================================
+  실행 요약
+==============================================================================
+  처리 화면       5건
+  생성 파일       25종
+  LLM 포팅 호출   25건 (규칙 기반으로 회피 21건, 규칙 처리 비중 46%)
+  자가 교정 회차    1회
+  잔여 BLOCKER  1건
+  동작 일치       3/5화면 실행 · 업무 로직(F) 48/48 · 화면 요청(Api) 0/9(페이로드 9/9)
+  반영 여부       미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨
+==============================================================================</pre>
+  <pre>[자막] 정적 검증이 아니라 실제 실행 결과로 비교합니다.
+       업무 로직은 48건 전건 일치. 실행 가능한 3화면 기준입니다.
+       화면 요청 0/9는 못 옮긴 게 아니라, 결과 메시지를 담을 규약이 아직 없어서입니다.
+       페이로드는 9/9 일치합니다.
+
+       마지막 줄이 중요합니다 — 여기까지 자동으로 진행했지만 아무것도 저장하지 않았습니다.</pre>
+
+  <div class="cut"><span class="t">컷 8 · 4:20 ~ 4:40 · 실제 전환 대상 + 승인 게이트</span></div>
+  <p><b>화면</b> — PLA046 인수인계 문서 → Streamlit 단계 체크리스트 → "승인하고 저장" 버튼</p>
+  <pre>[자막] 채점은 정답키 세트로 하지만, 실제로 전환하는 건 운영 소스입니다.
+       PLA046은 SQL statement가 26개인데, 변환하면서
+       원본 XML 따옴표 누락 3건과 조회 결과 건수 불일치를 찾았습니다.
+
+       후자는 원본이 다건으로 받는 걸 단건으로 생성하던 것으로,
+       컴파일도 정적 검증도 실행 비교도 못 잡는 결함이라 BLOCKER로 드러냈습니다.
+
+       실제 반영은 사람이 이 버튼을 눌러야만 일어납니다.</pre>
+
+  <div class="cut"><span class="t">컷 9 · 4:40 ~ 5:00 · 성과</span></div>
+  <pre>[1] 원본 결함 탐지 — 탐지율 10/10 (100%), 오탐 0건      [보강 전 5/10]
+[2] 중복 함수 탐지 — 정규화 후 209/210 (100%)          [정규화 전 105/210]
+[3] 전환 스코어카드 — 80.9 / 100
+[4] 사람 수정 라인 비율 — 0.20% (생성 1,960줄 중 4줄)</pre>
+  <pre>[자막] 정답키 30화면 벤치마크로 측정했습니다.
+       처음엔 5/10이었는데 놓친 유형을 보고 탐지기 범주를 넓혀 100%가 됐습니다.
+       만점이 정답에 끼워 맞춘 것인지 확인하려 다른 세트에 교차 적용했더니,
+       처음부터 써온 원본에서 여태 보고되지 않은 실제 결함을 찾아냈습니다.
+
+       가장 중요한 결과는, "정적 검증만으로 정확성을 보증할 수 있다"는
+       가설이 반증됐다는 것입니다.</pre>
+
+  <div class="warn">
+    <h4>연출 체크리스트</h4>
+    <ul>
+      <li><b>확대 + 정지</b> — 그냥 지나가면 의미 없습니다. 컷 4·5는 반드시 멈춥니다</li>
+      <li><b>화살표·박스</b> — <code>PLAN</code> <code>THINK</code> <code>DECIDE</code> <code>REFLECT</code> 줄에 표시</li>
+      <li><b>UI는 20초 이내</b> — "결과만 보여주는" 인상 회피</li>
+      <li><b>두 세트를 말로 구분</b> — 섞으면 틀린 주장이 됩니다</li>
+      <li>터미널 UTF-8(<code>chcp 65001</code>), 폭 100컬럼 이상, 글꼴 14pt 이상</li>
+      <li><code>.env</code>·API 키·DB 접속정보 노출 최종 확인</li>
+    </ul>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="shead">
+    <span class="idx">Q&amp;A</span>
+    <h2>예상 질의 18문항</h2>
+    <span class="note">시연 후 5문항 예상 — ★ 우선 암기</span>
+  </div>
+  <p class="lede">답변은 모두 <b>문제 → 선택 → 결과</b> 구조입니다. 감으로 답하지 말고 <b>측정·설계·제한</b>으로 답합니다.</p>
+
+  <div class="qa">
+    <p class="q"><span>Q1 ★</span>이 프로젝트를 한 줄로 설명하면?</p>
+    <p class="a"><strong>AI로 코드를 만드는 프로젝트가 아니라, AI를 검증 가능한 구조로 통제한 프로젝트입니다.</strong> 생성은 LLM이 하지만 판단은 규칙 기반 검증기가 하고, 실행 경로는 계획이 통제합니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q2 ★</span>기존 자동화와 무엇이 다릅니까?</p>
+    <p class="a">기준이 다릅니다. 기존 방식은 <strong>정적 검증을 통과하면 성공</strong>으로 봅니다. 그런데 저희가 실제로 재보니 <strong>정적 검증을 전부 통과한 코드가 실행에서는 27건 중 9건만 일치</strong>했습니다. 그래서 실행 기반 검증을 추가해 <strong>동작 일치</strong>를 성공 기준으로 삼았습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q3 ★</span>왜 LangGraph입니까? ReAct로는 안 됩니까?</p>
+    <p class="a">ReAct는 단계마다 모델이 다음 행동을 정합니다. 화면 <strong>1,416개를 동일하게 처리</strong>해야 하는 작업에서는 화면마다 경로가 갈려 결과 일관성을 보장할 수 없고, 탐색 비용도 낭비입니다.<br>
+    그래서 계획을 먼저 파일로 고정하고 LangGraph로 흐름을 통제했습니다. <strong>순환은 자가 교정 한 곳뿐이고 회차 상한이 2</strong>입니다. 결과적으로 재현성과 통제성을 얻었습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q4 ★</span>100%라는 수치를 신뢰할 수 있습니까?</p>
+    <p class="a">범위를 먼저 말씀드리겠습니다. <strong>업무 로직 계층 48/48, 실행 가능한 3화면 기준</strong>입니다. 나머지 2화면은 AS-IS 원본이 컴파일되지 않아 실행 자체가 불가능합니다.<br>
+    측정 방식은 AS-IS와 TO-BE에 <strong>같은 입력</strong>을 넣고, 데이터 계층을 양쪽 <strong>동일한 고정 데이터</strong>로 대체해 차이가 포팅 차이에서만 나오게 한 뒤, 메서드마다 0행·1행·3행으로 분기를 훑은 것입니다. 재현 가능한 측정입니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q5 ★</span>화면 요청 계층이 0/9인데, 실패한 것 아닙니까?</p>
+    <p class="a">두 가지를 나눠 보고 있습니다. <strong>페이로드는 9/9 일치</strong>합니다. 0/9는 <strong>결과 메시지 코드</strong>만의 이야기입니다.<br>
+    이걸 TO-BE 응답의 어떤 키에 실을지는 아직 확정되지 않은 <strong>공통 규약</strong>입니다. 규약 없이 키를 지어내는 건 저희가 금지한 바로 그 행동이라, 생성기가 그 자리에 TODO를 남기고 BLOCKER를 올립니다.<br>
+    즉 <strong>"우리가 못 옮긴 것"이 아니라 "아직 아무도 정하지 않은 것"</strong>이고, 하네스도 이 둘을 한 칸에 섞지 않도록 나눠 보고합니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q6</span>MCP를 왜 썼습니까? 없어도 되지 않습니까?</p>
+    <p class="a">처음엔 <strong>도입하지 않기로 판단했습니다.</strong> MCP의 핵심 가치가 모델이 도구를 동적으로 고르는 것인데, 그건 "자율 탐색 에이전트를 만들지 않는다"는 원칙과 정면으로 충돌하기 때문입니다.<br>
+    대신 <strong>표면을 갈라서</strong> 도입했습니다. 부작용 없는 조회 4종만 노출하고 변환 실행은 노출하지 않습니다. 승인 게이트를 우회할 경로를 만들지 않으면서 분석 질의는 표준 프로토콜로 열었습니다.<br>
+    실제 클라이언트로 stdio 연결해 검증했고, 그 과정에서 SDK 버전 차이로 서버가 뜨지 않는 문제를 발견해 고쳤습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q7</span>Self-Correction은 어떻게 구현했습니까?</p>
+    <p class="a">통상 Self-Correction은 모델이 자기 결과를 평가합니다. 신뢰도가 낮습니다.<br>
+    저희는 BLOCKER마다 <strong>방침이 다른 후보를 병렬 생성</strong>하고, 각 후보를 사본에 결합해 <strong>검증기를 실제로 돌린 뒤 잔여 BLOCKER 수로 채점</strong>합니다. 동점이면 원본에서 덜 벗어난 쪽을 고릅니다.<br>
+    그래서 이름이 <strong>Validator-driven Self-Correction</strong>입니다. 다만 정직하게 말씀드리면, <strong>이번 실행에서는 두 후보가 모두 0건으로 동점</strong>이라 결과가 바뀌지는 않았습니다. 후보가 갈릴 때 효과가 나는 구조입니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q8</span>ToT를 왜 썼습니까? 과한 것 아닙니까?</p>
+    <p class="a">비용이 작기 때문입니다. 교정은 드물게 발생해 <strong>5화면에 1회</strong> 수준이라 후보를 늘려도 부담이 크지 않습니다.<br>
+    단일 생성은 실패 시 복구 수단이 없지만, 후보를 여러 갈래로 두면 검증기가 고를 수 있습니다. <strong>검증 기반 탐색</strong>으로 쓴 것이지 탐색 자체가 목적은 아닙니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q9</span>LLM을 줄이고 규칙을 쓴 이유는?</p>
+    <p class="a">줄인 게 아니라 <strong>역할을 나눈 것</strong>입니다. 문법 치환·선언부 매핑·DTO는 규칙으로 100% 처리하고, LLM은 계산·분기가 섞인 본문에만 씁니다.<br>
+    결과적으로 포팅 대상 46건 중 <strong>21건(46%)이 규칙으로 빠져</strong> LLM 호출 자체를 회피했고, 화면당 호출이 <strong>5건에서 1건</strong>으로 줄었습니다. 1,416회 반복 규모에서는 이 차이가 그대로 비용이 됩니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q10</span>가장 어려웠던 기술 문제는?</p>
+    <p class="a">"컴파일 성공이 실행 성공을 뜻하지 않는다"였습니다. 정적 검증을 전부 통과한 코드가 실행에서 달랐는데, <strong>검증할 수단 자체가 없었습니다.</strong><br>
+    돌파구는 기술이 아니라 <strong>전제를 의심한 것</strong>이었습니다. "실행할 수단이 없다"가 오판이었고, 필요한 건 애플리케이션 기동이 아니라 메서드를 부를 최소 환경이었습니다. AS-IS가 쓰는 프레임워크 API가 10개 남짓의 닫힌 집합이라 만들 수 있었습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q11</span>왜 30개 화면입니까? 표본이 적지 않습니까?</p>
+    <p class="a">두 세트를 나눠 씁니다. <strong>30화면은 정답키가 딸린 채점용</strong>으로, 결함 10건과 중복 330행의 정답이 확정돼 있어 탐지 성능을 수치로 잴 수 있습니다. <strong>실행 비교는 5화면</strong>이고 그중 3화면이 실행 가능했습니다.<br>
+    표본이 적다는 지적은 맞습니다. 그래서 <strong>단일 세트로 일반화하지 않고</strong> 지표마다 어느 세트 기준인지 함께 적습니다. 유형별 확대는 파일럿 과제로 남겨뒀습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q12</span>탐지율 100%는 정답을 보고 맞춘 것 아닙니까?</p>
+    <p class="a">그 의심이 정당해서 저희도 확인했습니다. 정답키를 보고 <strong>개별 규칙을 맞추지 않고 탐지기 범주를 넓혔고</strong>, 후보 중 오탐이 54건 난 것은 폐기했습니다.<br>
+    그리고 만점이 끼워 맞춘 결과인지 보려고 <strong>다른 소스 세트에 교차 적용</strong>했더니, 이 프로젝트가 처음부터 써온 원본에서 <strong>여태 보고되지 않은 실제 결함</strong>을 찾아냈습니다. 과적합이 아니라는 근거로 보고 있습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q13</span>점수가 88.2에서 80.9로 내려갔는데요?</p>
+    <p class="a">도구가 나빠진 게 아니라 <strong>안 재던 두 가지를 재기 시작</strong>했기 때문입니다.<br>
+    하나는 화면 요청 계층입니다. 처음 측정했더니 생성된 Api가 권한 게이트와 결과 메시지를 통째로 버리고 있었는데, <strong>정적 검증은 전부 통과하는 코드</strong>였고 업무 로직 100% 뒤에 완전히 가려져 있었습니다.<br>
+    다른 하나는 규칙 처리 비중의 분모입니다. 실제로는 변환하지 않는 것을 "규칙으로 처리했다"고 세고 있었습니다.<br>
+    <strong>측정 범위를 넓히면 점수는 내려갑니다. 그 방향이 맞다고 보고 되돌리지 않았습니다.</strong></p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q14</span>이 시스템의 한계는?</p>
+    <p class="a">셋입니다. <strong>실행 가능 범위</strong>가 3/5입니다 — 원본이 컴파일되지 않는 화면은 실행 비교를 할 수 없습니다. <strong>공수 절감률</strong>은 수작업 기준선이 없어 파일럿에서 측정합니다. <strong>표본</strong>이 1개 업무그룹에 편중돼 있습니다.<br>
+    그리고 두 가지는 <strong>의도한 제한</strong>입니다 — 본 적 없는 패턴에는 규칙을 만들지 않고, 원본 결함은 고치지 않고 보존합니다. 잘못된 자동화를 막기 위한 선택입니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q15</span>완전 자동화가 가능합니까?</p>
+    <p class="a">현재 구조는 완전 자동화가 아니라 <strong>통제된 자동화</strong>입니다. BLOCKER가 하나라도 있으면 저장이 불가하고, 승인 전에는 산출물과 DB에 아무것도 쓰지 않습니다.<br>
+    승인 게이트를 없앨 수는 있지만, 그러면 <strong>검증되지 않은 산출물이 유입되는 경로</strong>가 생깁니다. 1,416개 규모에서는 그게 더 비쌉니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q16</span>이걸 Deep Agent라고 부를 수 있습니까?</p>
+    <p class="a">세 가지 근거를 들겠습니다. <strong>계획 기반 실행</strong> — 코드 생성 전에 계획을 파일로 고정하고 이후 단계가 그 계획만 따릅니다. <strong>다중 후보 탐색</strong> — ToT로 방침이 다른 후보를 병렬 생성합니다. <strong>검증 기반 자가 교정</strong> — 실패를 피드백해 재생성하고 검증기가 채점합니다.<br>
+    단순 도구 호출 에이전트와 다른 점은 <strong>판단 근거가 로그에 남고 재현된다</strong>는 것입니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q17</span>RAG를 왜 쓰지 않았습니까?</p>
+    <p class="a">필요한 컨텍스트가 <strong>검색해 올 지식이 아니라 지금 소스에서 확정되는 사실</strong>이기 때문입니다. 어떤 메서드를 호출할지는 유사 문서 검색 문제가 아니라 호출 관계도에서 결정되는 값이고, 검색으로 근사하면 오히려 환각의 입구가 됩니다.<br>
+    대신 <strong>정적 분석으로 확정해 계약으로 주입</strong>합니다. RAG는 파일럿 산출물이 코퍼스가 된 이후로 명시적으로 연기했습니다.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q"><span>Q18</span>다음 단계는?</p>
+    <p class="a">1순위는 <strong>실행 범위 확대</strong>입니다. 자가 교정을 아무리 고도화해도 개선되는 건 이미 높은 문법 층이고, 낮은 기능 층을 건드리려면 실행 수단이 있어야 합니다. 가장 큰 병목에 자원을 씁니다.<br>
+    2순위는 유형별 파일럿으로 <strong>사람 수정 라인 비율을 사람 리뷰 기준으로 재측정</strong>하는 것입니다.<br>
+    그리고 확장 축으로, 전환 직후 <strong>LLM이 표준 개발 형식을 한 번 더 검토</strong>하게 하려 합니다. 10년 이상 운영하며 이원화된 소스를 네이밍·계층 책임·공통 규약 기준으로 정비하는 것으로, 전환을 "이관"이 아니라 "정비"로 만드는 작업입니다.</p>
+  </div>
+</section>
+
+<section id="drill">
+  <div class="shead">
+    <span class="idx">DRILL</span>
+    <h2>꼬리질문 대응</h2>
+    <span class="note">집요하게 파고들 때</span>
+  </div>
+
+  <table class="scroll">
+    <tr><th style="width:42%">꼬리질문</th><th>대응 핵심</th></tr>
+    <tr>
+      <td>"실행 못 한 2화면은 그냥 실패 아닌가요?"</td>
+      <td>실패가 아니라 <b>AS-IS 원본이 컴파일되지 않는 상태</b>입니다. 그리고 그건 저희 벤치마크가 <b>의도적으로 심은 결함</b>이라 탐지 대상이었고, 실제로 잡아냈습니다. 원본을 고치지 않는 게 원칙이라 실행 불가로 분류했습니다.</td>
+    </tr>
+    <tr>
+      <td>"규칙이 46%면 AI는 절반만 한 거네요?"</td>
+      <td>역으로 보셔야 합니다. <b>규칙으로 되는 걸 LLM에 맡기지 않은 것이 설계의 성과</b>입니다. 1,416회 반복에서 그 46%가 그대로 비용과 환각 위험입니다. LLM은 규칙이 못 하는 계산·분기에만 씁니다.</td>
+    </tr>
+    <tr>
+      <td>"교정이 1회차에 끝났으면 루프가 필요 없던 것 아닌가요?"</td>
+      <td>필요 여부는 <b>실패했을 때 드러납니다.</b> 이번엔 1회차로 수렴했지만 상한이 없으면 자율 탐색이 됩니다. 그리고 이 루프를 만들며 <b>기존 코드의 실제 결함 2건</b>(교정 결과가 조용히 버려지던 문제, 중괄호 오류가 엉뚱한 메서드에 귀속되던 문제)을 찾아 고쳤습니다.</td>
+    </tr>
+    <tr>
+      <td>"0.20%면 리뷰할 게 거의 없었다는 뜻 아닌가요?"</td>
+      <td>지표가 리뷰 가치를 <b>과소평가하는 구조</b>입니다. 이번 리뷰가 찾은 결함 3건 중 2건은 산출물이 아니라 <b>생성기를 고쳐</b> 해소했고, 그러면 수정 라인으로 잡히지 않습니다. 그래서 AI 리뷰어 1차 기준의 <b>하한값</b>으로 보고합니다.</td>
+    </tr>
+    <tr>
+      <td>"정답키가 있는 세트라 쉬웠던 것 아닌가요?"</td>
+      <td>정답키는 <b>채점을 가능하게 할 뿐 난도를 낮추지 않습니다.</b> 오히려 정답이 있어서 "놓친 5건"이 드러났고 그게 보강 목록이 됐습니다. 정답이 없는 실제 전환 대상에서도 <b>원본 XML 결함 3건과 결과 건수 불일치</b>를 찾아냈습니다.</td>
+    </tr>
+    <tr>
+      <td>"LLM 모델을 바꾸면 결과가 달라지지 않나요?"</td>
+      <td>달라질 수 있습니다. 다만 <b>계약 주입과 검증 구조는 모델과 무관</b>합니다. 지어낸 호출은 어떤 모델이든 BLOCKER로 막히고, 채점은 규칙 기반 검증기가 합니다. 모델 교체 시 <b>정답키 대조로 회귀를 바로 잴 수 있는</b> 구조도 갖춰져 있습니다.</td>
+    </tr>
+    <tr>
+      <td>"이걸 실제 프로젝트에 쓸 수 있나요?"</td>
+      <td>지금은 <b>로컬 도구 + 사람 승인</b> 형태입니다. 8주 범위에서는 이게 맞는 형태라고 판단했습니다. 실제 적용의 다음 관문은 유형별 파일럿 20~30화면이고, 거기서 <b>사람 수정 라인 비율과 공수 절감률</b>을 실측해야 확대 여부를 판단할 수 있습니다.</td>
+    </tr>
+    <tr>
+      <td>"Agent라기보다 파이프라인 아닌가요?"</td>
+      <td>고정 파이프라인인 것은 <b>의도한 선택</b>입니다. 다만 안에서 <b>판단이 일어납니다</b> — 메서드마다 규칙이냐 LLM이냐를 정하고, BLOCKER 10건 중 고칠 9건과 넘길 1건을 가르고, 후보를 만들어 채점해 고릅니다. 그 판단이 전부 로그에 근거와 함께 남습니다. 자율성을 뺀 대신 <b>재현성과 통제성</b>을 얻은 구조입니다.</td>
+    </tr>
+  </table>
+
+  <div class="ok">
+    <h4>답변이 막힐 때의 안전한 형태</h4>
+    <p style="margin:0">모르는 건 지어내지 않습니다. <b>"그건 측정하지 않았습니다. 다만 측정하려면 ~가 필요하고, 그게 다음 단계 1순위입니다."</b> — 이 프로젝트가 문서 전체에서 지켜온 태도와 일치하고, 평가 렌즈의 "성장 가능성"에도 정확히 걸립니다.</p>
+  </div>
+</section>
+
+</div>

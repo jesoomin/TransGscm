@@ -435,35 +435,39 @@ set_text(shp(s4, "Text 9"), [
 
 set_text(shp(s4, "Text 13"), [
     ("전제 재검토", True, 8.5, MINT),
-    ("“실행 수단이 없다”가 오판 — 필요한 건 앱 기동이 아닌 F 메서드 호출 환경.",
-     False, 8, GREY),
-    ("AS-IS 프레임워크 API는 10개 남짓의 닫힌 집합", False, 8, GREY),
-    ("", False, 3, GREY),
-    ("① 최소 실행 검증 실행 환경 (L3)", True, 8.5, DARK),
-    ("데이터 계층을 양쪽 동일 고정 테스트 데이터로 고정 → 차이는 포팅 차이만", False, 8, GREY),
-    ("0행 / 1행 / 3행으로 분기 경로 전수", False, 8, GREY),
-    ("", False, 3, GREY),
+    ("“실행 수단이 없다”가 오판 — 앱 기동이 아니라 메서드 호출 환경이면 됐다",
+     False, 7.5, GREY),
+    ("", False, 2, GREY),
+    ("① 최소 실행 Harness", True, 8.5, DARK),
+    ("데이터 계층을 양쪽 동일 고정값으로 → 차이는 포팅 차이만", False, 7.5, GREY),
+    ("0행 / 1행 / 3행으로 분기 전수", False, 7.5, GREY),
+    ("", False, 2, GREY),
     ("② 호출 대상 계약 JSON 주입", True, 8.5, DARK),
-    ("호출 관계도의 실제 메서드명·반환 타입·결과 건수를 프롬프트에 명시", False, 8, GREY),
-    ("", False, 3, GREY),
-    ("③ ToT 수리 — 채점자 분리", True, 8.5, DARK),
-    ("후보 병렬 생성, 규칙 기반 검증기가 채점 (모델 자기평가 미사용)", False, 8, GREY),
-    ("", False, 3, GREY),
-    ("④ 자동화하지 않을 것을 확정", True, 8.5, DARK),
-    ("원본 결함은 보존·표시, 미확인 패턴에 규칙 생성 금지", False, 8, GREY),
+    ("실제 메서드명·반환 타입·결과 건수를 프롬프트에 명시", False, 7.5, GREY),
+    ("", False, 2, GREY),
+    ("③ ToT 교정 — 채점자 분리", True, 8.5, DARK),
+    ("후보 병렬 생성, 규칙 기반 검증기가 채점", False, 7.5, GREY),
+    ("BLOCKER 10건 중 9건만 교정 — 나머지는 사람에게", False, 7.5, GREY),
+    ("", False, 2, GREY),
+    ("④ 판단 근거를 로그로", True, 8.5, DARK),
+    ("모델이 밝힌 근거를 인용 출력 — 원본 버그 2건을 스스로 지적", False, 7.5, GREY),
+    ("", False, 2, GREY),
+    ("⑤ 자동화하지 않을 것을 확정", True, 8.5, DARK),
+    ("원본 결함은 보존·표시, 미확인 패턴에 규칙 생성 금지", False, 7.5, GREY),
 ])
 
 grp = [s for s in s4.shapes if s.shape_type == 6][0]
 set_text(gshp(grp, "Text 18"), [("33%→", True, 16, NAVY), ("100%", True, 16, MINT)])
 set_text(gshp(grp, "Text 20"), [
     ("업무 로직(F) 실행 일치율", True, 9, DARK),
-    ("27건 중 9건 일치 → 원인(레코드셋 추출 누락) 수정 후 48/48", False, 7, GREY),
+    ("27건 중 9건 → 원인(레코드셋 추출 누락) 수정 후 48/48", False, 7, GREY),
+    ("※ 실행 가능한 3화면 기준 (2화면은 원본 컴파일 불가)", False, 6.5, MINT),
 ])
 set_text(gshp(grp, "Text 22"), [("0/9→", True, 16, NAVY), ("9/9", True, 16, MINT)])
 set_text(gshp(grp, "Text 24"), [
     ("화면 요청(Api) 페이로드 일치율", True, 9, DARK),
-    ("“P는 순수 위임” = 표본 1건 가정. 30화면 전수 확인 → 권한 게이트 누락 발견",
-     False, 7, GREY),
+    ("“P는 순수 위임” = 표본 1건 가정 → 30화면 전수 확인으로 반증", False, 7, GREY),
+    ("※ 메시지 키는 0/9 — 응답 규약 미확정, 지어내지 않음", False, 6.5, MINT),
 ])
 set_text(gshp(grp, "Text 26"), [("5→", True, 16, NAVY), ("1건", True, 16, MINT)])
 set_text(gshp(grp, "Text 28"), [
