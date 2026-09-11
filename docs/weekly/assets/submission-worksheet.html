@@ -255,7 +255,7 @@ footer p{margin:0 0 6px}
     <h2>시연 영상 5분 — 구성의 척추</h2>
     <span class="note">장표·주차별 본문이 여기서 나온다</span>
   </div>
-  <p class="lede">소스를 제출하지 않으므로 <b>화면에 보이는 로그가 유일한 증거</b>입니다. 제출 가이드도 “Agent의 추론 과정이 보여지는 로그로 증명해야 기술 깊이를 평가받는다”고 못 박고 있어, 콘솔이 주인공이고 UI는 30초 이내 보조로 씁니다.</p>
+  <p class="lede"><b>영상은 하나입니다</b> — 5분 안에 <b>장표를 띄워 설명하면서 시연까지</b> 마칩니다. 소스를 제출하지 않으므로 화면에 보이는 로그가 유일한 증거이고, 장표는 그 로그를 읽히게 만드는 지도 역할입니다. 컷별 대사·편집 지시는 <code>presentation-kit.html</code>의 5분 촬영 대본에 있습니다.</p>
 
   <div class="field">
     <div class="fhead"><span class="flabel">이 영상이 증명할 것</span><span class="fhint">5가지</span><button class="copy" type="button">복사</button></div>
@@ -290,31 +290,59 @@ footer p{margin:0 0 6px}
   - 이 한 줄을 0:20 지점에 넣어 두 세트를 말로 구분한다</pre>
   </div>
   <div class="field">
-    <div class="fhead"><span class="flabel">시간 배분</span><span class="fhint">총 5:00</span><button class="copy" type="button">복사</button></div>
-<pre>1. 0:00 ~ 0:30  무엇을, 왜
+    <div class="fhead"><span class="flabel">시간 배분</span><span class="fhint">장표+시연 한 영상, 총 5:00</span><button class="copy" type="button">복사</button></div>
+<pre>1. 0:00 ~ 0:35  장표 1 — 문제와 에이전트 구조
   - 전환 대상과 병목을 한 문장으로
-  - 투입 화면에 정답키가 있다는 사실을 선언
+  - Planner / Translator / Validator / Repairer / 승인 게이트
 
-2. 0:30 ~ 1:30  계획 수립 (STAGE 1)
-  - 규칙 21건 / LLM 25건으로 갈리는 판단 근거를 짚는다
+2. 0:35 ~ 1:05  장표 2 — 추론 순환
+  - 뒤에 볼 로그가 어느 칸에서 나오는지 미리 짚는다
+
+3. 1:05 ~ 1:35  터미널 — 계획 수립 (STAGE 1)
+  - 규칙 21건 / LLM 25건으로 갈리는 판단 근거
   - 원본이 컴파일 안 되는 화면을 변환 전에 잡아내는 장면
+  - 투입 화면에 정답키가 있다는 사실을 여기서 선언
 
-3. 1:30 ~ 3:30  핵심 구간 (배점 40%)
-  1) 계획이 도구를 지휘 — STAGE 3 PLAN
-  2) 호출 대상 계약 주입 — CONTEXT
-  3) 모델이 남긴 근거 — THINK (원본 버그를 스스로 지적)
-  4) 검증이 결함을 잡음 — BLOCKER 10건
-  5) 자가 교정 게이트가 9건만 선택 — 나머지는 사람에게
-  6) 정답키와 좌우 대조
+4. 1:35 ~ 2:00  터미널 — 계약 주입 + THINK   ★
+  1) 호출 대상 계약 주입 — CONTEXT
+  2) 모델이 남긴 근거 — THINK (원본 버그를 스스로 지적)
 
-4. 3:30 ~ 4:30  결과 확인
-  1) 동작 일치 — 업무 로직(F) 48/48 · 화면 요청(Api) 0/9(페이로드 9/9)
-  2) 실행 요약 — 마지막 줄 "미반영"
-  3) 실제 전환 대상에서 찾은 결함 (PLA046)
-  4) 승인 게이트 (UI, 20초)
+5. 2:00 ~ 2:20  터미널 — 정적 검증, BLOCKER 10건
 
-5. 4:30 ~ 5:00  성과 수치
-  - 탐지율 10/10 · 중복 209/210 · 스코어카드 80.9 · 사람 수정 0.20%</pre>
+6. 2:20 ~ 2:55  터미널 — 선별 게이트 + ToT 채점   ★★
+  - 10건 중 9건만 자가 교정, 1건은 사람에게
+
+7. 2:55 ~ 3:25  터미널 — 정답키 대조 + 재검증 10 → 1
+
+8. 3:25 ~ 3:50  터미널 — 동작 일치 + 실행 요약
+  1) 업무 로직(F) 48/48 · 화면 요청(Api) 0/9(페이로드 9/9)
+  2) 실행 요약 마지막 줄 "미반영"
+
+9. 3:50 ~ 4:05  UI — 승인 게이트 (15초)
+
+10. 4:05 ~ 4:35  장표 3 — 난제와 결과 수치
+  - 탐지율 10/10 · 중복 209/210 · 스코어카드 80.9 · 사람 수정 0.20%
+
+11. 4:35 ~ 5:00  장표 3 — 2차 적용 + 마무리
+
+배분 : 장표 2:00(40%) · 터미널 2:45(55%) · UI 0:15(5%)
+추론 로그 구간 1:05~3:25 = 2분 20초(47%) — 배점 구간을 넘겨 잡았다</pre>
+  </div>
+  <div class="field">
+    <div class="fhead"><span class="flabel">화면 구성</span><span class="fhint">나란히 놓지 않는다</span><button class="copy" type="button">복사</button></div>
+<pre>1. 장표와 터미널을 한 화면에 나란히 놓지 않는다
+  - 터미널이 작아지면 로그를 읽을 수 없다
+  - 로그를 못 읽으면 이 영상의 근거가 통째로 사라진다
+
+2. 전체화면 전환으로 간다
+  1) 장표 구간 — 슬라이드 쇼 전체화면 (발표자 노트 창이 잡히지 않게 확인)
+  2) 시연 구간 — 터미널 전체화면, 글꼴 16pt 이상
+  3) 승인 게이트 15초만 브라우저
+
+3. 반드시 담을 것
+  1) 터미널 추론 로그 — 주인공
+  2) 정답키 CSV와 수리된 코드의 좌우 대조
+  3) 실행 요약 마지막 줄 "미반영 — 사람이 승인해야 기록됨"</pre>
   </div>
   <div class="field">
     <div class="fhead"><span class="flabel">실행 명령</span><span class="fhint">녹화 시 그대로 입력</span><button class="copy" type="button">복사</button></div>
@@ -322,9 +350,9 @@ footer p{margin:0 0 6px}
   python -m agents.run_pipeline <평가 세트>
       --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend --dry-run
 
-2. 본 녹화
+2. 본 녹화 — 응답 캐시를 켜고 두 번째 실행을 찍는다
   python -m agents.run_pipeline <평가 세트>
-      --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend
+      --screens PLA087,PLA089,PLA093,PLA096,PLA100 --no-ai-recommend --cache
 
 3. 성과 수치 확보
   python -m agents.benchmark <샘플폴더> --answer-dir <정답키폴더>
@@ -333,7 +361,8 @@ footer p{margin:0 0 6px}
   1) 터미널 UTF-8 확인 — cp949면 로그가 중단된다 (chcp 65001)
   2) 폭 100컬럼 이상, 글꼴 14pt 이상
   3) .env / API 키 / DB 접속정보 노출 없는지 스크롤 정리
-  4) 실행 시간 약 40초 — 배속 없이 담긴다
+  4) 실행 시간 — 첫 실행 약 40초, --cache 재실행 약 11초 (로그는 동일)
+     남는 11초는 동작 일치 검증이 실제로 javac를 돌리는 시간이라 건너뛰지 않는다
   5) UI로 실행해도 터미널에 추론 로그가 찍힌다
      (streamlit을 띄운 터미널을 화면에 함께 잡으면 UI와 로그가 같이 보인다)</pre>
   </div>

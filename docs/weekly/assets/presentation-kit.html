@@ -123,9 +123,8 @@ li b{color:var(--ink)}
 <nav>
   <div class="navrow">
     <a href="#rule">쓰면 안 되는 문장</a>
-    <a href="#shoot">촬영 큐시트</a>
-    <a href="#talk">발표 대본 10분</a>
-    <a href="#cut">시연 컷·자막 5분</a>
+    <a href="#shoot">5분 촬영 대본</a>
+    <a href="#talk">대사 원본</a>
     <a href="#qa">예상 질의 18문항</a>
     <a href="#drill">꼬리질문 대응</a>
   </div>
@@ -170,109 +169,116 @@ li b{color:var(--ink)}
 <section id="shoot">
   <div class="shead">
     <span class="idx">SHOOT</span>
-    <h2>촬영 큐시트</h2>
-    <span class="note">영상 2건 · 발표 10분 + 시연 5분</span>
+    <h2>5분 촬영 대본 — 장표 + 시연</h2>
+    <span class="note">영상 1건 · 5:00 정각 · 500MB 이하</span>
   </div>
-  <p class="lede">대사는 <a href="#talk">발표 대본</a>과 <a href="#cut">시연 컷</a>에 있습니다. 이 절은 그 옆에 두고 보는 <b>조작 지시</b>입니다 — 몇 분에 무엇을 띄우고, 어디서 멈추고, 무엇을 잘라낼지.</p>
+  <p class="lede">장표를 띄워 설명하면서 시연까지 <b>한 영상 안에</b> 담습니다. 장표와 로그가 같은 5분을 나눠 쓰므로 초 단위로 배분했습니다 — <b>장표 2:00(40%) · 터미널 2:45(55%) · UI 0:15</b>. 가이드가 배점을 몰아둔 <b>추론 로그 구간은 1:05~3:25, 2분 20초(47%)</b>로 잡았습니다.</p>
 
   <div class="ok">
-    <h4>가이드의 “Planning: 5-step plan generated”에 대하여</h4>
-    <p style="margin:0">이 문장은 가이드가 <b>“고수준 로그란 이런 것”을 설명하려고 든 예시</b>입니다. 그대로 쓰라는 뜻이 아니고, 우리 출력에도 없습니다. 가이드가 요구하는 건 <b>단순 <code>Thinking... → Tool Call...</code>이 아니라 판단이 보이는 로그</b>이고, 우리 쪽 대응물은 <code>PLAN</code> · <code>DECIDE</code> · <code>THINK</code> · <code>REFLECT</code> 네 줄입니다. 의도는 충족하되 <b>화면에 실제로 뜨는 문장만</b> 씁니다.</p>
+    <h4>화면은 전환식으로</h4>
+    <p style="margin:0">장표와 터미널을 나란히 놓지 마세요. 터미널이 작아지면 <b>로그를 읽을 수 없고</b>, 그러면 이 영상의 근거가 통째로 사라집니다. <b>장표 구간은 장표 전체화면, 시연 구간은 터미널 전체화면</b>으로 전환합니다. 장표가 앞에서 구조를 먼저 세워주기 때문에, 뒤의 로그가 설명 없이도 읽힙니다.</p>
   </div>
 
-  <h3>0. 공통 준비</h3>
+  <h3>큐시트</h3>
+  <div class="scroll">
+  <table>
+    <tr><th style="width:11%">시각</th><th style="width:9%">화면</th><th style="width:26%">보이는 것</th><th>말할 것 · 편집</th></tr>
+    <tr>
+      <td><code>0:00</code><br><span class="pill p-rule">35초</span></td><td>장표 1</td>
+      <td>문제 정의 → 에이전트 구성</td>
+      <td>“화면 하나를 옮기려면 P·F·D와 SQL <b>4종을 사람이 매번 추적</b>해야 하고, 이게 <b>1,416개 화면에서 반복</b>됩니다. 게다가 원본에 컴파일 오류가 섞여 있어, <b>정상 원본을 전제한 도구는 첫 화면에서 멈춥니다.</b><br>그래서 계획을 먼저 고정하고, <b>규칙 46%·LLM 54%로 나눠</b> 변환한 뒤, <b>변환기와 분리된 검증기</b>가 판정하고, <b>사람이 승인해야만</b> 반영되게 만들었습니다.”<br><span class="pill p-block">편집</span> 구성 5줄에 순차 하이라이트</td>
+    </tr>
+    <tr>
+      <td><code>0:35</code><br><span class="pill p-rule">30초</span></td><td>장표 2</td>
+      <td>추론 순환 그림</td>
+      <td>“구조는 <b>REASON → ACT → OBSERVE → REFLECT</b> 순환입니다. 계획과 저장은 순환 <b>밖</b>에 있고, 그 사이에서만 돕니다.<br>핵심은 이 한 줄입니다 — <b>관찰자가 모델이 아니라 규칙 기반 검증기입니다.</b> 그래서 순환에 상한과 채점이 성립합니다.<br>지금부터 보실 로그가 정확히 이 순환입니다.”<br><span class="pill p-block">편집</span> 순환 화살표를 따라 커서 이동 → 강조 줄에서 <b>3초 정지</b> ★</td>
+    </tr>
+    <tr>
+      <td><code>1:05</code><br><span class="pill p-llm">30초</span></td><td>터미널</td>
+      <td><code>STAGE 1/8 PLAN</code><br><code>DECIDE</code> 2줄 · <code>PLAN</code> 2줄</td>
+      <td>“코드를 만들기 전에 계획을 <b>파일로 고정</b>합니다. 이 단계엔 LLM을 쓰지 않습니다.<br>메서드마다 규칙이냐 LLM이냐를 판단하고 <b>근거를 남깁니다.</b> 46%가 규칙으로 빠져 호출 자체를 회피합니다.<br>원본이 컴파일되지 않는 화면은 <b>변환 전에</b> 잡아냅니다.”<br><span class="pill p-block">편집</span> 실행이 0.1초라 <b>정지 프레임</b>. 네 줄에 화살표</td>
+    </tr>
+    <tr>
+      <td><code>1:35</code><br><span class="pill p-llm">25초</span></td><td>터미널</td>
+      <td><code>PLAN 1단계 계획이 지목한…</code><br><code>CONTEXT</code> · <code>THINK</code></td>
+      <td>“<b>계획이 도구 호출을 지휘합니다.</b> 모델이 무엇을 부를지 스스로 고르지 않습니다.<br>이 <code>THINK</code> 줄은 우리가 쓴 해설이 아니라 <b>모델 자신의 문장</b>입니다. 그런데 보시면 — <b>요구하지 않은 원본 버그 2건을 스스로 지적</b>했습니다. 옮기기만 하는 게 아닙니다.”<br><span class="pill p-block">편집</span> <b>확대 + 3초 정지.</b> <code>FIXME(원본 버그)</code> 두 곳에 화살표 ★</td>
+    </tr>
+    <tr>
+      <td><code>2:00</code><br><span class="pill p-llm">20초</span></td><td>터미널</td>
+      <td><code>STAGE 4/8 VALIDATE</code><br><code>BLOCKER 10건</code></td>
+      <td>“검증기는 <b>변환기와 분리</b>돼 있습니다. 만든 쪽이 스스로 채점하지 않게 하려는 설계입니다.<br>정답키에 심어둔 결함을 포함해 <b>10건</b>을 잡았습니다.”<br><span class="pill p-block">편집</span> <code>BLOCKER 10건</code>에 박스</td>
+    </tr>
+    <tr>
+      <td><code>2:20</code><br><span class="pill p-block">35초</span></td><td>터미널</td>
+      <td><code>DECIDE … 교정 대상에서 제외</code><br><code>REFLECT 수리 대상 9건</code><br><code>후보 채점</code> · <code>채택</code></td>
+      <td>“여기가 핵심입니다. <b>10건 중 9건만</b> 교정 대상으로 골랐습니다.<br>XML 태그 누락은 <b>규칙 기반 산출물이라 LLM이 고칠 문제가 아닙니다.</b> 의도적으로 빼고 사람에게 넘깁니다. Agent가 <b>내가 고칠 것과 사람이 볼 것을 구분</b>합니다.<br>그리고 후보를 방침이 다르게 만든 뒤 <b>검증기가 채점해서</b> 고릅니다.”<br><span class="pill p-block">편집</span> <b>가장 크게 확대 + 4초 정지.</b> 제외 줄과 9건 줄을 나란히 박스 ★★</td>
+    </tr>
+    <tr>
+      <td><code>2:55</code><br><span class="pill p-llm">30초</span></td><td>터미널<br>(좌우 분할)</td>
+      <td>왼쪽 정답키 CSV<br>오른쪽 수리된 java<br><code>BLOCKER 1건 ← 10건</code></td>
+      <td>“정답키에 <b>정상 메서드명은 dPLA08701</b>이라고 적혀 있고, 수리된 코드가 정확히 그 이름을 씁니다. <b>검증만 통과한 게 아니라 정답과 일치</b>합니다.<br>1회차 만에 9건이 해소돼 <b>10건에서 1건</b>으로 줄었습니다. 회차엔 상한이 있습니다 — 무한 재시도는 자율 탐색이 됩니다.”<br><span class="pill p-block">편집</span> 양쪽 <code>dPLA08701</code>에 같은 색 박스</td>
+    </tr>
+    <tr>
+      <td><code>3:25</code><br><span class="pill p-rule">25초</span></td><td>터미널</td>
+      <td><code>STAGE 6/8</code> 동작 일치<br>실행 요약 전체</td>
+      <td>“정적 검증이 아니라 <b>실제 실행 결과</b>로 비교합니다. 업무 로직은 <b>48건 전건 일치</b>, <b>실행 가능한 3화면 기준</b>입니다.<br>화면 요청 0/9는 못 옮긴 게 아니라 <b>결과 메시지를 담을 규약이 아직 없어서</b>입니다. 페이로드는 9/9 일치합니다.<br>그리고 마지막 줄 — 여기까지 자동으로 왔지만 <b>아무것도 저장하지 않았습니다.</b>”<br><span class="pill p-block">편집</span> 요약표를 한 화면에. <b>“미반영” 줄에 화살표</b></td>
+    </tr>
+    <tr>
+      <td><code>3:50</code><br><span class="pill p-rule">15초</span></td><td>UI</td>
+      <td>단계 체크리스트 → 승인 버튼</td>
+      <td>“실제 반영은 사람이 이 버튼을 눌러야만 일어납니다.”<br><span class="pill p-block">편집</span> <b>15초 엄수.</b> 클릭 직전에 멈춘다</td>
+    </tr>
+    <tr>
+      <td><code>4:05</code><br><span class="pill p-rule">30초</span></td><td>장표 3</td>
+      <td>난제 → 결과 3수치</td>
+      <td>“가장 큰 문제는 <b>컴파일 성공이 실행 성공을 뜻하지 않는다</b>였습니다. AlphaTrans도 같은 간극을 보고합니다 — 문법 96.4% 대 기능 25.1%.<br>돌파구는 <b>전제를 의심한 것</b>이었습니다. 앱 기동이 아니라 메서드를 부를 최소 환경이면 됐고, 그래서 <b>33%에서 100%</b>로 닫았습니다. <b>실행 가능한 3화면 기준</b>입니다.”<br><span class="pill p-block">편집</span> ※ 범위 주석을 <b>반드시 화면에 보이게</b></td>
+    </tr>
+    <tr>
+      <td><code>4:35</code><br><span class="pill p-rule">25초</span></td><td>장표 3</td>
+      <td>2차 적용 → 마무리</td>
+      <td>“탐지율은 10/10, 오탐 0건입니다. 만점이 <b>정답에 끼워 맞춘 것인지</b> 확인하려 다른 세트에 교차 적용했더니, 처음부터 써온 원본에서 <b>여태 보고되지 않은 결함</b>을 찾아냈습니다.<br>시간이 더 있었다면 <b>네이밍과 계층 책임 같은 암묵지를 규칙으로 정리</b>해, 전환을 이관이 아니라 <b>운영 품질까지 보장하는 정비</b>로 만들고 싶습니다. 2차 과제로 두었습니다.<br><b>이 프로젝트는 AI로 코드를 만든 게 아니라, AI를 검증 가능한 구조로 통제한 프로젝트입니다.</b>”<br><span class="pill p-block">편집</span> 마지막 문장에서 <b>정지 후 종료</b></td>
+    </tr>
+  </table>
+  </div>
+
+  <h3>녹화 준비</h3>
   <table>
     <tr><th style="width:22%">항목</th><th>설정</th></tr>
-    <tr><td>터미널</td><td><code>chcp 65001</code>로 UTF-8 확인 · 폭 100컬럼 이상 · 글꼴 14pt 이상 · 배경 어둡게</td></tr>
-    <tr><td>색상</td><td>색이 안 나오면 <code>GSCM_LOG_COLOR=1</code></td></tr>
-    <tr><td>화면 정리</td><td><code>.env</code> · API 키 · DB 접속정보가 스크롤에 남아 있지 않은지 확인. <code>cls</code>로 비우고 시작</td></tr>
-    <tr><td>Streamlit</td><td>미리 띄워두고 <b>파이프라인 실행 완료 상태</b>로 대기 — 부팅·실행 대기는 찍지 않는다</td></tr>
-    <tr><td>리허설</td><td><code>--dry-run</code>으로 전 구간 1회. LLM 없이 계획~검증 경로가 그대로 재현된다</td></tr>
-    <tr><td>녹화 도구</td><td>화면 녹화 + 시스템 음성 없이. 자막은 편집에서 얹는다(가이드상 음성은 선택)</td></tr>
-    <tr><td>파일명</td><td><code>[사번]_[성명]_시연영상.mp4</code> · 500MB 이하 · MP4</td></tr>
+    <tr><td>화면 전환</td><td>장표 전체화면 ↔ 터미널 전체화면. <b>동시 배치 금지</b> — 로그가 안 읽히면 근거가 사라진다</td></tr>
+    <tr><td>터미널</td><td><code>chcp 65001</code>(UTF-8) · 폭 100컬럼 이상 · 글꼴 <b>16pt 이상</b>(영상에서 읽혀야 함) · <code>cls</code>로 비우고 시작</td></tr>
+    <tr><td>장표</td><td>슬라이드 쇼 모드. 발표자 노트 창이 화면에 잡히지 않게 확인</td></tr>
+    <tr><td>대기 제거</td><td><code>--cache</code>로 한 번 돌린 뒤 <b>두 번째 실행을 녹화</b> — 약 40초 → 약 11초. 로그는 동일하게 전부 출력된다</td></tr>
+    <tr><td>Streamlit</td><td>미리 띄우고 <b>실행 완료 상태</b>로 대기. 부팅·실행 장면은 찍지 않는다</td></tr>
+    <tr><td>보안</td><td><code>.env</code> · API 키 · DB 접속정보가 스크롤에 남지 않았는지 확인</td></tr>
   </table>
 
-  <h3>1. 발표 영상 — 10분</h3>
-  <p>화면은 <b>장표 전체화면</b>. 발표자 얼굴은 선택입니다. 슬라이드는 <b>4장</b>(표지 + 3)뿐이라, 넘기는 시점만 지키면 됩니다.</p>
-  <div class="scroll">
+  <h4>500MB를 넘기지 않는 설정</h4>
   <table>
-    <tr><th style="width:13%">시각</th><th style="width:22%">화면</th><th>조작 · 강조</th></tr>
-    <tr><td><code>0:00</code></td><td>표지</td><td>과제명·성명 보이게 2초 정지 후 시작</td></tr>
-    <tr><td><code>0:20</code></td><td>슬라이드 1</td><td>문제 정의 블록을 먼저 짚는다 — <b>규모·품질·리스크</b> 세 줄에 커서</td></tr>
-    <tr><td><code>1:00</code></td><td>슬라이드 1</td><td>에이전트 구성 5줄로 이동. <b>규칙 46% / LLM 54%</b>에서 잠깐 멈춤</td></tr>
-    <tr><td><code>1:40</code></td><td>슬라이드 1</td><td>성과 3개 → Key Message 순으로. Key Message는 <b>읽고 3초 정지</b></td></tr>
-    <tr><td><code>2:00</code></td><td>슬라이드 2</td><td>추론 순환 그림 전체를 먼저 보여준 뒤 <b>REASON → ACT → OBSERVE → REFLECT</b> 순으로 짚는다</td></tr>
-    <tr><td><code>2:40</code></td><td>슬라이드 2</td><td><b>“관찰자가 모델이 아니라 규칙 기반 검증기다”</b> 한 줄에 커서 + 정지 3초 ★</td></tr>
-    <tr><td><code>3:00</code></td><td>슬라이드 2</td><td>기술 3선을 01 → 02 → 03 순서로. 각 <b>강점</b> 줄을 소리내어 읽는다</td></tr>
-    <tr><td><code>5:30</code></td><td>슬라이드 2</td><td>도구 8칸으로 내려와 색 구분(민트=규칙, 네이비=LLM) 언급</td></tr>
-    <tr><td><code>6:00</code></td><td>슬라이드 3</td><td>난제 블록. <b>96.40% vs 25.14%</b> 대비를 짚는다</td></tr>
-    <tr><td><code>7:00</code></td><td>슬라이드 3</td><td>접근 ①~⑤. <b>④ 모델이 원본 버그를 스스로 지적</b>에서 멈춤 ★</td></tr>
-    <tr><td><code>8:40</code></td><td>슬라이드 3</td><td>결과 3수치. <b>※ 범위 주석을 반드시 읽는다</b> — 감추면 질문에서 무너진다</td></tr>
-    <tr><td><code>9:20</code></td><td>슬라이드 3</td><td><b>2차 적용 — 개발 표준 내재화</b> 블록. 여기서 마무리로 이어간다</td></tr>
-    <tr><td><code>9:40</code></td><td>슬라이드 3</td><td>차별점 3가지 → 스코어카드 하향 설명 → 한 줄 마무리</td></tr>
+    <tr><th style="width:22%">비트레이트</th><th style="width:20%">5분 용량</th><th>판단</th></tr>
+    <tr><td>8 Mbps</td><td>약 300 MB</td><td><b>권장.</b> 1080p 30fps H.264 에서 로그 글자가 충분히 선명하다</td></tr>
+    <tr><td>10 Mbps</td><td>약 375 MB</td><td>여유 있음. 확대 컷이 많으면 이쪽</td></tr>
+    <tr><td>12 Mbps</td><td>약 450 MB</td><td>한계에 근접 — 음성까지 넣으면 위험하다</td></tr>
   </table>
-  </div>
-  <div class="warn">
-    <h4>발표 영상에서 하지 말 것</h4>
-    <ul>
-      <li>장표를 <b>읽지 않습니다</b>. 장표엔 근거만 있고 설명은 말로 채웁니다</li>
-      <li>수치를 <b>범위 없이</b> 말하지 않습니다 — <code>100%</code>는 항상 “실행 가능한 3화면 기준”과 함께</li>
-      <li>10분을 넘기지 않습니다. <b>15분 초과분은 평가 제외</b>이고, 10분이 권장입니다</li>
-    </ul>
-  </div>
+  <p><b>1920×1080 · 30fps · H.264 · 8~10 Mbps</b>로 두면 안전합니다. 화면 녹화는 움직임이 적어 실제 용량은 대개 이보다 작게 나옵니다. 60fps는 필요 없습니다 — 용량만 두 배가 되고 로그 가독성은 그대로입니다.</p>
 
-  <h3>2. 시연 영상 — 5분</h3>
-  <p>화면은 <b>터미널이 주인공</b>. UI는 마지막에 20초만. 컷별 대사와 로그는 <a href="#cut">시연 컷·자막</a>에 있습니다.</p>
-  <div class="scroll">
-  <table>
-    <tr><th style="width:12%">시각</th><th style="width:16%">컷</th><th style="width:30%">조작</th><th>편집 지시</th></tr>
-    <tr><td><code>0:00</code></td><td>1 · 소개</td><td><code>ls</code>로 대상 파일 → 정답키 CSV 한 줄</td><td>자막만. 30초 안에 끝낸다</td></tr>
-    <tr><td><code>0:30</code></td><td>2 · 계획</td><td>실행 명령을 <b>화면에 직접 입력</b>하고 엔터</td><td>실행이 0.1초라 <b>정지 프레임</b>으로 전환. <code>DECIDE</code> 2줄 + <code>PLAN</code> 2줄에 화살표</td></tr>
-    <tr><td><code>1:30</code></td><td>3 · 계획→도구</td><td>STAGE 3 구간까지 스크롤</td><td><code>PLAN 1단계 계획이 지목한 25건에만</code> 줄 확대 + 박스</td></tr>
-    <tr><td><code>1:50</code></td><td>4 · THINK ★</td><td>THINK 블록으로 스크롤</td><td><b>확대 + 3초 정지.</b> <code>FIXME(원본 버그)</code> 두 곳에 화살표</td></tr>
-    <tr><td><code>2:15</code></td><td>5 · 검증</td><td>STAGE 4 결과</td><td><code>BLOCKER 10건</code> 강조</td></tr>
-    <tr><td><code>2:40</code></td><td>6 · 선별 ★</td><td>STAGE 5 게이트</td><td><b>가장 크게 확대 + 4초 정지.</b> <code>DECIDE … 교정 대상에서 제외</code>와 <code>수리 대상 9건</code>을 나란히 박스</td></tr>
-    <tr><td><code>3:10</code></td><td>7 · 정답 대조</td><td>화면 좌우 분할 — 정답키 CSV / 수리된 java</td><td><code>dPLA08701</code> 양쪽에 같은 색 박스</td></tr>
-    <tr><td><code>3:30</code></td><td>8 · 동작 일치</td><td>STAGE 6 + 실행 요약</td><td>요약표 전체를 한 화면에. <b>마지막 “미반영” 줄에 화살표</b></td></tr>
-    <tr><td><code>4:20</code></td><td>9 · UI</td><td>Streamlit — 단계 체크리스트 → 승인 버튼</td><td><b>20초 이내.</b> 버튼 클릭 직전에 멈춘다</td></tr>
-    <tr><td><code>4:40</code></td><td>10 · 성과</td><td>벤치마크 결과 또는 정지 슬라이드</td><td>수치 4줄. 5:00 정각에 끝낸다</td></tr>
-  </table>
-  </div>
-
-  <h4>오프닝 멘트 (가이드 권장 형태를 우리 실제 구조로)</h4>
-  <div class="say">
-    “이 Agent는 도구를 그때그때 고르는 방식이 아닙니다. <b>먼저 계획을 세워 무엇을 어떤 도구로 처리할지 고정하고</b>, 검증에 실패하면 <b>후보를 여러 개 만들어 규칙 기반 검증기가 채점</b>해 고칩니다. 그 판단 과정이 로그에 그대로 남고, 오늘 보실 것이 그 로그입니다.”
-  </div>
-
-  <h4>LLM 응답 대기를 잘라내는 법</h4>
-  <p>가이드가 <b>“긴 대기 시간은 잘라내거나 빠르게 재생”</b>하라고 합니다. 편집으로 잘라도 되지만, <b>재촬영이 더 깔끔합니다.</b></p>
-  <pre>python -m agents.run_pipeline &lt;평가 세트&gt; --screens PLA087,PLA089,PLA093,PLA096,PLA100     --no-ai-recommend --cache</pre>
-  <p><code>--cache</code>를 켜고 한 번 돌려 응답을 받아두면, 같은 명령의 두 번째 실행이 <b>약 40초 → 약 11초</b>로 줄어듭니다. 대기의 대부분이 LLM 응답이었기 때문입니다. 로그는 동일하게 전부 출력되므로 <b>대기 구간 없는 깨끗한 화면</b>을 그대로 찍을 수 있습니다.</p>
-  <p>남는 11초는 <b>동작 일치 검증이 실제로 javac를 돌리는 시간</b>입니다. 이 단계는 시연의 핵심이라 건너뛰지 않습니다 — <code>--fast</code>는 개발 중 반복 실행용이고, <b>녹화에는 쓰지 않습니다.</b></p>
-  <div class="warn">
-    <h4>다만 정직하게</h4>
-    <p style="margin:0">캐시 실행은 <b>같은 입력에 같은 응답을 재생</b>하는 것이라 결과가 조작되지 않습니다. 그래도 질문이 나오면 그대로 말하면 됩니다 — <b>“응답 캐시를 켜고 두 번째 실행을 녹화했습니다. 로그와 결과는 첫 실행과 동일합니다.”</b> 숨길 이유가 없고, 오히려 반복 실행 비용을 줄인 설계로 읽힙니다.</p>
-  </div>
-
-  <h3>3. 제출 전 최종 확인</h3>
+  <h3>제출 전 최종 확인</h3>
   <table>
     <tr><th style="width:8%"></th><th>항목</th></tr>
-    <tr><td>□</td><td>발표 영상 <b>10분 이내</b> · 시연 영상 <b>5분 이내</b></td></tr>
-    <tr><td>□</td><td>파일명 <code>[사번]_[성명]_시연영상.mp4</code> · MP4 · 500MB 이하</td></tr>
-    <tr><td>□</td><td>자막이 화면의 로그와 <b>글자까지 일치</b>하는지 (가장 중요)</td></tr>
+    <tr><td>□</td><td><b>5:00 이내</b> · MP4 · <b>500MB 이하</b> · 파일명 <code>[사번]_[성명]_시연영상.mp4</code></td></tr>
+    <tr><td>□</td><td>자막·내레이션이 화면의 로그와 <b>글자까지 일치</b>하는지 <span class="pill p-block">가장 중요</span></td></tr>
     <tr><td>□</td><td>수치에 <b>측정 범위</b>가 붙어 있는지 — <code>100%</code> 단독 금지</td></tr>
-    <tr><td>□</td><td>두 소스 세트를 <b>말로 구분</b>했는지</td></tr>
+    <tr><td>□</td><td>★ 정지 지점 3곳이 실제로 멈춰 있는지 (0:35 강조 줄 · 1:35 THINK · 2:20 선별)</td></tr>
+    <tr><td>□</td><td>UI 장면이 <b>15초 이내</b>인지</td></tr>
+    <tr><td>□</td><td>터미널 글자가 <b>재생 화면에서 읽히는지</b> — 휴대폰으로 한 번 재생해 확인</td></tr>
     <tr><td>□</td><td><code>.env</code> · API 키 · DB 접속정보 노출 없음</td></tr>
-    <tr><td>□</td><td>UI 장면이 <b>20초 이내</b>인지</td></tr>
-    <tr><td>□</td><td>핵심 구간(1:30~3:30)이 <b>확대·정지</b>되어 있는지</td></tr>
   </table>
 </section>
 
 <section id="talk">
   <div class="shead">
     <span class="idx">TALK</span>
-    <h2>발표 대본 — 10분</h2>
-    <span class="note">표지 + 3장 / 2분 · 4분 · 4분</span>
+    <h2>대사 원본 — 구두 발표용</h2>
+    <span class="note">영상 대본 아님 · 질의응답 근거</span>
   </div>
 
   <div class="cut"><span class="t">0:00 ~ 0:20 · 오프닝</span></div>
@@ -370,159 +376,6 @@ li b{color:var(--ink)}
     <b>셋</b>, 정답키로 정량 검증했습니다 — 탐지율 10/10, 오탐 0건. 처음엔 5/10이었는데 놓친 유형을 보고 탐지기 범주를 넓혔고, 만점이 <b>정답에 끼워 맞춘 것인지</b> 확인하려 다른 세트에 교차 적용했더니 이 프로젝트가 처음부터 써온 원본에서 <b>여태 보고되지 않은 실제 결함</b>을 찾아냈습니다.<br><br>
     끝으로 하나만 덧붙이겠습니다. 전환 스코어카드가 <b>88.2점에서 80.9점으로 내려갔습니다.</b> 도구가 나빠져서가 아니라 <b>안 재던 두 축을 재기 시작</b>했기 때문입니다. 측정 범위를 넓히면 점수는 내려갑니다. 그 방향이 맞다고 보고 되돌리지 않았습니다.<br><br>
     <b>이 프로젝트는 AI로 코드를 만든 프로젝트가 아니라, AI를 검증 가능한 구조로 통제한 프로젝트입니다.</b> 감사합니다.
-  </div>
-</section>
-
-<section id="cut">
-  <div class="shead">
-    <span class="idx">CUT</span>
-    <h2>시연 컷 · 자막 — 5분</h2>
-    <span class="note">로그는 실제 출력 그대로</span>
-  </div>
-  <p class="lede">가이드 배점: <b>1:30~3:30 구간이 40%</b>. 이 구간은 반드시 <b>확대 + 정지 + 화살표</b>로 강조합니다.</p>
-
-  <div class="cut"><span class="t">컷 1 · 0:00 ~ 0:30 · 무엇을, 왜</span></div>
-  <p><b>화면</b> — 실제 전환 대상 파일 목록 → 평가 세트 정답키 CSV 한 줄</p>
-  <pre>[시나리오]
-NEXCORE 레거시 서버(P·F·D BizUnit + XSQL)를 Spring으로 전환합니다.
-화면 하나당 4종 파일을 사람이 추적해야 하고, 이게 1,416개 화면에서 반복됩니다.
-
-지금 투입할 화면 5개에는 정답키가 있는 결함이 심어져 있습니다.
-실제 전환 대상에는 정답이 없어, 제대로 잡아냈는지 채점하려면 이 세트가 필요합니다.</pre>
-
-  <div class="cut"><span class="t">컷 2 · 0:30 ~ 1:30 · 계획 수립 <span class="pill p-rule">LLM 미사용</span></span></div>
-  <pre>┌─ STAGE 1/8  PLAN  변환 계획 수립 — 대상 화면 5건 (LLM 미사용, 정적 분석)
-│  DECIDE   PLA087.fPLA087QrySelectMainList → LLM 포팅
-│           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 규칙으로 못 만듦
-│  DECIDE   PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
-│           ↳ 단순 위임 패턴 — store 호출 1건으로 규칙 생성 가능
-│  BLOCK    PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
-│  PLAN     LLM 호출 예산 확정: 25건
-│           ↳ 21/46건(46%)을 규칙으로 처리 → LLM 호출 회피
-│  PLAN     도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
-└─ 계획 고정 완료 — tracking/conversion-plans/ 에 5건 기록</pre>
-  <pre>[자막] 코드를 만들기 전에 계획을 파일로 고정합니다. 이 단계엔 LLM을 쓰지 않습니다.
-       메서드마다 규칙이냐 LLM이냐를 판단하고 근거를 남깁니다 — 46%가 규칙으로 빠집니다.
-       원본이 컴파일되지 않는 화면은 변환 전에 잡아냅니다.</pre>
-  <p><b>연출</b> — 실행이 0.1초라 <b>정지 프레임 + 화살표</b>로 <code>DECIDE</code> 두 줄과 <code>PLAN</code> 두 줄을 짚습니다.</p>
-
-  <div class="cut"><span class="t">컷 3 · 1:30 ~ 2:10 · 계획이 도구를 지휘 + 계약 주입</span></div>
-  <pre>┌─ STAGE 3/8  TOOL  LLM 포팅 — 25건 병렬 배분
-│  PLAN     1단계 계획이 지목한 25건에만 LLM Gateway를 호출한다
-│           ↳ 대상은 계획 단계에서 이미 확정됐다 — 모델이 무엇을 부를지 스스로 고르지 않는다
-│  CONTEXT  PLA087.fPLA087QrySelectMainList ← 호출 대상 계약 1건 주입: dPLA08710
-│           ↳ 호출 관계도에서 뽑은 실제 메서드명 — LLM이 이름을 추측하지 않게 고정</pre>
-  <pre>[자막] 계획이 도구 호출을 지휘합니다.
-       모델이 무엇을 부를지 스스로 고르지 않습니다.
-       호출 대상은 관계도에서 뽑은 실제 이름을 계약으로 주입합니다. (AlphaTrans 방식)</pre>
-
-  <div class="cut"><span class="t">컷 4 · 2:10 ~ 2:40 · 모델이 남긴 근거 <span class="pill p-llm">THINK</span></span></div>
-  <pre>│  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,204자 · 3.4초)
-│  THINK    PLA087.fPLA087QrySelectMainList — 모델이 밝힌 근거
-│           "NEXCORE IDataSet/IRecordSet 의존을 Map 기반으로 치환하고 데이터 접근 호출을
-│             store.dPLA08701로 변경. / FIXME(원본 버그): lookupFunctionUnit 결과 fu는
-│             선언만 되고 사용되지 않음. / FIXME(원본 버그): if 블록 닫힘 중괄호 누락."</pre>
-  <pre>[자막] 이 줄은 우리가 쓴 해설이 아니라 모델 자신의 문장입니다.
-       프롬프트가 변경 근거를 남기도록 요구하고, 그걸 콘솔로 되돌려 출력합니다.
-       근거가 없으면 지어내지 않고 아무것도 출력하지 않습니다.
-
-       주목할 부분 — 모델이 요구하지 않은 원본 버그 2건을 스스로 지적했습니다.</pre>
-  <div class="ok">
-    <h4>여기가 이 영상의 숨은 강점</h4>
-    <p style="margin:0">"코드를 옮기기만 하는 게 아니라 <b>원본의 결함을 짚는다</b>"를 <b>모델의 출력 자체로</b> 증명하는 유일한 장면입니다. 반드시 확대하고 3초 정지하세요.</p>
-  </div>
-
-  <div class="cut"><span class="t">컷 5 · 2:40 ~ 3:30 · 고칠 것과 넘길 것 <span class="pill p-block">핵심</span></span></div>
-  <pre>┌─ STAGE 4/8  VALIDATE  정적 검증 — 변환기와 분리된 검증기
-│  BLOCK    검증 결과 — BLOCKER 10건 · WARNING 0건
-
-┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 0/2 사용
-│  DECIDE   BLOCKER 1건 → 교정 대상에서 제외 → 다른 검사 영역 —
-│           LLM이 고칠 문제가 아니라 사람에게 넘긴다 (Pla096Mapper.xml [XML_PARSE_ERROR])
-│  REFLECT  수리 대상 9건 확정 → 회차 1 진입
-│  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
-│  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
-│  DECIDE   PLA087.pPLA08703 수리 후보 2개 → [최소수정] 채택</pre>
-  <pre>[자막] BLOCKER 10건 중 9건만 교정 대상으로 골랐습니다.
-
-       XML 태그 누락은 규칙 기반 산출물이라 LLM이 고칠 문제가 아닙니다.
-       의도적으로 제외하고 사람에게 넘깁니다.
-
-       Agent가 "내가 고칠 것"과 "사람이 봐야 할 것"을 구분합니다.
-
-       그리고 후보를 방침이 다르게 만든 뒤, 검증기가 채점해서 고릅니다.
-       평가자가 모델이 아니라 규칙 기반 검증기입니다.</pre>
-
-  <div class="cut"><span class="t">컷 6 · 3:30 ~ 3:50 · 정답과 대조</span></div>
-  <pre>┌─ STAGE 4/8  VALIDATE  정적 검증 (자가 교정 1회차 후 재검증)
-│  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건        ← 10건 → 1건
-┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 1/2 사용
-│  REFLECT  수리 불필요 → 다음 단계로 진행</pre>
-  <p><b>화면 좌우 분할</b> — 왼쪽 정답키 CSV, 오른쪽 수리된 <code>Pla087Service.java</code></p>
-  <pre>[자막] 정답키에 "정상 메서드명은 dPLA08701"이라고 적혀 있고,
-       수리된 코드가 정확히 그 이름을 씁니다.
-       검증만 통과한 게 아니라 정답과 일치합니다.
-
-       1회차 만에 9건이 해소돼 BLOCKER가 10건에서 1건으로 줄었습니다.
-       회차에는 상한이 있습니다 — 무한 재시도는 자율 탐색이 됩니다.</pre>
-
-  <div class="cut"><span class="t">컷 7 · 3:50 ~ 4:20 · 동작 일치 + 실행 요약</span></div>
-  <pre>┌─ STAGE 6/8  TOOL  동작 일치 검증 — AS-IS/TO-BE를 실제로 실행해 비교
-│  BLOCK    동작 일치 결과 — 3/5화면 실행, 업무 로직(F) 48/48 · 화면 요청(Api) 0/9
-└─ 동작 일치 검증 완료 — 화면 5건
-
-==============================================================================
-  실행 요약
-==============================================================================
-  처리 화면       5건
-  생성 파일       25종
-  LLM 포팅 호출   25건 (규칙 기반으로 회피 21건, 규칙 처리 비중 46%)
-  자가 교정 회차    1회
-  잔여 BLOCKER  1건
-  동작 일치       3/5화면 실행 · 업무 로직(F) 48/48 · 화면 요청(Api) 0/9(페이로드 9/9)
-  반영 여부       미반영 — 사람이 '승인하고 저장'을 눌러야 산출물에 기록됨
-==============================================================================</pre>
-  <pre>[자막] 정적 검증이 아니라 실제 실행 결과로 비교합니다.
-       업무 로직은 48건 전건 일치. 실행 가능한 3화면 기준입니다.
-       화면 요청 0/9는 못 옮긴 게 아니라, 결과 메시지를 담을 규약이 아직 없어서입니다.
-       페이로드는 9/9 일치합니다.
-
-       마지막 줄이 중요합니다 — 여기까지 자동으로 진행했지만 아무것도 저장하지 않았습니다.</pre>
-
-  <div class="cut"><span class="t">컷 8 · 4:20 ~ 4:40 · 실제 전환 대상 + 승인 게이트</span></div>
-  <p><b>화면</b> — PLA046 인수인계 문서 → Streamlit 단계 체크리스트 → "승인하고 저장" 버튼</p>
-  <pre>[자막] 채점은 정답키 세트로 하지만, 실제로 전환하는 건 운영 소스입니다.
-       PLA046은 SQL statement가 26개인데, 변환하면서
-       원본 XML 따옴표 누락 3건과 조회 결과 건수 불일치를 찾았습니다.
-
-       후자는 원본이 다건으로 받는 걸 단건으로 생성하던 것으로,
-       컴파일도 정적 검증도 실행 비교도 못 잡는 결함이라 BLOCKER로 드러냈습니다.
-
-       실제 반영은 사람이 이 버튼을 눌러야만 일어납니다.</pre>
-
-  <div class="cut"><span class="t">컷 9 · 4:40 ~ 5:00 · 성과</span></div>
-  <pre>[1] 원본 결함 탐지 — 탐지율 10/10 (100%), 오탐 0건      [보강 전 5/10]
-[2] 중복 함수 탐지 — 정규화 후 209/210 (100%)          [정규화 전 105/210]
-[3] 전환 스코어카드 — 80.9 / 100
-[4] 사람 수정 라인 비율 — 0.20% (생성 1,960줄 중 4줄)</pre>
-  <pre>[자막] 정답키 30화면 벤치마크로 측정했습니다.
-       처음엔 5/10이었는데 놓친 유형을 보고 탐지기 범주를 넓혀 100%가 됐습니다.
-       만점이 정답에 끼워 맞춘 것인지 확인하려 다른 세트에 교차 적용했더니,
-       처음부터 써온 원본에서 여태 보고되지 않은 실제 결함을 찾아냈습니다.
-
-       가장 중요한 결과는, "정적 검증만으로 정확성을 보증할 수 있다"는
-       가설이 반증됐다는 것입니다.</pre>
-
-  <div class="warn">
-    <h4>연출 체크리스트</h4>
-    <ul>
-      <li><b>확대 + 정지</b> — 그냥 지나가면 의미 없습니다. 컷 4·5는 반드시 멈춥니다</li>
-      <li><b>화살표·박스</b> — <code>PLAN</code> <code>THINK</code> <code>DECIDE</code> <code>REFLECT</code> 줄에 표시</li>
-      <li><b>UI는 20초 이내</b> — "결과만 보여주는" 인상 회피</li>
-      <li><b>두 세트를 말로 구분</b> — 섞으면 틀린 주장이 됩니다</li>
-      <li>터미널 UTF-8(<code>chcp 65001</code>), 폭 100컬럼 이상, 글꼴 14pt 이상</li>
-      <li><code>.env</code>·API 키·DB 접속정보 노출 최종 확인</li>
-    </ul>
   </div>
 </section>
 
