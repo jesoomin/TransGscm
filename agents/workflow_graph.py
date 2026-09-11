@@ -1007,22 +1007,37 @@ def _find_repairable_targets(state: PipelineState) -> list[tuple[str, str, str]]
     pending = state.get("pending_methods", {})
     validation_results = state.get("validation_results", {})
     grouped: dict[tuple[str, str], list[str]] = {}
+    # 무엇을 왜 뺐는지 세어 둔다. 이 판단이 로그에 안 보이면 "고칠 것과 넘길 것을 구분한다"는
+    # 설계가 화면에서 증명되지 않는다.
+    excluded: dict[str, list[str]] = {
+        "규칙 기반 산출물": [], "포팅 미완(빈 껍데기 코드 잔존)": [], "다른 검사 영역": []}
     for screen_id, results in validation_results.items():
         llm_ported = set(pending.get(screen_id, []))
-        if not llm_ported:
-            continue
         for r in results:
-            if r.check not in ("JAVA_STATIC", "CROSS_LAYER_REF"):
-                continue
             for issue in r.issues:
-                if issue.severity != "BLOCKER" or issue.method_name not in llm_ported:
+                if issue.severity != "BLOCKER":
+                    continue
+                if r.check not in ("JAVA_STATIC", "CROSS_LAYER_REF"):
+                    # Mapper XML 같은 다른 검사 영역의 BLOCKER. LLM 포팅 결과가 아니라
+                    # 규칙 기반 변환 산출물이라 교정 프롬프트를 보낼 대상이 아니다.
+                    excluded["다른 검사 영역"].append(
+                        f"{r.file_name} [{issue.issue_type}]")
+                    continue
+                if issue.method_name not in llm_ported:
+                    # LLM이 만든 코드가 아니다 - 생성기 자체를 고쳐야 할 문제라
+                    # LLM에게 맡기지 않고 사람에게 넘긴다.
+                    excluded["규칙 기반 산출물"].append(
+                        f"{screen_id}.{issue.method_name or r.file_name} [{issue.issue_type}]")
                     continue
                 # 포팅 자체가 안 된 스텁은 수리 대상이 아니다(2026-09-05). "포팅된 코드의 오류를
                 # 고쳐라"라는 수리 프롬프트에 스텁 본문을 넣으면 고칠 대상이 없어 무의미한 호출이
                 # 된다 - 포팅 실패는 route_after_splice_all의 max_retries 재시도가 담당한다.
                 if issue.issue_type == "PORTING_INCOMPLETE":
+                    excluded["포팅 미완(빈 껍데기 코드 잔존)"].append(f"{screen_id}.{issue.method_name}")
                     continue
                 grouped.setdefault((screen_id, issue.method_name), []).append(issue.message)
+
+    state["_repair_excluded"] = {k: v for k, v in excluded.items() if v}
     return [(sid, m, " / ".join(msgs)) for (sid, m), msgs in grouped.items()]
 
 
@@ -1145,6 +1160,13 @@ def repair_gate_node(state: PipelineState) -> dict:
     max_repair = state.get("max_repair_retries", 2)
 
     log.stage(5, 8, "REFLECT", f"자가 교정 게이트 — 회차 {round_used}/{max_repair} 사용")
+    # 무엇을 왜 뺐는지 먼저 밝힌다. "고칠 것과 사람이 봐야 할 것을 구분한다"가 이 단계의 핵심이다.
+    for reason, items in (state.get("_repair_excluded") or {}).items():
+        log.decide(
+            f"BLOCKER {len(items)}건 → 교정 대상에서 제외",
+            f"{reason} — LLM이 고칠 문제가 아니라 사람에게 넘긴다 "
+            f"({', '.join(items[:3])}{' 외' if len(items) > 3 else ''})",
+        )
     if not targets:
         log.reflect("수리 불필요 → 다음 단계로 진행",
                     "LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 "
@@ -1236,7 +1258,7 @@ def equivalence_check_all_node(state: PipelineState) -> dict:
             screen_ids.append(screen_id)
 
         if not screen_ids:
-            log.observe("동등성 검증 대상 없음", "P/F/D java가 모두 있는 화면이 없음 - 건너뜀")
+            log.observe("동작 일치 검증 대상 없음", "P/F/D java가 모두 있는 화면이 없음 - 건너뜀")
             log.end_stage("동작 일치 검증 건너뜀 — 대상 화면 0건")
             return {"equivalence_result": {"skipped": True, "reason": "대상 화면 없음"}}
 
@@ -1254,10 +1276,13 @@ def equivalence_check_all_node(state: PipelineState) -> dict:
         log.end_stage("동작 일치 검증 미실행")
     else:
         rate = result.get("match_rate")
-        rate_text = f"{rate * 100:.1f}%" if rate is not None else "측정 불가(케이스 0건)"
         (log.ok if rate == 1.0 else log.block)(
-            f"동등성 검증 결과 — {result.get('screens_executed', 0)}/{result.get('screens_total', 0)}"
-            f"화면 실행, {result.get('matched', 0)}/{result.get('cases', 0)}케이스 일치 ({rate_text})"
+            f"동작 일치 결과 — {result.get('screens_executed', 0)}/{result.get('screens_total', 0)}"
+            f"화면 실행, " + " · ".join(
+                f"{lbl} {d.get('matched', 0)}/{d.get('cases', 0)}"
+                for key, lbl in (("SERVICE", "업무 로직(F)"), ("API", "화면 요청(Api)"))
+                for d in [(result.get("by_layer") or {}).get(key)] if d
+            )
         )
         log.end_stage(f"동작 일치 검증 완료 — 화면 {result.get('screens_total', 0)}건")
     return {"equivalence_result": result}

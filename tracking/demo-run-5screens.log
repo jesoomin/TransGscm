@@ -6,618 +6,616 @@
   대상 화면 5건 · 수리 회차 상한 2 · AI 추천 제외
 ==============================================================================
 
-[  0.0s] ┌─ STAGE 1/8  PLAN  변환 계획 수립 — 대상 화면 5건 (LLM 미사용, 정적 분석)
-[  0.1s] │  OBSERVE  PLA087: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+[  0.1s] ┌─ STAGE 1/8  PLAN  변환 계획 수립 — 대상 화면 5건 (LLM 미사용, 정적 분석)
+[  0.2s] │  OBSERVE  PLA087: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
-[  0.1s] │  DECIDE   PLA087.fAuthCheck → LLM 포팅
+[  0.2s] │  DECIDE   PLA087.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA087.fPLA087QrySelectMainList → LLM 포팅
+[  0.2s] │  DECIDE   PLA087.fPLA087QrySelectMainList → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA087.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA087.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA087.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA087.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA087.pPLA08701 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA087.pPLA08701 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA087.pPLA08702 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA087.pPLA08702 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA087.pPLA08703 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA087.pPLA08703 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA087.pPLA08704 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA087.pPLA08704 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  OBSERVE  PLA087: 트랙 = UNDECIDED
+[  0.2s] │  OBSERVE  PLA087: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
-[  0.1s] │  OBSERVE  PLA089: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+[  0.2s] │  OBSERVE  PLA089: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
-[  0.1s] │  DECIDE   PLA089.fAuthCheck → LLM 포팅
+[  0.2s] │  DECIDE   PLA089.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA089.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA089.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA089.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA089.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA089.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA089.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA089.pPLA08901 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA089.pPLA08901 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA089.pPLA08902 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA089.pPLA08902 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA089.pPLA08903 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA089.pPLA08903 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA089.pPLA08904 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA089.pPLA08904 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  BLOCK    PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
+[  0.2s] │  BLOCK    PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
          │           ↳ 중괄호 불일치 {'P.java': 1, 'F.java': 0, 'D.java': 0} — 원본을 고치지 않고 보존, Reimagine 트랙 후보로 신호만 남김(트랙 결정은 사람 몫)
-[  0.1s] │  OBSERVE  PLA089: 트랙 = UNDECIDED
+[  0.2s] │  OBSERVE  PLA089: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
-[  0.1s] │  OBSERVE  PLA093: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+[  0.2s] │  OBSERVE  PLA093: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
-[  0.1s] │  DECIDE   PLA093.fAuthCheck → LLM 포팅
+[  0.2s] │  DECIDE   PLA093.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA093.fPLA093QrySelectDetail → LLM 포팅
+[  0.2s] │  DECIDE   PLA093.fPLA093QrySelectDetail → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA093.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA093.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA093.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA093.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA093.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA093.fExcelDownQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA093.pPLA09301 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA093.pPLA09301 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA093.pPLA09302 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA093.pPLA09302 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA093.pPLA09303 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA093.pPLA09303 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA093.pPLA09304 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA093.pPLA09304 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  OBSERVE  PLA093: 트랙 = UNDECIDED
+[  0.2s] │  OBSERVE  PLA093: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
-[  0.1s] │  OBSERVE  PLA096: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+[  0.2s] │  OBSERVE  PLA096: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
-[  0.1s] │  DECIDE   PLA096.fAuthCheck → LLM 포팅
+[  0.2s] │  DECIDE   PLA096.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA096.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA096.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA096.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA096.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA096.pPLA09601 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA096.pPLA09601 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA096.pPLA09602 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA096.pPLA09602 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA096.pPLA09603 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA096.pPLA09603 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  OBSERVE  PLA096: 트랙 = UNDECIDED
+[  0.2s] │  OBSERVE  PLA096: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
-[  0.1s] │  OBSERVE  PLA100: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
+[  0.2s] │  OBSERVE  PLA100: fragment 4/5 존재 (D.java, D.xsql, F.java, P.java)
          │           ↳ nctRid 0건 · 예상 산출물 5종
-[  0.1s] │  DECIDE   PLA100.fAuthCheck → LLM 포팅
+[  0.2s] │  DECIDE   PLA100.fAuthCheck → LLM 포팅
          │           ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
-[  0.1s] │  DECIDE   PLA100.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA100.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA100.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
+[  0.2s] │  DECIDE   PLA100.fHistoryQry → 규칙 기반 생성 (LLM 호출 안 함)
          │           ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
-[  0.1s] │  DECIDE   PLA100.pPLA10001 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA100.pPLA10001 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA100.pPLA10002 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA100.pPLA10002 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  DECIDE   PLA100.pPLA10003 → LLM 포팅 (Api 계층)
+[  0.2s] │  DECIDE   PLA100.pPLA10003 → LLM 포팅 (Api 계층)
          │           ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
-[  0.1s] │  OBSERVE  PLA100: 트랙 = UNDECIDED
+[  0.2s] │  OBSERVE  PLA100: 트랙 = UNDECIDED
          │           ↳ 자동 배정하지 않음 — 판단 근거만 기록하고 사람이 결정
-[  0.1s] │  PLAN     LLM 호출 예산 확정: 25건
-         │           ↳ 21/46건(45%)을 규칙으로 처리 → LLM 호출 회피
-[  0.1s] │  PLAN     도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
+[  0.2s] │  PLAN     LLM 호출 예산 확정: 25건
+         │           ↳ 21/46건(46%)을 규칙으로 처리 → LLM 호출 회피
+[  0.2s] │  PLAN     도구 호출 계획 — 이 계획이 이후 단계의 호출 대상을 확정한다
          │           ↳ 변환기 46건 대상 → 규칙 변환기 21건(LLM 미사용) · LLM Gateway 25건 · 검증기 전건 · 수리 루프는 검증 실패 시에만
-[  0.1s] └─ 계획 고정 완료 — tracking/conversion-plans/ 에 5건 기록
-[  0.1s] ┌─ STAGE 2/8  TOOL  규칙 기반 변환 — 화면 5건 (LLM 미사용)
-[  0.1s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA087)
+[  0.2s] └─ 계획 고정 완료 — tracking/conversion-plans/ 에 5건 기록
+[  0.2s] ┌─ STAGE 2/8  TOOL  규칙 기반 변환 — 화면 5건 (LLM 미사용)
+[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA087)
          │           ↳ 산출 5종 · 콜그래프 간선 10개 · 이슈 19건 · LLM 대기 6건
-[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA089)
+[  0.3s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA089)
          │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 20건 · LLM 대기 5건
-[  0.2s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA093)
+[  0.3s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA093)
          │           ↳ 산출 5종 · 콜그래프 간선 11개 · 이슈 20건 · LLM 대기 6건
-[  0.3s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA096)
+[  0.4s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA096)
          │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 17건 · LLM 대기 4건
-[  0.4s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA100)
+[  0.5s] │  TOOL     iBatis→MyBatis + 골격/DTO 생성(PLA100)
          │           ↳ 산출 5종 · 콜그래프 간선 9개 · 이슈 17건 · LLM 대기 4건
-[  0.4s] └─ 규칙 기반 변환 완료 — 화면 5건, LLM 포팅 대상 25건만 남음
-[  0.4s] ┌─ STAGE 3/8  TOOL  LLM 포팅 — 25건 병렬 배분
-[  0.4s] │  PLAN     1단계 계획이 지목한 25건에만 LLM Gateway를 호출한다
+[  0.5s] └─ 규칙 기반 변환 완료 — 화면 5건, LLM 포팅 대상 25건만 남음
+[  0.5s] ┌─ STAGE 3/8  TOOL  LLM 포팅 — 25건 병렬 배분
+[  0.5s] │  PLAN     1단계 계획이 지목한 25건에만 LLM Gateway를 호출한다
          │           ↳ 대상은 계획 단계에서 이미 확정됐다 — 모델이 무엇을 부를지 스스로 고르지 않는다
-[  0.4s] │  CONTEXT  PLA087.pPLA08701 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA087QrySelectMainList
+[  0.5s] │  CONTEXT  PLA087.pPLA08701 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA087QrySelectMainList
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA087.pPLA08702 ← 피호출자 계약 1건 주입: fPLA087QrySelectDetail
+[  0.5s] │  CONTEXT  PLA087.pPLA08702 ← 피호출자 계약 1건 주입: fPLA087QrySelectDetail
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA087.pPLA08703 ← 피호출자 계약 1건 주입: fHistoryQry
+[  0.5s] │  CONTEXT  PLA087.pPLA08703 ← 피호출자 계약 1건 주입: fHistoryQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA087.pPLA08704 ← 피호출자 계약 1건 주입: fExcelDownQry
+[  0.5s] │  CONTEXT  PLA087.pPLA08704 ← 피호출자 계약 1건 주입: fExcelDownQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA087.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+[  0.5s] │  CONTEXT  PLA087.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA087.fPLA087QrySelectMainList ← 피호출자 없음
+[  0.5s] │  CONTEXT  PLA087.fPLA087QrySelectMainList ← 피호출자 없음
          │           ↳ 이 메서드는 하위 계층을 호출하지 않는다
-[  0.4s] │  CONTEXT  PLA089.pPLA08901 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA089QrySelectMainList
+[  0.5s] │  CONTEXT  PLA089.pPLA08901 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA089QrySelectMainList
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA089.pPLA08902 ← 피호출자 계약 1건 주입: fPLA089QrySelectDetail
+[  0.5s] │  CONTEXT  PLA089.pPLA08902 ← 피호출자 계약 1건 주입: fPLA089QrySelectDetail
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA089.pPLA08903 ← 피호출자 계약 1건 주입: fHistoryQry
+[  0.5s] │  CONTEXT  PLA089.pPLA08903 ← 피호출자 계약 1건 주입: fHistoryQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA089.pPLA08904 ← 피호출자 계약 1건 주입: fExcelDownQry
+[  0.5s] │  CONTEXT  PLA089.pPLA08904 ← 피호출자 계약 1건 주입: fExcelDownQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA089.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+[  0.5s] │  CONTEXT  PLA089.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA093.pPLA09301 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA093QrySelectMainList
+[  0.5s] │  CONTEXT  PLA093.pPLA09301 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA093QrySelectMainList
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA093.pPLA09302 ← 피호출자 계약 1건 주입: fPLA093QrySelectDetail
+[  0.5s] │  CONTEXT  PLA093.pPLA09302 ← 피호출자 계약 1건 주입: fPLA093QrySelectDetail
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA093.pPLA09303 ← 피호출자 계약 1건 주입: fHistoryQry
+[  0.5s] │  CONTEXT  PLA093.pPLA09303 ← 피호출자 계약 1건 주입: fHistoryQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA093.pPLA09304 ← 피호출자 계약 1건 주입: fExcelDownQry
+[  0.5s] │  CONTEXT  PLA093.pPLA09304 ← 피호출자 계약 1건 주입: fExcelDownQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA093.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+[  0.5s] │  CONTEXT  PLA093.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA093.fPLA093QrySelectDetail ← 피호출자 계약 1건 주입: dPLA09302 (카디널리티 불일치: dPLA09302)
+[  0.5s] │  CONTEXT  PLA093.fPLA093QrySelectDetail ← 피호출자 계약 1건 주입: dPLA09302 (카디널리티 불일치: dPLA09302)
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA096.pPLA09601 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA096QrySelectMainList
+[  0.5s] │  CONTEXT  PLA096.pPLA09601 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA096QrySelectMainList
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA096.pPLA09602 ← 피호출자 계약 1건 주입: fPLA096QrySelectDetail
+[  0.5s] │  CONTEXT  PLA096.pPLA09602 ← 피호출자 계약 1건 주입: fPLA096QrySelectDetail
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA096.pPLA09603 ← 피호출자 계약 1건 주입: fHistoryQry
+[  0.5s] │  CONTEXT  PLA096.pPLA09603 ← 피호출자 계약 1건 주입: fHistoryQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA096.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+[  0.5s] │  CONTEXT  PLA096.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA100.pPLA10001 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA100QrySelectMainList
+[  0.5s] │  CONTEXT  PLA100.pPLA10001 ← 피호출자 계약 2건 주입: fAuthCheck, fPLA100QrySelectMainList
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA100.pPLA10002 ← 피호출자 계약 1건 주입: fPLA100QrySelectDetail
+[  0.5s] │  CONTEXT  PLA100.pPLA10002 ← 피호출자 계약 1건 주입: fPLA100QrySelectDetail
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA100.pPLA10003 ← 피호출자 계약 1건 주입: fHistoryQry
+[  0.5s] │  CONTEXT  PLA100.pPLA10003 ← 피호출자 계약 1건 주입: fHistoryQry
          │           ↳ 콜그래프에서 뽑은 실제 Service 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  CONTEXT  PLA100.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
+[  0.5s] │  CONTEXT  PLA100.fAuthCheck ← 피호출자 계약 1건 주입: dAuthCheck
          │           ↳ 콜그래프에서 뽑은 실제 Store 메서드명 — LLM이 이름을 추측하지 않게 고정(AlphaTrans 방식: 조각마다 콜러/콜리 메타데이터를 함께 전달)
-[  0.4s] │  TOOL     LLM Gateway(PLA087.pPLA08701)
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08701)
          │           ↳ 최초 포팅 · 프롬프트 3,167자
-[  0.4s] │  TOOL     LLM Gateway(PLA087.pPLA08702)
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08702)
          │           ↳ 최초 포팅 · 프롬프트 2,902자
-[  0.4s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
          │           ↳ 최초 포팅 · 프롬프트 2,695자
-[  0.4s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
          │           ↳ 최초 포팅 · 프롬프트 2,713자
-[  0.4s] │  TOOL     LLM Gateway(PLA087.fAuthCheck)
+[  0.5s] │  TOOL     LLM Gateway(PLA087.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,894자
-[  0.4s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+[  0.5s] │  PASS     PLA087.pPLA08701 응답 수신 (1,382자 · 0.0초)
+[  0.5s] │  THINK    PLA087.pPLA08701 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 의존을 service 호출과 Map 기반 응답으로 치환하고, 원본의
+         │             권한확인·조기반환·결과건수 분기를 그대로 유지하며 레코드셋 키만 선별 반환하
+         │            도록 포팅 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / 
+         │            TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
+[  0.5s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
          │           ↳ 최초 포팅 · 프롬프트 1,997자
-[  0.4s] │  TOOL     LLM Gateway(PLA089.pPLA08901)
+[  0.5s] │  PASS     PLA087.pPLA08704 응답 수신 (721자 · 0.0초)
+[  0.5s] │  THINK    PLA087.pPLA08704 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service.fExcelDownQry(re
+         │            quest) 호출 결과 Map에서 EXCEL_LIST 키만 선별해 응답 Map에 담도록 이식함. / 
+         │            TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
+[  0.5s] │  PASS     PLA087.pPLA08702 응답 수신 (1,030자 · 0.0초)
+[  0.5s] │  THINK    PLA087.pPLA08702 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과(Map)에서 DETAIL_LIST만
+         │             선별 반환하도록 옮기되, 원본의 try/catch·분기·메시지 설정 위치를 그대로 유
+         │            지했다. / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TO
+         │            DO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08901)
          │           ↳ 최초 포팅 · 프롬프트 3,167자
-[  0.4s] │  TOOL     LLM Gateway(PLA089.pPLA08902)
-         │           ↳ 최초 포팅 · 프롬프트 2,902자
-[  4.5s] │  PASS     PLA087.pPLA08704 응답 수신 (765자 · 4.2초)
-[  4.5s] │  THINK    PLA087.pPLA08704 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fExcelDownQry(request) 호출 결과
-         │             Map에서 EXCEL_LIST만 선별해 응답 Map에 담도록 포팅했으며, 원본 try/catch와 
-         │            메시지 설정 위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I
-         │            0016", new String[] {"설비종합효율분석 엑셀다운로드"}) 상당”
-[  4.5s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
-         │           ↳ 최초 포팅 · 프롬프트 2,695자
-[  4.7s] │  PASS     PLA087.pPLA08703 응답 수신 (730자 · 4.4초)
-[  4.7s] │  THINK    PLA087.pPLA08703 — 모델이 밝힌 근거
+[  0.5s] │  PASS     PLA087.pPLA08703 응답 수신 (762자 · 0.0초)
+[  0.5s] │  THINK    PLA087.pPLA08703 — 모델이 밝힌 근거
          │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service.fHistoryQry(requ
-         │            est) 호출 결과 Map에서 HIST_LIST만 선별해 새 응답 Map에 담도록 포팅함. / TOD
-         │            O(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
-[  4.7s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
+         │            est) 호출 결과(Map)에서 HIST_LIST만 선별해 응답 Map에 담도록 포팅했으며, 원
+         │            본 try/catch와 메시지 처리 위치는 유지했다. / TODO(응답 규약 미확정): setOkR
+         │            esultMessage("I0016", ...) 상당”
+[  0.5s] │  PASS     PLA087.fAuthCheck 응답 수신 (1,392자 · 0.0초)
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08902)
+         │           ↳ 최초 포팅 · 프롬프트 2,902자
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
          │           ↳ 최초 포팅 · 프롬프트 2,740자
-[  6.1s] │  PASS     PLA089.pPLA08902 응답 수신 (1,137자 · 5.8초)
-[  6.1s] │  THINK    PLA089.pPLA08902 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fPLA089QrySelectDetail(request) 
-         │            호출 결과 Map에서 DETAIL_LIST만 방어적으로 선별해 응답 Map에 담도록 포팅 / T
-         │            ODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답 규
-         │            약 미확정): setOkResultMessage("I0016", ...) 상당”
-[  6.1s] │  TOOL     LLM Gateway(PLA089.fAuthCheck)
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
+         │           ↳ 최초 포팅 · 프롬프트 2,695자
+[  0.5s] │  TOOL     LLM Gateway(PLA089.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,894자
-[  6.5s] │  PASS     PLA087.pPLA08702 응답 수신 (1,125자 · 6.1초)
-[  6.5s] │  THINK    PLA087.pPLA08702 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과 Map에서 DETAIL_LIST만 
-         │            선별 반환하며, 건수 판정은 List 크기/null 여부로 방어적으로 처리했다. / TODO
-         │            (응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답 규약 
-         │            미확정): setOkResultMessage("I0016", ...) 상당”
-[  6.5s] │  TOOL     LLM Gateway(PLA093.pPLA09301)
+[  0.5s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,316자 · 0.0초)
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09301)
          │           ↳ 최초 포팅 · 프롬프트 3,164자
-[  6.6s] │  PASS     PLA087.pPLA08701 응답 수신 (1,299자 · 6.2초)
-[  6.6s] │  THINK    PLA087.pPLA08701 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 호출을 Spring Map 기반 service 호출로 치환하고, 원본의 
-         │            권한체크-조기반환/목록건수분기/예외흐름은 그대로 유지하며 필요한 키만 응답에
-         │             담도록 포팅 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당
-         │             / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
-[  6.6s] │  TOOL     LLM Gateway(PLA093.pPLA09302)
+[  0.5s] │  THINK    PLA087.fAuthCheck — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 store.dAuthCheck(
+         │            ...) 호출 결과 Map에서 AUTH_LIST를 꺼내 recordCount 판정 후 동일하게 AUTH_YN
+         │            을 설정하도록 포팅했다. / FIXME(원본 버그): 원본은 getRecordSet("AUTH_LIST")
+         │            .getRecordCount()에 전적으로 의존하므로 반환 타입 계약이 불명확하다. NEXCORE
+         │             제거 과정에서 비-컬렉션 단일 객체는 1건으로 간주했다.”
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09302)
          │           ↳ 최초 포팅 · 프롬프트 2,899자
-[  7.8s] │  PASS     PLA089.pPLA08904 응답 수신 (794자 · 3.1초)
-[  7.8s] │  THINK    PLA089.pPLA08904 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fExcelDownQry(request) 호출 결과
-         │             Map에서 EXCEL_LIST만 선별 반환하도록 포팅했으며, 원본 try/catch와 메시지 처
-         │            리 위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", ..
-         │            .) 상당 / FIXME(원본 버그): 닫는 중괄호 누락(의도적 오류 주입 E2)”
-[  7.8s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
+[  0.5s] │  PASS     PLA089.pPLA08901 응답 수신 (1,326자 · 0.0초)
+[  0.5s] │  PASS     PLA089.pPLA08904 응답 수신 (813자 · 0.0초)
+[  0.5s] │  PASS     PLA089.pPLA08902 응답 수신 (1,157자 · 0.0초)
+[  0.5s] │  PASS     PLA089.pPLA08903 응답 수신 (725자 · 0.0초)
+[  0.5s] │  THINK    PLA087.fPLA087QrySelectMainList — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 request Map 직접 
+         │            사용 및 store 호출로 치환했으며, 원본의 필드 재세팅 로직과 예외 흐름을 유지
+         │            했다. / FIXME(원본 버그): 원본은 du.dPLA08710(...).getRecordSet("MAIN_LIST")
+         │             형태로 반환 객체에서 MAIN_LIST 레코드셋을 꺼냈으나, store.dPLA08710(...)의 
+         │            실제 반환 타입/구조 정보가 없어 그대로 완전 재현 불가”
+[  0.5s] │  PASS     PLA089.fAuthCheck 응답 수신 (1,701자 · 0.0초)
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
          │           ↳ 최초 포팅 · 프롬프트 2,693자
-[  8.7s] │  PASS     PLA087.fPLA087QrySelectMainList 응답 수신 (1,654자 · 8.4초)
-[  8.7s] │  THINK    PLA087.fPLA087QrySelectMainList — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/IOnlineContext 의존을 제거하고 request/response를 Map 기반
-         │            으로 치환했으며, DataUnit 호출은 store로 변경하고 원본의 필드 추출·paramMap 
-         │            반영·조회 결과 세팅 흐름을 그대로 유지했다. / FIXME(원본 버그): requestData.
-         │            putFieldMap(paramMap) 호출 구조를 Map 기반으로 포팅하면서 별도 객체 반영 없
-         │            이 동일 Map 수정으로 대체함. / FIXME(원본 버그): 원본은 du.dPLA08710(...).ge
-         │            tRecordSet("MAIN_LIST") 구조이나 store 반환 타입 정보가 없어 그대로의 의미를
-         │             보존하기 위해 MAIN_LIST 키 우선 추출, 불가 시 전체 반환값을 세팅함.”
-[  8.7s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
          │           ↳ 최초 포팅 · 프롬프트 2,711자
-[ 10.2s] │  PASS     PLA093.pPLA09302 응답 수신 (1,101자 · 3.6초)
-[ 10.2s] │  THINK    PLA093.pPLA09302 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과 Map에서 DETAIL_LIST만 
-         │            방어적으로 추출해 원본 분기/예외 흐름을 유지하도록 포팅 / TODO(응답 규약 미
-         │            확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답 규약 미확정): setOk
-         │            ResultMessage("I0016", ...) 상당”
-[ 10.2s] │  TOOL     LLM Gateway(PLA093.fAuthCheck)
+[  0.5s] │  PASS     PLA093.pPLA09301 응답 수신 (1,348자 · 0.0초)
+[  0.5s] │  PASS     PLA093.pPLA09302 응답 수신 (1,137자 · 0.0초)
+[  0.5s] │  THINK    PLA089.pPLA08901 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 호출을 service 기반 Map 응답으로 치환하고, 원본 분기/조
+         │            기 반환/예외 구조를 유지하면서 필요한 키만 선별 반환하도록 포팅 / TODO(응답 
+         │            규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답 규약 미확정)
+         │            : setOkResultMessage("W0024", ...) 상당”
+[  0.5s] │  THINK    PLA089.pPLA08904 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service.fExcelDownQry(re
+         │            quest) 호출 결과(Map)에서 EXCEL_LIST만 선별 반환하도록 포팅했으며, 원본 try/
+         │            catch와 메시지 처리 위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMe
+         │            ssage("I0016", ...) 상당 / FIXME(원본 버그): 원본에 닫는 중괄호 누락(의도적 
+         │            오류 주입 E2)”
+[  0.5s] │  THINK    PLA089.pPLA08902 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/RecordSet 의존을 제거하고 service.fPLA089QrySelectDetail(re
+         │            quest) 호출 결과 Map에서 DETAIL_LIST만 방어적으로 판정·선별해 새 응답 Map에 
+         │            담도록 포팅 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 
+         │            / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
+[  0.5s] │  TOOL     LLM Gateway(PLA093.fAuthCheck)
          │           ↳ 최초 포팅 · 프롬프트 1,894자
-[ 11.0s] │  PASS     PLA089.fAuthCheck 응답 수신 (1,668자 · 4.8초)
-[ 11.0s] │  THINK    PLA089.fAuthCheck — 모델이 밝힌 근거
+[  0.5s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectDetail)
+         │           ↳ 최초 포팅 · 프롬프트 2,550자
+[  0.5s] │  THINK    PLA089.pPLA08903 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fHistoryQry(request) 호출 결과 M
+         │            ap에서 HIST_LIST만 선별해 응답 Map에 담도록 이식했으며, 원본 try/catch와 메
+         │            시지 설정 위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I00
+         │            16", ...) 상당”
+[  0.5s] │  TOOL     LLM Gateway(PLA096.pPLA09601)
+         │           ↳ 최초 포팅 · 프롬프트 3,167자
+[  0.5s] │  THINK    PLA089.fAuthCheck — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 Spring 서비스 방
+         │            식으로 store.dAuthCheck(request) 호출 결과(Map)의 AUTH_LIST를 꺼내 record co
+         │            unt 판정을 하도록 포팅했다. / FIXME(원본 버그): 원본은 IRecordSet.getRecordC
+         │            ount()를 전제로 하나, 포팅 후 store 반환 AUTH_LIST의 구체 타입 계약이 없어 
+         │            비-컬렉션 타입은 record count를 정확히 알 수 없음”
+[  0.5s] │  TOOL     LLM Gateway(PLA096.pPLA09602)
+         │           ↳ 최초 포팅 · 프롬프트 2,902자
+[  0.5s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
+         │           ↳ 최초 포팅 · 프롬프트 2,695자
+[  0.5s] │  TOOL     LLM Gateway(PLA096.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,894자
+[  0.5s] │  THINK    PLA093.pPLA09301 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/RecordSet 의존을 제거하고 service 호출 결과(Map)에서 필요한
+         │             키만 선별해 응답 Map에 담되, 권한 확인/조기 반환/건수 분기 및 예외 흐름은 
+         │            원본 그대로 유지 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 
+         │            상당 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
+[  0.5s] │  THINK    PLA093.pPLA09302 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과(Map)에서 DETAIL_LIST만
+         │             방어적으로 추출해 응답 Map에 담도록 포팅했으며, 원본 try/catch·분기·조기 반
+         │            환 없음 흐름을 그대로 유지함. / TODO(응답 규약 미확정): setOkResultMessage("
+         │            W0024", ...) 상당 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...)
+         │             상당”
+[  0.5s] │  PASS     PLA093.pPLA09303 응답 수신 (762자 · 0.0초)
+[  0.5s] │  TOOL     LLM Gateway(PLA100.pPLA10001)
+         │           ↳ 최초 포팅 · 프롬프트 3,170자
+[  0.5s] │  TOOL     LLM Gateway(PLA100.pPLA10002)
+         │           ↳ 최초 포팅 · 프롬프트 2,902자
+[  0.5s] │  PASS     PLA093.pPLA09304 응답 수신 (716자 · 0.0초)
+[  0.5s] │  TOOL     LLM Gateway(PLA100.fAuthCheck)
+         │           ↳ 최초 포팅 · 프롬프트 1,894자
+[  0.5s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
+         │           ↳ 최초 포팅 · 프롬프트 2,695자
+[  0.5s] │  PASS     PLA093.fAuthCheck 응답 수신 (1,256자 · 0.0초)
+[  0.5s] │  PASS     PLA093.fPLA093QrySelectDetail 응답 수신 (1,010자 · 0.0초)
+[  0.5s] │  PASS     PLA096.pPLA09601 응답 수신 (1,261자 · 0.0초)
+[  0.5s] │  PASS     PLA096.pPLA09602 응답 수신 (1,024자 · 0.0초)
+[  0.5s] │  THINK    PLA093.pPLA09303 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service.fHistoryQry(requ
+         │            est) 호출 결과(Map)에서 원본과 동일하게 HIST_LIST만 선별해 응답 Map에 담도록
+         │             포팅했다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", new String[
+         │            ] {"품질코스트관리 이력"}) 상당”
+[  0.5s] │  THINK    PLA093.pPLA09304 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 호출을 Spring Map 기반 응답과 service.fExcelDownQry(requ
+         │            est)로 치환하고, 원본처럼 EXCEL_LIST만 선별 반환하며 예외 흐름과 성공 메시지
+         │             위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...)
+         │             상당”
+[  0.5s] │  PASS     PLA096.pPLA09603 응답 수신 (755자 · 0.0초)
+[  0.5s] │  PASS     PLA096.fAuthCheck 응답 수신 (1,719자 · 0.0초)
+[  0.5s] │  PASS     PLA100.pPLA10001 응답 수신 (1,388자 · 0.0초)
+[  0.5s] │  PASS     PLA100.pPLA10002 응답 수신 (1,040자 · 0.0초)
+[  0.5s] │  THINK    PLA093.fAuthCheck — 모델이 밝힌 근거
          │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 store.dAuthCheck(
          │            ...) 호출 결과(Map)에서 AUTH_LIST를 꺼내 원본 분기 로직을 유지하도록 Spring 
-         │            서비스 메서드로 포팅했다. / FIXME(원본 버그): 원본은 getRecordSet("AUTH_LIST
-         │            ").getRecordCount() 전제이나, 포팅 대상 계약은 Map<String,Object>만 고정되어
-         │             있어 AUTH_LIST의 런타임 구조가 불명확함. 원본 분기 유지 목적상 null이 아닌 
-         │            단일 객체는 1건으로 간주.”
-[ 11.0s] │  TOOL     LLM Gateway(PLA093.fPLA093QrySelectDetail)
-         │           ↳ 최초 포팅 · 프롬프트 2,550자
-[ 11.0s] │  PASS     PLA093.pPLA09303 응답 수신 (731자 · 3.2초)
-[ 11.0s] │  THINK    PLA093.pPLA09303 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fHistoryQry(request) 호출 결과 M
-         │            ap에서 HIST_LIST만 선별 반환하며, 원본의 try/catch와 예외 흐름을 그대로 유지
-         │            했다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
-[ 11.0s] │  TOOL     LLM Gateway(PLA096.pPLA09601)
-         │           ↳ 최초 포팅 · 프롬프트 3,167자
-[ 11.3s] │  PASS     PLA089.pPLA08903 응답 수신 (717자 · 6.7초)
-[ 11.3s] │  THINK    PLA089.pPLA08903 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fHistoryQry(request) 호출 결과 M
-         │            ap에서 HIST_LIST만 선별 반환하며, 원본의 try/catch 및 메시지 설정 위치를 그
-         │            대로 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상
+         │            서비스 메서드 형태로 포팅했다.”
+[  0.5s] │  THINK    PLA093.fPLA093QrySelectDetail — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/IRecordSet/IOnlineContext 의존을 Map 기반으로 치환하고 D Bi
+         │            zUnit 호출을 store.dPLA09302(...)로 변경했으며, Map 값은 런타임 타입 가변성
+         │            을 고려해 그대로 전달하는 형태로 포팅 / FIXME(카디널리티 불일치, 사람 확인 
+         │            필요): 원본은 dPLA09302 결과를 recordset("DETAIL_LIST")로 다건 처리하나, 현
+         │            재 store 계약은 Map<String,Object> 단건 반환임”
+[  0.5s] │  PASS     PLA100.fAuthCheck 응답 수신 (1,365자 · 0.0초)
+[  0.5s] │  PASS     PLA100.pPLA10003 응답 수신 (746자 · 0.0초)
+[  0.5s] │  THINK    PLA096.pPLA09601 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/RecordSet 의존을 제거하고 service 호출 결과(Map)에서 필요한
+         │             키만 선별해 응답 Map에 담도록 포팅했으며, 리스트 건수 판정은 List 크기/null
+         │             체크로 방어적으로 처리함. / TODO(응답 규약 미확정): setOkResultMessage("W00
+         │            24", ...) 상당 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상
          │            당”
-[ 11.3s] │  TOOL     LLM Gateway(PLA096.pPLA09602)
-         │           ↳ 최초 포팅 · 프롬프트 2,902자
-[ 11.4s] │  PASS     PLA093.pPLA09301 응답 수신 (1,351자 · 5.0초)
-[ 11.4s] │  THINK    PLA093.pPLA09301 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service 호출 결과(Map)에
-         │            서 원본이 담던 키만 선별해 응답하며, 레코드 건수 판정은 List/null 여부로 방
-         │            어적으로 이식 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상
-         │            당 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
-[ 11.4s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
-         │           ↳ 최초 포팅 · 프롬프트 2,695자
-[ 11.8s] │  PASS     PLA089.pPLA08901 응답 수신 (1,256자 · 11.4초)
-[ 11.8s] │  THINK    PLA089.pPLA08901 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 service 호출과 Map 기반 응답으로 
-         │            치환하고, 레코드셋은 필요한 키만 선별 반환하며 건수 판정은 List/null 여부로 
-         │            방어적으로 처리 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 
-         │            상당 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
-[ 11.8s] │  TOOL     LLM Gateway(PLA096.fAuthCheck)
-         │           ↳ 최초 포팅 · 프롬프트 1,894자
-[ 12.0s] │  PASS     PLA093.pPLA09304 응답 수신 (725자 · 3.2초)
-[ 12.0s] │  THINK    PLA093.pPLA09304 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fExcelDownQry(request) 호출 결과
-         │             Map에서 EXCEL_LIST만 선별 반환하며, 원본 try/catch와 메시지 설정 위치를 그
-         │            대로 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상
-         │            당”
-[ 12.0s] │  TOOL     LLM Gateway(PLA100.pPLA10001)
-         │           ↳ 최초 포팅 · 프롬프트 3,170자
-[ 13.0s] │  PASS     PLA087.fAuthCheck 응답 수신 (1,273자 · 12.6초)
-[ 13.0s] │  THINK    PLA087.fAuthCheck — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 store.dAuthCheck(
-         │            ...) 호출 결과(Map)에서 AUTH_LIST를 꺼내 원본 분기 로직을 유지하되, Map 값 
-         │            타입 혼재를 고려해 컬렉션/배열/단건에 대해 방어적으로 건수 판별하도록 포팅”
-[ 13.0s] │  TOOL     LLM Gateway(PLA100.pPLA10002)
-         │           ↳ 최초 포팅 · 프롬프트 2,902자
-[ 14.9s] │  PASS     PLA096.pPLA09602 응답 수신 (1,129자 · 3.6초)
-[ 14.9s] │  THINK    PLA096.pPLA09602 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과 Map에서 DETAIL_LIST만 
-         │            선별 반환하며, 레코드 건수 판정은 List 크기/null 체크로 방어적으로 변환했다.
-         │             / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답
-         │             규약 미확정): setOkResultMessage("I0016", ...) 상당”
-[ 14.9s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
-         │           ↳ 최초 포팅 · 프롬프트 2,695자
-[ 15.2s] │  PASS     PLA096.pPLA09603 응답 수신 (745자 · 3.7초)
-[ 15.2s] │  THINK    PLA096.pPLA09603 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fHistoryQry(request) 호출 결과 M
-         │            ap에서 HIST_LIST만 선별해 응답 Map에 담도록 포팅했으며, 원본 try/catch와 메
-         │            시지 처리 위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I00
-         │            16", ...) 상당”
-[ 15.2s] │  TOOL     LLM Gateway(PLA100.fAuthCheck)
-         │           ↳ 최초 포팅 · 프롬프트 1,894자
-[ 16.0s] │  PASS     PLA096.pPLA09601 응답 수신 (1,249자 · 5.0초)
-[ 16.0s] │  THINK    PLA096.pPLA09601 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과 Map에서 필요한 키만 선
-         │            별해 응답 Map에 담되, 권한확인 조기 반환·건수 분기·예외 흐름은 원본 그대로 
-         │            유지하도록 포팅 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 
-         │            상당 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
-[ 16.3s] │  PASS     PLA100.pPLA10001 응답 수신 (1,352자 · 4.4초)
-[ 16.3s] │  THINK    PLA100.pPLA10001 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service 호출 결과 Map에
-         │            서 필요한 키만 선별해 응답하며, 레코드셋 건수 판정은 List 크기/null 여부로 
-         │            방어적으로 처리 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 
-         │            상당 / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
-[ 16.7s] │  PASS     PLA093.fAuthCheck 응답 수신 (1,797자 · 6.5초)
-[ 16.7s] │  THINK    PLA093.fAuthCheck — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 store.dAuthCheck(
-         │            ...) 호출 결과(Map)에서 AUTH_LIST를 꺼내 원본의 건수 판정 로직을 그대로 유지
-         │            하도록 Spring 서비스 메서드 형태로 포팅함. / FIXME(원본 버그): 원본은 IRecor
-         │            dSet.getRecordCount()를 직접 사용하므로 AUTH_LIST의 실제 런타임 타입 계약이 
-         │            없으면 여기서 건수 해석이 불완전할 수 있음. / FIXME(원본 버그): 원본은 IReco
-         │            rdSet가 아니면 컴파일되지 않으나, 포팅 후 AUTH_LIST 타입 계약이 불명확하여 
-         │            비컬렉션 단일 객체는 1건으로 간주함.”
-[ 17.0s] │  PASS     PLA100.pPLA10002 응답 수신 (1,125자 · 4.0초)
-[ 17.0s] │  THINK    PLA100.pPLA10002 — 모델이 밝힌 근거
+[  0.5s] │  THINK    PLA096.pPLA09602 — 모델이 밝힌 근거
          │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과(Map)에서 DETAIL_LIST만
          │             선별 반환하며, 레코드 건수 판정은 List 크기/null 체크로 방어적으로 이관 / T
          │            ODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답 규
          │            약 미확정): setOkResultMessage("I0016", ...) 상당”
-[ 17.8s] │  PASS     PLA096.fAuthCheck 응답 수신 (1,686자 · 6.0초)
-[ 17.8s] │  THINK    PLA096.fAuthCheck — 모델이 밝힌 근거
+[  0.5s] │  THINK    PLA096.pPLA09603 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FunctionUnit 의존을 제거하고 service.fHistoryQry(request) 
+         │            호출 결과 Map에서 HIST_LIST만 선별해 응답 Map에 담도록 포팅했으며, 원본 try/
+         │            catch와 메시지 처리 위치는 유지했다. / TODO(응답 규약 미확정): setOkResultMe
+         │            ssage("I0016", ...) 상당”
+[  0.5s] │  THINK    PLA096.fAuthCheck — 모델이 밝힌 근거
          │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 store.dAuthCheck(
-         │            request) 호출 결과(Map)에서 AUTH_LIST를 꺼내 원본 분기 그대로 유지하되, Map 
-         │            값의 가변 런타임 타입을 고려해 안전하게 record count를 판별하도록 포팅”
-[ 18.3s] │  PASS     PLA100.pPLA10003 응답 수신 (754자 · 3.4초)
-[ 18.3s] │  THINK    PLA100.pPLA10003 — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service.fHistoryQry(requ
-         │            est) 호출 결과 Map에서 HIST_LIST만 선별해 응답 Map에 담도록 포팅했다. / TODO
-         │            (응답 규약 미확정): setOkResultMessage("I0016", new String[] {"물류센터가동
-         │            현황 이력"}) 상당”
-[ 19.8s] │  PASS     PLA100.fAuthCheck 응답 수신 (1,285자 · 4.6초)
-[ 19.8s] │  THINK    PLA100.fAuthCheck — 모델이 밝힌 근거
+         │            ...) 호출 결과 Map에서 AUTH_LIST를 꺼내 레코드 수를 판별하도록 포팅했으며, 
+         │            이종 런타임 타입을 고려해 안전하게 처리했다. / FIXME(원본 버그): 원본은 getR
+         │            ecordSet("AUTH_LIST").getRecordCount() 계약에 전적으로 의존하므로, Map 기반 
+         │            포팅에서는 AUTH_LIST의 구조가 명확하지 않다. / FIXME(원본 버그): 원본은 AUTH
+         │            _LIST가 반드시 IRecordSet이라고 가정한다. 포팅 후 비표준 타입이 오면 정확한 
+         │            레코드 수를 알 수 없다.”
+[  0.5s] │  THINK    PLA100.pPLA10001 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/lookupFunctionUnit 의존을 제거하고 service 호출 결과(Map)에
+         │            서 필요한 키만 선별 반환하며, 권한/건수 분기와 예외 흐름은 원본 그대로 유지
+         │            했다. / TODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO
+         │            (응답 규약 미확정): setOkResultMessage("W0024", ...) 상당”
+[  0.5s] │  THINK    PLA100.pPLA10002 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 의존을 제거하고 service 호출 결과(Map)에서 DETAIL_LIST만
+         │             선별 반환하며, 레코드 건수 판정은 List 크기/null 체크로 방어적으로 이식 / T
+         │            ODO(응답 규약 미확정): setOkResultMessage("W0024", ...) 상당 / TODO(응답 규
+         │            약 미확정): setOkResultMessage("I0016", ...) 상당”
+[  0.5s] │  THINK    PLA100.fAuthCheck — 모델이 밝힌 근거
          │           “NEXCORE IDataSet/IRecordSet/lookupDataUnit 의존을 제거하고 store.dAuthCheck(
-         │            ...) 호출 결과(Map)에서 AUTH_LIST를 꺼내 동일 분기만 유지했으며, Map 값의 가
-         │            변 런타임 타입을 고려해 직접 캐스팅을 피하고 방어적으로 처리했다.”
-[ 19.9s] │  PASS     PLA093.fPLA093QrySelectDetail 응답 수신 (1,053자 · 8.9초)
-[ 19.9s] │  THINK    PLA093.fPLA093QrySelectDetail — 모델이 밝힌 근거
-         │           “NEXCORE IDataSet/IRecordSet/IOnlineContext 및 lookupDataUnit 의존을 제거하고
-         │             request/store(Map) 기반으로 포팅했으며, Map 값은 런타임 타입 혼재 가능성을 
-         │            고려해 직접 캐스팅 없이 그대로 전달하도록 유지했다. / FIXME(카디널리티 불일
-         │            치, 사람 확인 필요): 원본은 dPLA09302 결과를 다건(recordset) DETAIL_LIST로 
-         │            처리했으나, 현재 store.dPLA09302는 Map<String,Object> 단건 반환 계약임”
-[ 19.9s] │  PASS     결과 합치기 완료 — 25건을 Service/Api에 반영
+         │            ...) 호출 결과 Map 기반으로 동일 분기 로직을 유지하되, 런타임 타입 혼재를 고
+         │            려해 값 접근은 방어적으로 처리했다.”
+[  0.5s] │  THINK    PLA100.pPLA10003 — 모델이 밝힌 근거
+         │           “NEXCORE IDataSet/FU 의존을 제거하고 service.fHistoryQry(request) 호출 결과(M
+         │            ap)에서 HIST_LIST만 선별해 응답 Map에 담도록 포팅했으며, 원본 try/catch와 메
+         │            시지 처리 위치를 유지했다. / TODO(응답 규약 미확정): setOkResultMessage("I00
+         │            16", ...) 상당”
+[  0.5s] │  PASS     결과 합치기 완료 — 25건을 Service/Api에 반영
          │           ↳ PLA087.pPLA08701, PLA087.pPLA08702, PLA087.pPLA08703, PLA087.pPLA08704, PLA087.fAuthCheck, PLA087.fPLA087QrySelectMainList, PLA089.pPLA08901, PLA089.pPLA08902, PLA089.pPLA08903, PLA089.pPLA08904, PLA089.fAuthCheck, PLA093.pPLA09301, PLA093.pPLA09302, PLA093.pPLA09303, PLA093.pPLA09304, PLA093.fAuthCheck, PLA093.fPLA093QrySelectDetail, PLA096.pPLA09601, PLA096.pPLA09602, PLA096.pPLA09603, PLA096.fAuthCheck, PLA100.pPLA10001, PLA100.pPLA10002, PLA100.pPLA10003, PLA100.fAuthCheck
         └─
-[ 19.9s] ┌─ STAGE 4/8  VALIDATE  정적 검증 — 변환기와 분리된 검증기
-[ 19.9s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08703:93
+[  0.5s] ┌─ STAGE 4/8  VALIDATE  정적 검증 — 변환기와 분리된 검증기
+[  0.5s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08703:93
          │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 19.9s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08704:113
+[  0.5s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08704:113
          │           ↳ 113행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
-[ 19.9s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:90
-         │           ↳ 90행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
-[ 19.9s] │  BLOCK    PLA089 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08903:93
-         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 19.9s] │  BLOCK    PLA089 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08904:113
-         │           ↳ 113행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  BLOCK    PLA093 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09303:100
+[  0.5s] │  BLOCK    PLA087 [CROSS_LAYER_REF] UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:91
+         │           ↳ 91행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[  0.5s] │  BLOCK    PLA089 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08903:100
          │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  BLOCK    PLA093 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09304:120
+[  0.5s] │  BLOCK    PLA089 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA08904:120
          │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:53
+[  0.5s] │  BLOCK    PLA093 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09303:100
+         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  BLOCK    PLA093 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09304:120
+         │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:53
          │           ↳ 유효한 XML이 아닙니다: mismatched tag: line 53, column 2
-[ 20.0s] │  BLOCK    PLA096 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09603:93
-         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  BLOCK    PLA100 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA10003:100
-         │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  BLOCK    검증 결과 — BLOCKER 10건 · WARNING 0건
-[ 20.0s] └─ 정적 검증 완료 — 화면 5건
-[ 20.0s] ┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 0/2 사용
-[ 20.0s] │  REFLECT  수리 대상 9건 확정 → 회차 1 진입
+[  0.5s] │  BLOCK    PLA096 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA09603:86
+         │           ↳ 86행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  BLOCK    PLA100 [CROSS_LAYER_REF] UNRESOLVED_SERVICE_CALL @ pPLA10003:94
+         │           ↳ 94행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  BLOCK    검증 결과 — BLOCKER 10건 · WARNING 0건
+[  0.5s] └─ 정적 검증 완료 — 화면 5건
+[  0.5s] ┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 0/2 사용
+[  0.5s] │  DECIDE   BLOCKER 1건 → 교정 대상에서 제외 → 다른 검사 영역 — LLM이 고칠 문제가 아니라 사람에게 넘긴다 (Pla096Mapper.xml [XML_PARSE_ERROR])
+[  0.5s] │  REFLECT  수리 대상 9건 확정 → 회차 1 진입
          │           ↳ 검증 실패 메시지를 프롬프트에 피드백해 해당 메서드만 재생성한다 (MatchFixAgent/ACToR 패턴: 검증·수리를 변환기와 분리)
-[ 20.0s] │  REPAIR   PLA087.pPLA08703 재생성 요청
+[  0.5s] │  REPAIR   PLA087.pPLA08703 재생성 요청
          │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA087.pPLA08704 재생성 요청
+[  0.5s] │  REPAIR   PLA087.pPLA08704 재생성 요청
          │           ↳ 113행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA087.fPLA087QrySelectMainList 재생성 요청
-         │           ↳ 90행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA089.pPLA08903 재생성 요청
-         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA089.pPLA08904 재생성 요청
-         │           ↳ 113행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA093.pPLA09303 재생성 요청
+[  0.5s] │  REPAIR   PLA087.fPLA087QrySelectMainList 재생성 요청
+         │           ↳ 91행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다.
+[  0.5s] │  REPAIR   PLA089.pPLA08903 재생성 요청
          │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA093.pPLA09304 재생성 요청
+[  0.5s] │  REPAIR   PLA089.pPLA08904 재생성 요청
          │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA096.pPLA09603 재생성 요청
-         │           ↳ 93행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  REPAIR   PLA100.pPLA10003 재생성 요청
+[  0.5s] │  REPAIR   PLA093.pPLA09303 재생성 요청
          │           ↳ 100행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
-[ 20.0s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,796자
-[ 20.0s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,853자
-[ 20.0s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,690자
-[ 20.0s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,747자
-[ 20.0s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 2,692자
-[ 20.0s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 2,749자
-[ 20.0s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,783자
-[ 20.0s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,840자
-[ 22.6s] │  THINK    PLA087.pPLA08703 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄만 교체해 정
-         │            적 검증 오류를 해결함. / TODO(응답 규약 미확정): setOkResultMessage("I0016",
-         │             ...) 상당”
-[ 22.6s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,719자
-[ 22.7s] │  THINK    PLA089.pPLA08903 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄 치환해 정적
-         │             검증 오류만 수정 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...)
-         │             상당”
-[ 22.7s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,776자
-[ 22.8s] │  THINK    PLA087.pPLA08703 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체해 정적 검증 
-         │            오류만 수정”
-[ 22.8s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,798자
-[ 23.0s] │  THINK    PLA087.pPLA08704 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 한 줄 치환해 
-         │            정적 검증 오류만 수정 / TODO(응답 규약 미확정): setOkResultMessage("I0016", 
-         │            new String[] {"설비종합효율분석 엑셀다운로드"}) 상당”
-[ 23.0s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,855자
-[ 23.2s] │  THINK    PLA087.pPLA08704 후보[계약우선] — 모델이 밝힌 수정 근거
+[  0.5s] │  REPAIR   PLA093.pPLA09304 재생성 요청
+         │           ↳ 120행: Api가 호출하는 service.fExcelDownQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  REPAIR   PLA096.pPLA09603 재생성 요청
+         │           ↳ 86행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  REPAIR   PLA100.pPLA10003 재생성 요청
+         │           ↳ 94행: Api가 호출하는 service.fHistoryQry(...)가 Service에 정의돼 있지 않습니다.
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,828자
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08703)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,885자
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,646자
+[  0.5s] │  TOOL     LLM Gateway(PLA087.pPLA08704)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,703자
+[  0.5s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 2,354자
+[  0.5s] │  TOOL     LLM Gateway(PLA087.fPLA087QrySelectMainList)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 2,411자
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,792자
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08903)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,849자
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,738자
+[  0.5s] │  TOOL     LLM Gateway(PLA089.pPLA08904)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,795자
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,829자
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09303)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,886자
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,641자
+[  0.5s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,698자
+[  0.5s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,663자
+[  0.5s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,720자
+[  0.5s] │  THINK    PLA087.pPLA08703 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 최소 변경하여 정
+         │            적 검증 오류를 해결”
+[  0.5s] │  THINK    PLA087.pPLA08703 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Service 미정의 메서드 fHistoryQry(...)를 실제 정의된 historyqry(...)로 한 줄
+         │             치환해 정적 검증 오류만 수정 / TODO(응답 규약 미확정): setOkResultMessage("
+         │            I0016", ...) 상당”
+[  0.5s] │  THINK    PLA087.pPLA08704 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 한 줄만 변경
+         │            해 정적 검증 오류를 해결함. / TODO(응답 규약 미확정): setOkResultMessage("I0
+         │            016", ...) 상당”
+[  0.5s] │  THINK    PLA087.pPLA08704 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 교체하고, 원
+         │            본의 여분 중괄호 문제는 메서드 범위만 맞도록 최소 보정 / TODO(응답 규약 미확
+         │            정): setOkResultMessage("I0016", ...) 상당”
+[  0.6s] │  THINK    PLA087.fPLA087QrySelectMainList 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Store 미정의 메서드 dPLA08710 호출을 실제 정의된 dPLA08701로 한 줄만 교체해 
+         │            정적 검증 오류를 제거 / FIXME(원본 버그): 원본은 du.dPLA08710(...).getRecord
+         │            Set("MAIN_LIST") 형태로 반환 객체에서 MAIN_LIST 레코드셋을 꺼냈으나, store.d
+         │            PLA08710(...)의 실제 반환 타입/구조 정보가 없어 그대로 완전 재현 불가”
+[  0.6s] │  THINK    PLA087.fPLA087QrySelectMainList 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “store에 없는 dPLA08710 호출을 실제 정의된 dPLA08701로 최소 교체하여 정적 검
+         │            증 오류만 해결 / FIXME(원본 버그): 원본은 du.dPLA08710(...).getRecordSet("MA
+         │            IN_LIST") 형태로 반환 객체에서 MAIN_LIST 레코드셋을 꺼냈으나, store 반환 타
+         │            입/구조 정보가 없어 그대로 완전 재현 불가”
+[  0.6s] │  THINK    PLA089.pPLA08903 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “service에 없는 fHistoryQry(...) 호출을 실제 정의된 historyqry(...)로 최소 교
+         │            체해 정적 검증 오류만 수정 / TODO(응답 규약 미확정): setOkResultMessage("I00
+         │            16", ...) 상당”
+[  0.6s] │  THINK    PLA089.pPLA08904 후보[계약우선] — 모델이 밝힌 수정 근거
          │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 교체하고, 메
-         │            서드 바깥의 여분 구조는 제거해 정적 검증 오류만 최소 수정 / TODO(응답 규약 
-         │            미확정): setOkResultMessage("I0016", new String[] {"설비종합효율분석 엑셀다
-         │            운로드"}) 상당”
-[ 23.2s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,650자
-[ 23.6s] │  THINK    PLA089.pPLA08903 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체해 정적 검증 
-         │            오류를 최소 수정으로 해결 / TODO(응답 규약 미확정): setOkResultMessage("I001
-         │            6", ...) 상당”
-[ 23.6s] │  TOOL     LLM Gateway(PLA093.pPLA09304)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,707자
-[ 25.4s] │  THINK    PLA093.pPLA09303 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄 최소 변경했
-         │            다. / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
-[ 25.4s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,653자
-[ 25.5s] │  THINK    PLA093.pPLA09303 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “Service 미정의 호출인 fHistoryQry를 실제 정의된 historyqry로 교체해 정적 검
-         │            증 오류만 수정 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상
-         │            당”
-[ 25.5s] │  TOOL     LLM Gateway(PLA096.pPLA09603)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,710자
-[ 27.3s] │  THINK    PLA093.pPLA09304 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 한 줄만 교체
+         │            서드 구조상 필요한 최소한만 정리함 / TODO(응답 규약 미확정): setOkResultMess
+         │            age("I0016", ...) 상당”
+[  0.6s] │  THINK    PLA089.pPLA08903 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄 치환해 정적
+         │             검증 오류만 해결 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...)
+         │             상당”
+[  0.6s] │  THINK    PLA089.pPLA08904 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 한 줄만 변경
          │            해 정적 검증 오류를 해결함 / TODO(응답 규약 미확정): setOkResultMessage("I00
          │            16", ...) 상당”
-[ 27.3s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
-         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,663자
-[ 28.1s] │  THINK    PLA096.pPLA09603 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄만 최소 변경
-         │            해 정적 검증 오류를 제거함 / TODO(응답 규약 미확정): setOkResultMessage("I00
-         │            16", ...) 상당”
-[ 28.1s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
-         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,720자
-[ 28.2s] │  THINK    PLA089.pPLA08904 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 한 줄만 교체
+[  0.6s] │  THINK    PLA093.pPLA09303 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄 치환해 정적
+         │             검증 오류만 수정”
+[  0.6s] │  THINK    PLA093.pPLA09303 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체하여 정적 검
+         │            증 오류만 수정”
+[  0.6s] │  THINK    PLA093.pPLA09304 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 교체하고, 메
+         │            서드/중괄호 구조를 정리해 정적 검증 오류만 최소 수정 / TODO(응답 규약 미확정
+         │            ): setOkResultMessage("I0016", ...) 상당”
+[  0.6s] │  THINK    PLA093.pPLA09304 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 한 줄만 교체
          │            해 정적 검증 오류를 해결 / TODO(응답 규약 미확정): setOkResultMessage("I0016
          │            ", ...) 상당”
-[ 28.3s] │  THINK    PLA096.pPLA09603 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체하고, 정적 검
-         │            증에 걸릴 수 있는 여분 중괄호 없이 메서드 형태만 맞춤 / TODO(응답 규약 미확
-         │            정): setOkResultMessage("I0016", ...) 상당”
-[ 28.9s] │  THINK    PLA089.pPLA08904 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 교체하고, 중
-         │            괄호 구조를 최소한으로 정리함 / TODO(응답 규약 미확정): setOkResultMessage("
-         │            I0016", ...) 상당 / FIXME(원본 버그): 원본에 닫는 중괄호 누락 흔적이 있었음”
-[ 30.4s] │  THINK    PLA087.fPLA087QrySelectMainList 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “store에 없는 dPLA08710 호출을 실재하는 dPLA08701로 교체해 정적 검증 오류만 
-         │            수정 / FIXME(원본 버그): requestData.putFieldMap(paramMap) 호출 구조를 Map 
-         │            기반으로 포팅하면서 별도 객체 반영 없이 동일 Map 수정으로 대체함. / FIXME(원
-         │            본 버그): 원본은 du.dPLA08710(...).getRecordSet("MAIN_LIST") 구조이나 store 
-         │            반환 타입 정보가 없어 그대로의 의미를 보존하기 위해 MAIN_LIST 키 우선 추출, 
-         │            불가 시 전체 반환값을 세팅함.”
-[ 30.6s] │  THINK    PLA087.fPLA087QrySelectMainList 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “Store에 없는 dPLA08710 호출을, 제공된 실제 Store 메서드 목록 중 메인 조회 의
-         │            미에 맞는 dPLA08701로 한 줄 최소 변경 / FIXME(원본 버그): requestData.putFie
-         │            ldMap(paramMap) 호출 구조를 Map 기반으로 포팅하면서 별도 객체 반영 없이 동일
-         │             Map 수정으로 대체함. / FIXME(원본 버그): 원본은 du.dPLA08710(...).getRecord
-         │            Set("MAIN_LIST") 구조이나 store 반환 타입 정보가 없어 그대로의 의미를 보존하
-         │            기 위해 MAIN_LIST 키 우선 추출, 불가 시 전체 반환값을 세팅함.”
-[ 30.7s] │  THINK    PLA100.pPLA10003 후보[최소수정] — 모델이 밝힌 수정 근거
-         │           “service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄 치환해 정적
-         │             검증 오류만 해결 / TODO(응답 규약 미확정): setOkResultMessage("I0016", new 
-         │            String[] {"물류센터가동현황 이력"}) 상당”
-[ 31.1s] │  THINK    PLA100.pPLA10003 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체해 정적 검증 
-         │            오류를 해소 / TODO(응답 규약 미확정): setOkResultMessage("I0016", new String
-         │            [] {"물류센터가동현황 이력"}) 상당”
-[ 31.3s] │  THINK    PLA093.pPLA09304 후보[계약우선] — 모델이 밝힌 수정 근거
-         │           “Service에 없는 fExcelDownQry 호출을 실제 정의된 exceldownqry로 교체하고, 메
-         │            서드 밖에 남은 잘못된 중괄호/주석 잔재가 정적 검증을 깨지 않도록 메서드만 완
-         │            결 형태로 정리 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상
-         │            당”
-[ 31.3s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
+         │           ↳ 수리 후보 [최소수정] · 프롬프트 1,654자
+[  0.6s] │  TOOL     LLM Gateway(PLA100.pPLA10003)
+         │           ↳ 수리 후보 [계약우선] · 프롬프트 1,711자
+[  0.6s] │  THINK    PLA096.pPLA09603 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄만 교체해 정
+         │            적 검증 오류를 해결 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ..
+         │            .) 상당”
+[  0.6s] │  THINK    PLA096.pPLA09603 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체하고, 메서드 
+         │            범위 밖의 불필요한 닫는 중괄호는 제거되도록 완성된 메서드만 제시 / TODO(응답
+         │             규약 미확정): setOkResultMessage("I0016", ...) 상당”
+[  0.6s] │  THINK    PLA100.pPLA10003 후보[최소수정] — 모델이 밝힌 수정 근거
+         │           “service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 한 줄만 교체해 정
+         │            적 검증 오류를 해결 / TODO(응답 규약 미확정): setOkResultMessage("I0016", ..
+         │            .) 상당”
+[  0.6s] │  THINK    PLA100.pPLA10003 후보[계약우선] — 모델이 밝힌 수정 근거
+         │           “Service에 없는 fHistoryQry 호출을 실제 정의된 historyqry로 교체하고, 메서드 
+         │            외부의 잘못된 잔여 중괄호/주석이 섞이지 않도록 완결된 메서드 형태로 정리 / T
+         │            ODO(응답 규약 미확정): setOkResultMessage("I0016", ...) 상당”
+[  0.6s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  DECIDE   PLA087.pPLA08703 수리 후보 2개 → [최소수정] 채택
+[  0.6s] │  DECIDE   PLA087.pPLA08703 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.3s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  DECIDE   PLA087.pPLA08704 수리 후보 2개 → [최소수정] 채택
+[  0.6s] │  DECIDE   PLA087.pPLA08704 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.3s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 1건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  DECIDE   PLA087.fPLA087QrySelectMainList 수리 후보 2개 → [최소수정] 채택
+[  0.6s] │  DECIDE   PLA087.fPLA087QrySelectMainList 수리 후보 2개 → [계약우선] 채택
+         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [최소수정]=1건)
+[  0.6s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[  0.6s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
+[  0.6s] │  DECIDE   PLA089.pPLA08903 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.3s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.3s] │  DECIDE   PLA089.pPLA08903 수리 후보 2개 → [최소수정] 채택
+[  0.6s] │  DECIDE   PLA089.pPLA08904 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.3s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.6s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  DECIDE   PLA089.pPLA08904 수리 후보 2개 → [계약우선] 채택
-         │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [최소수정]=0건)
-[ 31.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
-         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
-         │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  DECIDE   PLA093.pPLA09303 수리 후보 2개 → [최소수정] 채택
+[  0.7s] │  DECIDE   PLA093.pPLA09303 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  DECIDE   PLA093.pPLA09304 수리 후보 2개 → [최소수정] 채택
+[  0.7s] │  DECIDE   PLA093.pPLA09304 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  DECIDE   PLA096.pPLA09603 수리 후보 2개 → [최소수정] 채택
+[  0.7s] │  DECIDE   PLA096.pPLA09603 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
-[ 31.4s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
+[  0.7s] │  REFLECT  후보 [계약우선] 채점 — 잔여 BLOCKER 0건
          │           ↳ 검증기로 실제 splice 후 측정(LLM 자기평가 아님)
-[ 31.4s] │  DECIDE   PLA100.pPLA10003 수리 후보 2개 → [최소수정] 채택
+[  0.7s] │  DECIDE   PLA100.pPLA10003 수리 후보 2개 → [최소수정] 채택
          │           ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
         └─
-[ 31.4s] ┌─ STAGE 4/8  VALIDATE  정적 검증 (수리 1회차 후 재검증) — 변환기와 분리된 검증기
-[ 31.5s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:53
+[  0.7s] ┌─ STAGE 4/8  VALIDATE  정적 검증 (수리 1회차 후 재검증) — 변환기와 분리된 검증기
+[  0.7s] │  BLOCK    PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:53
          │           ↳ 유효한 XML이 아닙니다: mismatched tag: line 53, column 2
-[ 31.5s] │  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건
-[ 31.5s] └─ 정적 검증 완료 — 화면 5건
-[ 31.5s] ┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 1/2 사용
-[ 31.5s] │  REFLECT  수리 불필요 → 다음 단계로 진행
+[  0.7s] │  BLOCK    검증 결과 — BLOCKER 1건 · WARNING 0건
+[  0.7s] └─ 정적 검증 완료 — 화면 5건
+[  0.7s] ┌─ STAGE 5/8  REFLECT  자가 교정 게이트 — 회차 1/2 사용
+[  0.7s] │  DECIDE   BLOCKER 1건 → 교정 대상에서 제외 → 다른 검사 영역 — LLM이 고칠 문제가 아니라 사람에게 넘긴다 (Pla096Mapper.xml [XML_PARSE_ERROR])
+[  0.7s] │  REFLECT  수리 불필요 → 다음 단계로 진행
          │           ↳ LLM이 포팅한 메서드에 귀속된 BLOCKER 0건 (규칙 기반 생성물의 BLOCKER는 대상에서 제외 — LLM이 고칠 문제가 아님)
-[ 31.5s] └─ 수리 0회차
-[ 31.5s] ┌─ STAGE 6/8  TOOL  동작 일치 검증 — AS-IS/TO-BE를 실제로 실행해 비교
-[ 40.6s] │  BLOCK    동등성 검증 결과 — 3/5화면 실행, 48/57케이스 일치 (84.2%)
-[ 40.6s] └─ 동작 일치 검증 완료 — 화면 5건
-[ 40.6s] ┌─ STAGE 7/8  TOOL  품질·취약점 스캔 — 검증기와 분리된 스캐너
-[ 40.6s] └─ 품질 스캔 완료 — 화면 5건, 지적 5건
-[ 40.6s] ┌─ STAGE 8/8  DECIDE  AI 추천 건너뜀 (opt-in 미선택)
-[ 40.6s] └─ 파이프라인 완료 — 사람 승인 대기
+[  0.7s] └─ 수리 0회차
+[  0.7s] ┌─ STAGE 6/8  TOOL  동작 일치 검증 — AS-IS/TO-BE를 실제로 실행해 비교
+[ 11.3s] │  BLOCK    동작 일치 결과 — 3/5화면 실행, 업무 로직(F) 48/48 · 화면 요청(Api) 0/9
+[ 11.3s] └─ 동작 일치 검증 완료 — 화면 5건
+[ 11.3s] ┌─ STAGE 7/8  TOOL  품질·취약점 스캔 — 검증기와 분리된 스캐너
+[ 11.3s] └─ 품질 스캔 완료 — 화면 5건, 지적 5건
+[ 11.3s] ┌─ STAGE 8/8  DECIDE  AI 추천 건너뜀 (opt-in 미선택)
+[ 11.3s] └─ 파이프라인 완료 — 사람 승인 대기
 
 ==============================================================================
   실행 요약
 ==============================================================================
   처리 화면       5건
   생성 파일       25종
-  LLM 포팅 호출   25건 (규칙 기반으로 회피 21건, 규칙 처리 비중 45%)
+  LLM 포팅 호출   25건 (규칙 기반으로 회피 21건, 규칙 처리 비중 46%)
   자가 교정 회차    1회
   잔여 BLOCKER  1건
   동작 일치       3/5화면 실행 · 업무 로직(F) 48/48 · 화면 요청(Api) 0/9(페이로드 9/9)
