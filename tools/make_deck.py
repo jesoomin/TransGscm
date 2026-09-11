@@ -16,9 +16,11 @@ from pptx.util import Emu, Pt
 
 SRC = Path(r"C:/Users/10982/.claude/uploads/205dd1d9-129d-4042-a027-d5acd577e068"
            r"/371bbd2c-AI_Master_Project____________.pptx")
-DST = Path(r"C:/Users/10982/project/TransGscm/docs/weekly/assets/최종발표장표.pptx")
+import os
+DST = Path(os.environ.get("DECK_OUT") or r"C:/Users/10982/project/TransGscm/docs/weekly/assets/최종발표장표.pptx")
 
 NAVY = RGBColor(0x1F, 0x35, 0x64)
+AMBER_T = RGBColor(0xB4, 0x62, 0x1A)
 MINT = RGBColor(0x00, 0xA5, 0x91)
 GREY = RGBColor(0x66, 0x66, 0x66)
 DARK = RGBColor(0x33, 0x33, 0x33)
@@ -167,7 +169,6 @@ set_text(shp(s2, "Text 14"), [
     ("Validator  변환기와 분리", False, 8.5, GREY),
     ("Repairer  검증 기반 자가 교정, 회차 상한 2", False, 8.5, GREY),
     ("Human Approval  승인 전 저장 0건", False, 8.5, GREY),
-    ("", False, 3, GREY),
     ("기술 스택", True, 9, MINT),
     ("LangGraph StateGraph · MCP(Model Context Protocol)", False, 8.5, GREY),
     ("Azure OpenAI 호환 사내 LLM Gateway · Tree-of-Thoughts · Oracle", False, 8.5, GREY),
@@ -437,23 +438,23 @@ set_text(shp(s4, "Text 13"), [
     ("전제 재검토", True, 8.5, MINT),
     ("“실행 수단이 없다”가 오판 — 앱 기동이 아니라 메서드 호출 환경이면 됐다",
      False, 7.5, GREY),
-    ("", False, 2, GREY),
     ("① 최소 실행 Harness", True, 8.5, DARK),
     ("데이터 계층을 양쪽 동일 고정값으로 → 차이는 포팅 차이만", False, 7.5, GREY),
     ("0행 / 1행 / 3행으로 분기 전수", False, 7.5, GREY),
-    ("", False, 2, GREY),
     ("② 호출 대상 계약 JSON 주입", True, 8.5, DARK),
-    ("실제 메서드명·반환 타입·결과 건수를 프롬프트에 명시", False, 7.5, GREY),
-    ("", False, 2, GREY),
+    ("실제 메서드명·반환 타입·결과 건수를 명시", False, 7.5, GREY),
     ("③ ToT 교정 — 채점자 분리", True, 8.5, DARK),
     ("후보 병렬 생성, 규칙 기반 검증기가 채점", False, 7.5, GREY),
-    ("BLOCKER 10건 중 9건만 교정 — 나머지는 사람에게", False, 7.5, GREY),
-    ("", False, 2, GREY),
+    ("BLOCKER 10건 중 9건만 교정, 나머지는 사람에게", False, 7.5, GREY),
     ("④ 판단 근거를 로그로", True, 8.5, DARK),
-    ("모델이 밝힌 근거를 인용 출력 — 원본 버그 2건을 스스로 지적", False, 7.5, GREY),
-    ("", False, 2, GREY),
+    ("모델이 원본 버그 2건을 스스로 지적", False, 7.5, GREY),
     ("⑤ 자동화하지 않을 것을 확정", True, 8.5, DARK),
     ("원본 결함은 보존·표시, 미확인 패턴에 규칙 생성 금지", False, 7.5, GREY),
+    ("", False, 3, GREY),
+    ("2차 적용 — 개발 표준 내재화", True, 8.5, AMBER_T),
+    ("네이밍·계층 책임·예외 규약을 암묵지에서 규칙으로", False, 7.5, GREY),
+    ("전환 직후 LLM이 표준 기준으로 한 번 더 검토", False, 7.5, GREY),
+    ("이관이 아니라 운영 품질까지 보장하는 소스로", False, 7.5, GREY),
 ])
 
 grp = [s for s in s4.shapes if s.shape_type == 6][0]
