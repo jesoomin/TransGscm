@@ -175,11 +175,13 @@ def _scroll_to(anchor_id: str) -> None:
 st.set_page_config(page_title="G-SCM AS-IS → TO-BE 변환", layout="wide")
 
 
+# 의도가 서로 다른 예시를 섞어 둔다 — 모델이 질문마다 다른 조회를 고른다는 걸
+# 처음 쓰는 사람이 한눈에 알 수 있게 하려는 것이다.
 _QUERY_EXAMPLES = [
+    "이 도구 어떻게 쓰는 거야? BLOCKER가 뭐야?",
+    "PLA047은 원본이 컴파일돼? 안 되면 왜?",
+    "PLA047의 fPLA047QrySelectRev는 무슨 일을 해?",
     "dPLA04702를 고치면 어디가 영향받아?",
-    "아무도 호출하지 않는 함수가 있어?",
-    "화면 사이에 중복된 함수 보여줘",
-    "PLA047의 트랜잭션 매핑 알려줘",
 ]
 
 
@@ -196,8 +198,9 @@ def _render_query_panel() -> None:
     """
     st.subheader("조회 질의", divider="gray")
     st.caption(
-        "호출 관계도·매핑 그래프에 자연어로 묻습니다. 답은 규칙 기반 조회 결과에만 근거하며, "
-        "조회에 없는 이름이 나오면 차단합니다."
+        "사용법·화면 상태·원본 소스·영향 범위를 자연어로 묻습니다. 질문의 의도에 따라 조회를 "
+        "골라 실행하고, 그 결과에만 근거해 답합니다 — 조회에 없는 이름이 나오면 차단합니다. "
+        "조회 전용이라 수정·저장은 하지 않습니다."
     )
 
     msgs = st.session_state.setdefault("query_msgs", [])

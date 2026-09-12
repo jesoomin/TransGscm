@@ -53,14 +53,19 @@ class QueryAnswer:
     rounds: int = 0
 
 
-def openai_tools() -> list[dict]:
-    """MCP 도구 스펙을 OpenAI function 포맷으로 옮긴다.
+def _tool_specs() -> list[dict]:
+    """노출할 도구 전부(MCP 4종 + 로컬 3종). **각 도구는 한 곳에만 정의돼 있다.**
 
-    두 곳에서 도구 목록을 따로 관리하면 반드시 어긋난다 - MCP 서버의 `_tools()` 하나만
-    진실로 두고 여기서는 모양만 바꾼다.
+    MCP 서버는 외부 클라이언트에 여는 표면이라 메타데이터 조회 4종만 갖고, 소스 본문을
+    돌려주는 도구는 `agents/query_tools.py`에 따로 둔다 - 이유는 그 모듈 docstring 참고.
     """
-    from agents import mcp_server
+    from agents import mcp_server, query_tools
 
+    return list(mcp_server._tools()) + list(query_tools.tools())
+
+
+def openai_tools() -> list[dict]:
+    """도구 스펙을 OpenAI function 포맷으로 옮긴다(이름만 다른 같은 목록)."""
     return [
         {
             "type": "function",
@@ -70,8 +75,17 @@ def openai_tools() -> list[dict]:
                 "parameters": t.get("inputSchema") or {"type": "object", "properties": {}},
             },
         }
-        for t in mcp_server._tools()
+        for t in _tool_specs()
     ]
+
+
+def dispatch(name: str, args: dict) -> dict:
+    """도구 이름으로 실행처를 고른다. 조회 외 경로는 어느 쪽에도 없다."""
+    from agents import mcp_server, query_tools
+
+    if name in {t["name"] for t in mcp_server._tools()}:
+        return mcp_server.call_tool(name, args)
+    return query_tools.call(name, args)
 
 
 def _collect_identifiers(obj) -> set[str]:
@@ -106,7 +120,7 @@ def ask(question: str, history: list[dict] | None = None, chat_fn=None,
     if chat_fn is None:
         from agents.llm_gateway import chat_with_tools as chat_fn  # noqa: N806
     if tool_fn is None:
-        from agents.mcp_server import call_tool as tool_fn  # noqa: N806
+        tool_fn = dispatch
 
     tools = openai_tools()
     messages: list[dict] = [{"role": "system", "content": _SYSTEM}]

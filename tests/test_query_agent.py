@@ -108,4 +108,23 @@ def test_a_failing_query_does_not_break_the_conversation() -> None:
 def test_only_read_only_tools_are_exposed() -> None:
     """변환 실행·저장 도구가 목록에 끼면 모델이 고를 수 있게 된다."""
     names = {t["function"]["name"] for t in query_agent.openai_tools()}
-    assert names == {"impact_of_method", "unused_methods", "duplicate_methods", "nctrid_map"}
+    assert names == {
+        # MCP와 공유하는 메타데이터 조회
+        "impact_of_method", "unused_methods", "duplicate_methods", "nctrid_map",
+        # 패널 전용 (소스 본문은 MCP로 내보내지 않는다)
+        "how_to_use", "screen_report", "read_screen_source",
+    }
+    banned = ("save", "write", "convert", "delete", "approve", "run_pipeline")
+    assert not [n for n in names if any(b in n for b in banned)]
+
+
+def test_every_tool_name_dispatches_somewhere() -> None:
+    """목록에만 있고 실행처가 없는 도구가 생기면 대화 중에 터진다."""
+    import inspect
+    from agents import mcp_server, query_tools
+    mcp = {t["name"] for t in mcp_server._tools()}
+    local = {t["name"] for t in query_tools.tools()}
+    listed = {t["function"]["name"] for t in query_agent.openai_tools()}
+    assert listed == mcp | local
+    assert not (mcp & local), "같은 이름이 두 곳에 정의돼 있다"
+    assert "dispatch" in inspect.getsource(query_agent.ask)
