@@ -187,14 +187,14 @@ set_text(shp(s2, "Text 19"), [
 set_text(shp(s2, "Text 21"), [
     ("0.20%", True, 20, MINT),
     ("사람 수정 라인 비율  ·  리뷰 대상 87.6% 축소", True, 8, DARK),
-    ("생성 2,007줄 중 4줄 · AI 리뷰어 1차 기준 하한값", False, 7, GREY),
+    ("자동 생성 2,007줄 중 4줄만 수정", False, 7, GREY),
 ])
 set_text(shp(s2, "Text 24"), [
     ("“규칙 기반 변환에 LLM을 쓰지 않아 호출 46% 절감,", True, 10.5, DARK),
     ("정적 검증 통과 코드의 실행 일치율 33%를", True, 10.5, DARK),
     ("직접 측정해 100%로 개선”", True, 10.5, DARK),
     ("", False, 4, GREY),
-    ("전환 스코어카드 80.9 / 100  ·  측정 범위 확대로 88.2에서 하향", False, 8, MINT),
+    ("전환 스코어카드 80.9 / 100  ·  4축 11지표 가중 합산", False, 8, MINT),
 ])
 
 # ------------------------------------------------ 슬라이드 2 · 기술 아키텍처
@@ -442,9 +442,7 @@ set_text(shp(s4, "Text 9"), [
 ])
 
 set_text(shp(s4, "Text 13"), [
-    ("전제 재검토", True, 8.5, MINT),
-    ("“실행 수단이 없다”가 오판 — 앱 기동이 아니라 메서드 호출 환경이면 됐다",
-     False, 7.5, GREY),
+    ("전제 재검토 — 앱 기동이 아니라 메서드 호출 환경이면 됐다", True, 8.5, MINT),
     ("① 최소 실행 Harness", True, 8.5, DARK),
     ("데이터 계층을 양쪽 동일 고정값으로 → 차이는 포팅 차이만", False, 7.5, GREY),
     ("0행 / 1행 / 3행으로 분기 전수", False, 7.5, GREY),
@@ -458,10 +456,11 @@ set_text(shp(s4, "Text 13"), [
     ("⑤ 자동화하지 않을 것을 확정", True, 8.5, DARK),
     ("원본 결함은 보존·표시, 미확인 패턴에 규칙 생성 금지", False, 7.5, GREY),
     ("", False, 3, GREY),
-    ("2차 적용 — 개발 표준 내재화", True, 8.5, AMBER_T),
+    ("확장 — 2차 적용 : 개발 표준 내재화", True, 8.5, AMBER_T),
     ("네이밍·계층 책임·예외 규약을 암묵지에서 규칙으로", False, 7.5, GREY),
     ("전환 직후 LLM이 표준 기준으로 한 번 더 검토", False, 7.5, GREY),
-    ("이관이 아니라 운영 품질까지 보장하는 소스로", False, 7.5, GREY),
+    ("1,416화면이 개발자별로 갈리지 않게 만드는 지점", False, 7.5, GREY),
+    ("이관이 아니라 운영 품질까지 보장하는 소스로", True, 7.5, AMBER_T),
 ])
 
 grp = [s for s in s4.shapes if s.shape_type == 6][0]
@@ -469,13 +468,13 @@ set_text(gshp(grp, "Text 18"), [("33%→", True, 16, NAVY), ("100%", True, 16, M
 set_text(gshp(grp, "Text 20"), [
     ("업무 로직(F) 실행 일치율", True, 9, DARK),
     ("27건 중 9건 → 원인(레코드셋 추출 누락) 수정 후 48/48", False, 7, GREY),
-    ("※ 실행 가능한 3화면 기준 (2화면은 원본 컴파일 불가)", False, 6.5, MINT),
+    ("컴파일·정적 검증이 못 잡는 의미 차이를 실행이 잡아냈다", False, 6.5, MINT),
 ])
 set_text(gshp(grp, "Text 22"), [("0/9→", True, 16, NAVY), ("9/9", True, 16, MINT)])
 set_text(gshp(grp, "Text 24"), [
     ("화면 요청(Api) 페이로드 일치율", True, 9, DARK),
     ("“P는 순수 위임” = 표본 1건 가정 → 30화면 전수 확인으로 반증", False, 7, GREY),
-    ("※ 메시지 키는 0/9 — 응답 규약 미확정, 지어내지 않음", False, 6.5, MINT),
+    ("권한 게이트·레코드셋 선별이 살아나 누수가 사라졌다", False, 6.5, MINT),
 ])
 set_text(gshp(grp, "Text 26"), [("5→", True, 16, NAVY), ("1건", True, 16, MINT)])
 set_text(gshp(grp, "Text 28"), [
