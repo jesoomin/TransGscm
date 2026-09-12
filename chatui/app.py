@@ -186,30 +186,32 @@ _QUERY_EXAMPLES = [
 def _render_query_panel() -> None:
     """조회 질의 패널 — 자연어로 묻고 결정론적 조회로 답한다.
 
-    본문과 나란히 늘 떠 있게 두려고 사이드바에 둔다. 팝업(`_show_impact_dialog`)은 함수명을
-    정확히 아는 경우에 더 빠르므로 그대로 남겼다 - 이 패널은 "무엇을 물어볼 수 있는지"부터
-    모르는 경우를 맡는다.
+    본문 오른쪽을 갈라 늘 떠 있게 둔다. 팝업(`_show_impact_dialog`)은 함수명을 정확히 아는
+    경우 더 빠르므로 함께 남겼다 - 이 패널은 "무엇을 물어볼 수 있는지"부터 모르는 경우를 맡는다.
 
     답의 근거는 전부 `agents/query_agent`가 부르는 **읽기 전용 조회 4종**이다. 변환 실행·저장
     도구는 애초에 모델에게 보이지 않는다.
+
+    호출부가 이미 오른쪽 컬럼 안이므로 여기서 컨테이너를 다시 잡지 않는다.
     """
-    with st.sidebar:
-        st.subheader("조회 질의", divider="gray")
-        st.caption(
-            "호출 관계도·매핑 그래프에 자연어로 묻습니다. 답은 규칙 기반 조회 결과에만 "
-            "근거하며, 조회에 없는 이름이 나오면 차단합니다."
-        )
+    st.subheader("조회 질의", divider="gray")
+    st.caption(
+        "호출 관계도·매핑 그래프에 자연어로 묻습니다. 답은 규칙 기반 조회 결과에만 근거하며, "
+        "조회에 없는 이름이 나오면 차단합니다."
+    )
 
-        msgs = st.session_state.setdefault("query_msgs", [])
+    msgs = st.session_state.setdefault("query_msgs", [])
 
-        if not msgs:
-            with st.container(border=True):
-                st.caption("이렇게 물어보세요")
-                for i, ex in enumerate(_QUERY_EXAMPLES):
-                    if st.button(ex, key=f"qex_{i}", width="stretch"):
-                        st.session_state["query_pending"] = ex
-                        st.rerun()
+    if not msgs:
+        with st.container(border=True):
+            st.caption("이렇게 물어보세요")
+            for i, ex in enumerate(_QUERY_EXAMPLES):
+                if st.button(ex, key=f"qex_{i}", width="stretch"):
+                    st.session_state["query_pending"] = ex
+                    st.rerun()
 
+    # 대화가 길어져도 본문을 밀어내지 않도록 높이를 고정하고 그 안에서 스크롤한다.
+    with st.container(height=420, border=False):
         for m in msgs:
             with st.chat_message(m["role"]):
                 st.markdown(m["content"])
@@ -220,29 +222,33 @@ def _render_query_panel() -> None:
                 for issue in m.get("issues", []):
                     st.warning(f"{issue['severity']} · {issue['message']}")
 
-        typed = st.chat_input("함수명이나 화면 ID를 넣어 물어보세요", key="query_input")
-        pending = st.session_state.pop("query_pending", None) or typed
-        if not pending:
-            return
+    typed = st.chat_input("함수명이나 화면 ID를 넣어 물어보세요", key="query_input")
+    pending = st.session_state.pop("query_pending", None) or typed
+    if not pending:
+        if msgs and st.button("대화 지우기", key="query_clear"):
+            st.session_state["query_msgs"] = []
+            st.rerun()
+        return
 
-        msgs.append({"role": "user", "content": pending})
-        history = [{"role": m["role"], "content": m["content"]} for m in msgs[:-1]][-6:]
-        with st.spinner("조회 중..."):
-            try:
-                from agents.query_agent import ask
+    msgs.append({"role": "user", "content": pending})
+    history = [{"role": m["role"], "content": m["content"]} for m in msgs[:-1]][-6:]
+    with st.spinner("조회 중..."):
+        try:
+            from agents.query_agent import ask
 
-                out = ask(pending, history=history)
-                msgs.append({
-                    "role": "assistant", "content": out.answer,
-                    "tool_calls": out.tool_calls, "issues": out.issues,
-                })
-            except Exception as exc:  # 조회 실패가 본문 작업을 막지 않게 한다
-                msgs.append({
-                    "role": "assistant",
-                    "content": f"조회하지 못했습니다 — {exc}",
-                    "tool_calls": [], "issues": [],
-                })
-        st.rerun()
+            out = ask(pending, history=history)
+            msgs.append({
+                "role": "assistant", "content": out.answer,
+                "tool_calls": out.tool_calls, "issues": out.issues,
+            })
+        except Exception as exc:  # 조회 실패가 본문 작업을 막지 않게 한다
+            msgs.append({
+                "role": "assistant",
+                "content": f"조회하지 못했습니다 — {exc}",
+                "tool_calls": [], "issues": [],
+            })
+    st.rerun()
+
 
 _JAVAC_ERR_RE = re.compile(r"^\[ERROR\]\s+(.+?\.java):\[(\d+),(\d+)\]\s+(.*)$")
 
@@ -1254,7 +1260,16 @@ def _render_batch_screen_detail(
         _render_diff_test(screen_id, buckets, package_p1, package_p2)
 
 
-_render_query_panel()
+# ── 본문 / 조회 패널 분할 ──────────────────────────────────────────────────
+# 오른쪽을 갈라 질의 패널을 늘 띄워둔다. 아래 본문은 1,100줄이 넘고 대부분 조건 블록 안에
+# 있어서 `with main_col:`로 감싸려면 전부 들여써야 하는데, 그러면 help= 문자열과 CSS 블록의
+# 내용까지 바뀐다. 컬럼 컨텍스트를 열고 닫지 않으면 이후 최상위 요소가 전부 그 안으로
+# 들어가므로(AppTest로 배치 확인) 한 줄로 같은 결과를 얻는다.
+_MAIN_RATIO = [3, 1]  # 본문 75% / 질의 패널 25%
+main_col, chat_col = st.columns(_MAIN_RATIO, gap="large")
+with chat_col:
+    _render_query_panel()
+main_col.__enter__()
 
 st.title("G-SCM AS-IS → TO-BE 변환 (v0)")
 st.caption(
