@@ -112,11 +112,26 @@ def _summarize(name: str, result: dict) -> str:
 
 
 def ask(question: str, history: list[dict] | None = None, chat_fn=None,
-        tool_fn=None) -> QueryAnswer:
+        tool_fn=None, on_event=None) -> QueryAnswer:
     """질문 하나에 답한다. history는 [{'role','content'}] 형식의 이전 대화.
 
     chat_fn/tool_fn을 주입할 수 있게 둔 이유는 테스트에서 LLM·DB 없이 루프를 돌리기 위해서다.
+
+    `on_event(ev)`를 주면 진행 상황을 **일어나는 대로** 알려준다 - UI가 "지금 무엇을 하는 중인지"를
+    보여줄 수 있게 하려는 것이다. ev["kind"]는 다음 중 하나다.
+      think  모델에게 물어보는 중 (round 번호)
+      tool   도구 하나를 실행함 (name/args/ok/summary)
+      done   답변 확정
+    **없는 진행을 지어내지 않는다** - 전부 실제 분기 지점에서 부른다
+    (`agents/reasoning_log.py`와 같은 원칙).
     """
+    def emit(**ev):
+        if on_event:
+            try:
+                on_event(ev)
+            except Exception:  # 표시용 콜백이 대화를 멈추게 두지 않는다
+                pass
+
     if chat_fn is None:
         from agents.llm_gateway import chat_with_tools as chat_fn  # noqa: N806
     if tool_fn is None:
@@ -131,11 +146,13 @@ def ask(question: str, history: list[dict] | None = None, chat_fn=None,
     calls: list[dict] = []
 
     for round_no in range(1, MAX_TOOL_ROUNDS + 1):
+        emit(kind="think", round=round_no)
         msg = chat_fn(messages, tools=tools)
         tool_calls = getattr(msg, "tool_calls", None) or []
         if not tool_calls:
             answer = (getattr(msg, "content", None) or "").strip()
             issues = _check_grounding(answer, allowed)
+            emit(kind="done", issues=issues)
             return QueryAnswer(answer=answer, tool_calls=calls, issues=issues,
                                rounds=round_no - 1)
 
@@ -163,6 +180,7 @@ def ask(question: str, history: list[dict] | None = None, chat_fn=None,
                 result = {"error": str(exc)}
                 ok, summary = False, f"조회 실패: {exc}"
             calls.append({"name": name, "args": args, "ok": ok, "summary": summary})
+            emit(kind="tool", name=name, args=args, ok=ok, summary=summary)
             messages.append({
                 "role": "tool",
                 "tool_call_id": c.id,

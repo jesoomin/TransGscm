@@ -185,16 +185,48 @@ _QUERY_EXAMPLES = [
 ]
 
 
+def _stream_text(text: str):
+    """완성된 답변을 조금씩 흘려 보여준다.
+
+    **문장은 이미 완성돼 있다** - 도구 결과를 받아 한 번에 생성한 뒤 화면에만 나눠 그리는
+    표시 효과다. 토큰이 실제로 그때그때 오는 것처럼 보이게 하려고 쓰는 게 아니라, 긴 답이
+    통째로 툭 나타나지 않게 하려는 것이다.
+    """
+    import time
+
+    buf = ""
+    for ch in text:
+        buf += ch
+        if ch in " \n" or len(buf) >= 12:
+            yield buf
+            buf = ""
+            time.sleep(0.006)
+    if buf:
+        yield buf
+
+
+def _render_history(msgs: list[dict]) -> None:
+    for m in msgs:
+        with st.chat_message(m["role"]):
+            st.markdown(m["content"])
+            for call in m.get("tool_calls", []):
+                args = ", ".join(f"{k}={v}" for k, v in call["args"].items()) or "-"
+                icon = ":material/check:" if call["ok"] else ":material/error:"
+                st.caption(f"{icon} `{call['name']}({args})` → {call['summary']}")
+            for issue in m.get("issues", []):
+                st.warning(f"{issue['severity']} · {issue['message']}")
+
+
+@st.fragment
 def _render_query_panel() -> None:
     """조회 질의 패널 — 자연어로 묻고 결정론적 조회로 답한다.
 
-    본문 오른쪽을 갈라 늘 떠 있게 둔다. 팝업(`_show_impact_dialog`)은 함수명을 정확히 아는
-    경우 더 빠르므로 함께 남겼다 - 이 패널은 "무엇을 물어볼 수 있는지"부터 모르는 경우를 맡는다.
+    **프래그먼트인 이유**: 이 패널이 일반 rerun을 걸면 아래 본문 1,100줄이 통째로 다시 그려진다.
+    폴더 스캔·DB 조회가 얹혀 있어 몇 초씩 걸리고, 그동안 방금 보낸 질문과 답이 화면에서 사라져
+    "답을 안 한다"처럼 보인다. 프래그먼트는 자기 자신만 다시 그린다.
 
-    답의 근거는 전부 `agents/query_agent`가 부르는 **읽기 전용 조회 4종**이다. 변환 실행·저장
-    도구는 애초에 모델에게 보이지 않는다.
-
-    호출부가 이미 오른쪽 컬럼 안이므로 여기서 컨테이너를 다시 잡지 않는다.
+    답의 근거는 전부 `agents/query_agent`가 부르는 **읽기 전용 조회**다. 변환 실행·저장 도구는
+    애초에 모델에게 보이지 않는다.
     """
     st.subheader("조회 질의", divider="gray")
     st.caption(
@@ -211,46 +243,66 @@ def _render_query_panel() -> None:
             for i, ex in enumerate(_QUERY_EXAMPLES):
                 if st.button(ex, key=f"qex_{i}", width="stretch"):
                     st.session_state["query_pending"] = ex
-                    st.rerun()
+                    st.rerun(scope="fragment")
 
     # 대화가 길어져도 본문을 밀어내지 않도록 높이를 고정하고 그 안에서 스크롤한다.
-    with st.container(height=420, border=False):
-        for m in msgs:
-            with st.chat_message(m["role"]):
-                st.markdown(m["content"])
-                for call in m.get("tool_calls", []):
-                    args = ", ".join(f"{k}={v}" for k, v in call["args"].items()) or "-"
-                    icon = ":material/check:" if call["ok"] else ":material/error:"
-                    st.caption(f"{icon} `{call['name']}({args})` → {call['summary']}")
-                for issue in m.get("issues", []):
-                    st.warning(f"{issue['severity']} · {issue['message']}")
+    box = st.container(height=420, border=False)
+    with box:
+        _render_history(msgs)
 
     typed = st.chat_input("함수명이나 화면 ID를 넣어 물어보세요", key="query_input")
     pending = st.session_state.pop("query_pending", None) or typed
+
     if not pending:
         if msgs and st.button("대화 지우기", key="query_clear"):
             st.session_state["query_msgs"] = []
-            st.rerun()
+            st.rerun(scope="fragment")
         return
 
-    msgs.append({"role": "user", "content": pending})
-    history = [{"role": m["role"], "content": m["content"]} for m in msgs[:-1]][-6:]
-    with st.spinner("조회 중..."):
-        try:
-            from agents.query_agent import ask
+    # 방금 보낸 질문을 먼저 띄운다 - 기다리는 동안 화면이 비어 있지 않게.
+    with box:
+        with st.chat_message("user"):
+            st.markdown(pending)
 
-            out = ask(pending, history=history)
-            msgs.append({
-                "role": "assistant", "content": out.answer,
-                "tool_calls": out.tool_calls, "issues": out.issues,
-            })
-        except Exception as exc:  # 조회 실패가 본문 작업을 막지 않게 한다
-            msgs.append({
-                "role": "assistant",
-                "content": f"조회하지 못했습니다 — {exc}",
-                "tool_calls": [], "issues": [],
-            })
-    st.rerun()
+        with st.chat_message("assistant"):
+            status = st.status("의도 파악 중...", expanded=True)
+            seen: list[dict] = []
+
+            def on_event(ev: dict) -> None:
+                kind = ev.get("kind")
+                if kind == "think":
+                    status.update(label=f"생각 중... (회차 {ev['round']})")
+                elif kind == "tool":
+                    args = ", ".join(f"{k}={v}" for k, v in ev["args"].items()) or "-"
+                    icon = ":material/check:" if ev["ok"] else ":material/error:"
+                    status.write(f"{icon} `{ev['name']}({args})` → {ev['summary']}")
+                    status.update(label=f"{ev['name']} 조회 완료")
+                    seen.append(ev)
+                elif kind == "done":
+                    status.update(label="답변 작성 중...")
+
+            try:
+                from agents.query_agent import ask
+
+                history = [{"role": m["role"], "content": m["content"]} for m in msgs][-6:]
+                out = ask(pending, history=history, on_event=on_event)
+                status.update(label=f"조회 {len(out.tool_calls)}건 완료",
+                              state="complete", expanded=False)
+                st.write_stream(_stream_text(out.answer))
+                for issue in out.issues:
+                    st.warning(f"{issue['severity']} · {issue['message']}")
+                answer_msg = {"role": "assistant", "content": out.answer,
+                              "tool_calls": out.tool_calls, "issues": out.issues}
+            except Exception as exc:  # 조회 실패가 본문 작업을 막지 않게 한다
+                status.update(label="조회 실패", state="error", expanded=True)
+                st.error(f"조회하지 못했습니다 — {exc}")
+                answer_msg = {"role": "assistant",
+                              "content": f"조회하지 못했습니다 — {exc}",
+                              "tool_calls": seen, "issues": []}
+
+    # 이번 턴은 위에서 이미 그렸으니 rerun하지 않는다 - 기록만 남긴다.
+    msgs.append({"role": "user", "content": pending})
+    msgs.append(answer_msg)
 
 
 _JAVAC_ERR_RE = re.compile(r"^\[ERROR\]\s+(.+?\.java):\[(\d+),(\d+)\]\s+(.*)$")
