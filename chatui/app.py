@@ -174,6 +174,76 @@ def _scroll_to(anchor_id: str) -> None:
 
 st.set_page_config(page_title="G-SCM AS-IS → TO-BE 변환", layout="wide")
 
+
+_QUERY_EXAMPLES = [
+    "dPLA04702를 고치면 어디가 영향받아?",
+    "아무도 호출하지 않는 함수가 있어?",
+    "화면 사이에 중복된 함수 보여줘",
+    "PLA047의 트랜잭션 매핑 알려줘",
+]
+
+
+def _render_query_panel() -> None:
+    """조회 질의 패널 — 자연어로 묻고 결정론적 조회로 답한다.
+
+    본문과 나란히 늘 떠 있게 두려고 사이드바에 둔다. 팝업(`_show_impact_dialog`)은 함수명을
+    정확히 아는 경우에 더 빠르므로 그대로 남겼다 - 이 패널은 "무엇을 물어볼 수 있는지"부터
+    모르는 경우를 맡는다.
+
+    답의 근거는 전부 `agents/query_agent`가 부르는 **읽기 전용 조회 4종**이다. 변환 실행·저장
+    도구는 애초에 모델에게 보이지 않는다.
+    """
+    with st.sidebar:
+        st.subheader("조회 질의", divider="gray")
+        st.caption(
+            "호출 관계도·매핑 그래프에 자연어로 묻습니다. 답은 규칙 기반 조회 결과에만 "
+            "근거하며, 조회에 없는 이름이 나오면 차단합니다."
+        )
+
+        msgs = st.session_state.setdefault("query_msgs", [])
+
+        if not msgs:
+            with st.container(border=True):
+                st.caption("이렇게 물어보세요")
+                for i, ex in enumerate(_QUERY_EXAMPLES):
+                    if st.button(ex, key=f"qex_{i}", width="stretch"):
+                        st.session_state["query_pending"] = ex
+                        st.rerun()
+
+        for m in msgs:
+            with st.chat_message(m["role"]):
+                st.markdown(m["content"])
+                for call in m.get("tool_calls", []):
+                    args = ", ".join(f"{k}={v}" for k, v in call["args"].items()) or "-"
+                    icon = ":material/check:" if call["ok"] else ":material/error:"
+                    st.caption(f"{icon} `{call['name']}({args})` → {call['summary']}")
+                for issue in m.get("issues", []):
+                    st.warning(f"{issue['severity']} · {issue['message']}")
+
+        typed = st.chat_input("함수명이나 화면 ID를 넣어 물어보세요", key="query_input")
+        pending = st.session_state.pop("query_pending", None) or typed
+        if not pending:
+            return
+
+        msgs.append({"role": "user", "content": pending})
+        history = [{"role": m["role"], "content": m["content"]} for m in msgs[:-1]][-6:]
+        with st.spinner("조회 중..."):
+            try:
+                from agents.query_agent import ask
+
+                out = ask(pending, history=history)
+                msgs.append({
+                    "role": "assistant", "content": out.answer,
+                    "tool_calls": out.tool_calls, "issues": out.issues,
+                })
+            except Exception as exc:  # 조회 실패가 본문 작업을 막지 않게 한다
+                msgs.append({
+                    "role": "assistant",
+                    "content": f"조회하지 못했습니다 — {exc}",
+                    "tool_calls": [], "issues": [],
+                })
+        st.rerun()
+
 _JAVAC_ERR_RE = re.compile(r"^\[ERROR\]\s+(.+?\.java):\[(\d+),(\d+)\]\s+(.*)$")
 
 
@@ -1183,6 +1253,8 @@ def _render_batch_screen_detail(
     with tab_diff:
         _render_diff_test(screen_id, buckets, package_p1, package_p2)
 
+
+_render_query_panel()
 
 st.title("G-SCM AS-IS → TO-BE 변환 (v0)")
 st.caption(

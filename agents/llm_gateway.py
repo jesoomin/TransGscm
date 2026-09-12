@@ -124,6 +124,28 @@ def chat(
     return out
 
 
+def chat_with_tools(
+    messages: list[dict],
+    tools: list[dict],
+    model: str = DEFAULT_CHAT_MODEL,
+    **kwargs,
+):
+    """도구 호출용 단발 완성. **응답 메시지 객체를 그대로** 돌려준다.
+
+    `chat()`은 `.content`만 돌려주는데, 모델이 도구를 부르기로 하면 content가 None이고
+    정보는 전부 `.tool_calls`에 있다 - 그래서 별도 함수로 둔다.
+
+    **응답 캐시를 타지 않는다.** 캐시 키가 messages만 보기 때문에 같은 질문이라도 도구 결과가
+    달라지면(DB가 갱신되면) 틀린 답을 재생할 수 있다. 조회 답변은 항상 지금 DB를 보고 만든다.
+    """
+    _require_model(model)
+    client = get_client()
+    resp = client.chat.completions.create(
+        model=model, messages=messages, tools=tools, **kwargs
+    )
+    return resp.choices[0].message
+
+
 def chat_stream(
     messages: list[dict],
     model: str = DEFAULT_CHAT_MODEL,
