@@ -84,7 +84,10 @@ def tools() -> list[dict]:
         {
             "name": "read_screen_source",
             "description": "AS-IS 원본의 메서드 본문을 읽습니다. 함수가 실제로 무엇을 하는지 "
-                           "물을 때 씁니다. 변환 계획이 기록해 둔 파일만 읽습니다.",
+                           "물을 때 씁니다. 변환 계획이 기록해 둔 파일만 읽습니다. "
+                           "**질문에 함수명이 있으면 method_name을 함께 넘기세요** — 생략하면 "
+                           "목록만 돌아와 한 번 더 불러야 합니다. 함수명만 알고 계층을 모르면 "
+                           "f로 시작하면 F.java, d는 D.java, p는 P.java입니다.",
             "inputSchema": {"type": "object", "properties": {
                 "screen_id": {"type": "string", "description": "화면 ID (예: PLA047)"},
                 "fragment": {"type": "string", "enum": ["P.java", "F.java", "D.java", "D.xsql"],

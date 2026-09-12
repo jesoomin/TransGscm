@@ -1,6 +1,6 @@
 # PLA046 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-11T09:11:07
+- 생성 시각: 2026-09-12T18:17:52
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla046Api.java, Pla046Dto.java, Pla046Mapper.xml, Pla046Service.java, Pla046Store.java)
 - 사람이 반드시 처리해야 할 항목: **24건**, 확인 권장: 42건
@@ -194,13 +194,13 @@
 - **SQL_INJECTION_RISK** (818행) — ${RSL_CNT}가 1곳(818행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla046Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateMemo`, 121행) — 121행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 du.dPLA04609(...).getIntField("RSL_CNT") 호출을 전제하여 null 반환 가능성을 고려하지 않음
+- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateMemo`, 125행) — 125행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 du.dPLA04609(...).getIntField("RSL_CNT")를 전제로 하나, 계약 원문에는 return_type이 int로 명시되어 있어 반환 형태가 상충함.
   - 발견: 품질·취약점 스캔(Pla046Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateInfo`, 225행) — 225행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - EXR_PLN_YM가 문자열 리터럴이 아니라 미선언 변수로 사용되어 컴파일 에러가 발생할 수 있음.
+- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateInfo`, 216행) — 216행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - EXR_PLN_YM가 문자열 리터럴이 아니라 미선언 변수로 참조되어 컴파일 에러가 발생하는 원본 로직을 그대로 유지함.
   - 발견: 품질·취약점 스캔(Pla046Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA046QryCallProc`, 249행) — 249행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본의 lookupDataUnit(DPLA046.class) 및 onlineCtx 의존은 제거되어 직접 store 필드 사용으로 포팅함.
+- **ORIGINAL_BUG** (메서드 `fPLA046QryUpdateFinalConfirm`, 306행) — 306행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 du.dPLA04609(requestData, onlineCtx).getIntField("RSL_CNT")로 결과가 IDataSet임을 전제하지만,
   - 발견: 품질·취약점 스캔(Pla046Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 

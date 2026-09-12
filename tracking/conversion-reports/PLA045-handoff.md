@@ -1,6 +1,6 @@
 # PLA045 변환 인수인계 (미변환 사유 + 수동 처리 가이드)
 
-- 생성 시각: 2026-09-11T09:11:07
+- 생성 시각: 2026-09-12T18:17:52
 - TO-BE 패키지: `com.skhynix.gscm.r.pm.pla`
 - 생성된 파일: 5개 (Pla045Api.java, Pla045Dto.java, Pla045Mapper.xml, Pla045Service.java, Pla045Store.java)
 - 사람이 반드시 처리해야 할 항목: **7건**, 확인 권장: 9건
@@ -70,19 +70,16 @@
 - **SQL_INJECTION_RISK** (194행) — ${SUM}가 1곳(194행)에서 발견됨: ORDER BY/컬럼·테이블명 동적 치환으로 보여 상대적으로 위험도가 낮게 분류했습니다 - 값의 출처가 코드 상수/고정 목록이 아니라 외부 입력이라면 여전히 검토가 필요합니다.
   - 발견: 품질·취약점 스캔(Pla045Mapper.xml)
   - 조치: `${...}`가 조건절에 쓰였습니다. 값이 외부 입력에서 오면 인젝션 위험이니 가능하면 `#{...}`로 바꿀 수 있는지 검토하세요.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 40행) — 40행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 IRecordSet.getRecordCount()/get(i, ...) 전제이나 store 반환 계약은 Map<String,Object> 단건이라 그대로 포팅 시 컴파일 불가/의미 불명
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 55행) — 55행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 sSum을 누적하면서 requestData.putField("SUM", sSUM)로 대소문자 다른 미선언 변수 sSUM을 사용함.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 56행) — 56행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - sSUM 미선언 변수 원문 그대로 유지
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 58행) — 58행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 arrQuaterColMap 타입을 List<Map<String,String>>로 선언하고 new HashMap<String,String>()를 대입함(타입 불일치).
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 58행) — 58행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 변수 선언 타입은 List<Map<String, String>>인데 HashMap을 대입함
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 59행) — 59행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 quaterColList 미선언 상태로 add 호출함.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 60행) — 60행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 괄호 누락 원문 그대로 의도 보존
-  - 발견: 품질·취약점 스캔(Pla045Service.java)
-  - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
-- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 62행) — 62행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - quaterColList 미선언 변수 원문 그대로 유지
+- **ORIGINAL_BUG** (메서드 `fPLA045QrySelectMainList`, 60행) — 60행: 원본 버그(포팅 시 보존, 임의 수정 안 함) - 원본은 괄호 누락으로 문법 오류가 있음.
   - 발견: 품질·취약점 스캔(Pla045Service.java)
   - 조치: 원본에 있던 결함을 고치지 않고 그대로 옮긴 지점입니다(의도된 동작). 업무 규칙을 아는 사람이 고칠지 유지할지 판단해야 합니다.
 

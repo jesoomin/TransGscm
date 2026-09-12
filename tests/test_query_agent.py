@@ -42,7 +42,7 @@ def test_calls_a_tool_then_answers_from_its_result() -> None:
     ]
     seen = []
 
-    def chat_fn(messages, tools):
+    def chat_fn(messages, tools, **kw):
         assert tools, "도구 목록이 전달돼야 한다"
         return steps.pop(0)
 
@@ -62,7 +62,7 @@ def test_blocks_a_name_the_query_never_returned() -> None:
         _msg(content="dPLA99999도 함께 고쳐야 합니다."),
     ]
     out = query_agent.ask("영향도 알려줘",
-                          chat_fn=lambda m, tools: steps.pop(0),
+                          chat_fn=lambda m, tools, **kw: steps.pop(0),
                           tool_fn=lambda n, a: IMPACT)
     assert out.issues, "조회에 없던 이름이 통과했다"
     assert out.issues[0]["type"] == "QUERY_ANSWER_INVENTED_REF"
@@ -76,13 +76,13 @@ def test_korean_particle_does_not_slip_past_the_guardrail() -> None:
         _msg(content="dPLA99999를 같이 확인하세요."),
     ]
     out = query_agent.ask("영향도",
-                          chat_fn=lambda m, tools: steps.pop(0),
+                          chat_fn=lambda m, tools, **kw: steps.pop(0),
                           tool_fn=lambda n, a: IMPACT)
     assert out.issues and "dPLA99999" in out.issues[0]["identifiers"]
 
 
 def test_stops_at_the_round_budget_instead_of_looping() -> None:
-    def chat_fn(messages, tools):
+    def chat_fn(messages, tools, **kw):
         return _msg(tool_calls=[_call("unused_methods", {})])
 
     out = query_agent.ask("계속 조회해", chat_fn=chat_fn, tool_fn=lambda n, a: {"count": 0, "rows": []})
@@ -99,7 +99,7 @@ def test_a_failing_query_does_not_break_the_conversation() -> None:
     def tool_fn(name, args):
         raise RuntimeError("DB 연결 없음")
 
-    out = query_agent.ask("영향도", chat_fn=lambda m, tools: steps.pop(0), tool_fn=tool_fn)
+    out = query_agent.ask("영향도", chat_fn=lambda m, tools, **kw: steps.pop(0), tool_fn=tool_fn)
     assert out.tool_calls[0]["ok"] is False
     assert "DB 연결 없음" in out.tool_calls[0]["summary"]
     assert out.answer
@@ -128,3 +128,18 @@ def test_every_tool_name_dispatches_somewhere() -> None:
     assert listed == mcp | local
     assert not (mcp & local), "같은 이름이 두 곳에 정의돼 있다"
     assert "dispatch" in inspect.getsource(query_agent.ask)
+
+def test_the_first_turn_is_forced_to_consult_a_query() -> None:
+    """빠른 모델은 도구를 건너뛰고 그럴듯하게 답하는 일이 있다(실측). 첫 턴은 강제한다."""
+    seen_kw = []
+
+    def chat_fn(messages, tools, **kw):
+        seen_kw.append(kw)
+        if len(seen_kw) == 1:
+            return _msg(tool_calls=[_call("unused_methods", {})])
+        return _msg(content="미사용 후보는 없습니다.")
+
+    query_agent.ask("미사용 함수 있어?", chat_fn=chat_fn,
+                    tool_fn=lambda n, a: {"count": 0, "rows": []})
+    assert seen_kw[0].get("tool_choice") == "required", "첫 턴에 조회를 강제하지 않았다"
+    assert "tool_choice" not in seen_kw[1], "두 번째 턴까지 강제하면 재조회가 늘어난다"

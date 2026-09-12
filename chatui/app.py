@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 import streamlit as st
@@ -267,27 +268,30 @@ def _render_query_panel() -> None:
         with st.chat_message("assistant"):
             status = st.status("의도 파악 중...", expanded=True)
             seen: list[dict] = []
+            t0 = time.monotonic()
 
             def on_event(ev: dict) -> None:
+                el = time.monotonic() - t0
                 kind = ev.get("kind")
                 if kind == "think":
-                    status.update(label=f"생각 중... (회차 {ev['round']})")
+                    status.update(label=f"조회 대상 판단 중... ({el:.1f}초)")
                 elif kind == "tool":
                     args = ", ".join(f"{k}={v}" for k, v in ev["args"].items()) or "-"
                     icon = ":material/check:" if ev["ok"] else ":material/error:"
                     status.write(f"{icon} `{ev['name']}({args})` → {ev['summary']}")
-                    status.update(label=f"{ev['name']} 조회 완료")
+                    status.update(label=f"{ev['name']} 조회 완료 ({el:.1f}초)")
                     seen.append(ev)
                 elif kind == "done":
-                    status.update(label="답변 작성 중...")
+                    status.update(label=f"답변 정리 중... ({el:.1f}초)")
 
             try:
                 from agents.query_agent import ask
 
                 history = [{"role": m["role"], "content": m["content"]} for m in msgs][-6:]
                 out = ask(pending, history=history, on_event=on_event)
-                status.update(label=f"조회 {len(out.tool_calls)}건 완료",
-                              state="complete", expanded=False)
+                status.update(
+                    label=f"조회 {len(out.tool_calls)}건 · {time.monotonic() - t0:.1f}초",
+                    state="complete", expanded=False)
                 st.write_stream(_stream_text(out.answer))
                 for issue in out.issues:
                     st.warning(f"{issue['severity']} · {issue['message']}")

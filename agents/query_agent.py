@@ -17,11 +17,20 @@ MCP 도입 때 세운 "표면을 갈랐다"는 조건을 그대로 따른다.
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 
 MAX_TOOL_ROUNDS = 4  # 고정 상한. 무한 재질의는 자율 탐색이 된다.
 MAX_RESULT_CHARS = 6000  # 한 도구 결과를 프롬프트에 실을 최대 길이
+
+# 조회 패널 전용 모델. 파이프라인의 포팅 모델과 **따로 둔다** - 포팅은 품질이 전부라 큰
+# 모델이 맞지만, 이 패널이 하는 일은 "어느 조회를 부를지 고르고 결과를 문장으로 옮기기"라
+# 추론 모델을 쓸 이유가 없다. 실측(예시 질문 1건, 도구 2회 호출):
+#   gpt-5.4       6.95초   ← .env의 기본 모델. 답하기 전에 오래 생각한다
+#   gpt-4.1       3.09초
+#   gpt-4.1-mini  2.59초
+QUERY_MODEL = os.getenv("GSCM_QUERY_MODEL", "gpt-4.1")
 
 _SYSTEM = """너는 레거시 전환 도구의 **조회 도우미**다.
 
@@ -133,7 +142,11 @@ def ask(question: str, history: list[dict] | None = None, chat_fn=None,
                 pass
 
     if chat_fn is None:
-        from agents.llm_gateway import chat_with_tools as chat_fn  # noqa: N806
+        from agents import llm_gateway
+
+        def chat_fn(messages, tools, **kw):  # noqa: N806
+            return llm_gateway.chat_with_tools(
+                messages, tools=tools, model=QUERY_MODEL, **kw)
     if tool_fn is None:
         tool_fn = dispatch
 
@@ -147,7 +160,13 @@ def ask(question: str, history: list[dict] | None = None, chat_fn=None,
 
     for round_no in range(1, MAX_TOOL_ROUNDS + 1):
         emit(kind="think", round=round_no)
-        msg = chat_fn(messages, tools=tools)
+        # 첫 턴은 **반드시 조회를 거치게 강제한다.** 빠른 모델은 도구를 건너뛰고 그럴듯한
+        # 답을 바로 내놓는 일이 있는데(실측), 그러면 이 패널의 전제인 "근거는 조회 결과"가
+        # 깨진다. 두 번째 턴부터는 auto라 불필요한 재조회가 생기지 않는다.
+        # chat_fn은 **kw를 받아야 한다(주입할 때도 마찬가지) - TypeError를 삼켜 재시도하면
+        # 진짜 인자 오류까지 조용히 강제 조회 없이 넘어간다.
+        kw = {"tool_choice": "required"} if round_no == 1 else {}
+        msg = chat_fn(messages, tools=tools, **kw)
         tool_calls = getattr(msg, "tool_calls", None) or []
         if not tool_calls:
             answer = (getattr(msg, "content", None) or "").strip()
