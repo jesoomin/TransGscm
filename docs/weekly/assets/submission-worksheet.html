@@ -1678,10 +1678,12 @@ RAG / 벡터 검색        유사 화면 few-shot 주입     —                
 2. 에이전트 동작
   1) 계획 수립 — 메서드마다 규칙/LLM을 가르고 근거를 남긴다
     - DECIDE  PLA087.fPLA087QrySelectMainList → LLM 포팅
-              ↳ 계산·분기가 있어 기계적 1:1 치환 불가
+              ↳ 계산·분기가 있어 기계적 1:1 치환 불가 — 결정론적 규칙으로 못 만듦
+    - DECIDE  PLA087.pPLA08701 → LLM 포팅 (Api 계층)
+              ↳ P가 순수 위임이 아님 — 권한 게이트·결과 메시지·레코드셋 선별을 옮겨야 함
     - DECIDE  PLA087.fCommonCodeQry → 규칙 기반 생성 (LLM 호출 안 함)
-              ↳ 단순 위임 패턴
-    - BLOCK   PLA089 : AS-IS 원본이 그대로는 컴파일 안 됨
+              ↳ 단순 위임 패턴 — store 호출 1건으로 결정론적 생성 가능
+    - BLOCK   PLA089: AS-IS 원본이 그대로는 컴파일 안 됨
     - PLAN    도구 호출 계획 확정 — 규칙 21건 · LLM 25건 · 검증기 전건
   2) 계약 주입 후 병렬 포팅
     - CONTEXT PLA087.fPLA087QrySelectMainList ← 호출 대상 계약 주입: dPLA08710
@@ -1689,21 +1691,30 @@ RAG / 벡터 검색        유사 화면 few-shot 주입     —                
               ↳ 실측 : 요구하지 않은 원본 버그 2건을 FIXME로 스스로 표시
                 (쓰이지 않는 변수 · if 블록 중괄호 누락)
                 — 옮기기만 하는 것이 아니라 원본 결함을 짚는다는 직접 증거
-  3) 검증이 심어진 결함을 잡는다
-    - BLOCK   UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:82
-    - BLOCK   XML_PARSE_ERROR @ Pla096Mapper.xml:80
-    - BLOCK   검증 결과 — BLOCKER 2건
+  3) 검증이 결함을 잡는다
+    - BLOCK   PLA087 [CROSS_LAYER_REF] UNRESOLVED_STORE_CALL @ fPLA087QrySelectMainList:91
+              ↳ 91행: Service가 호출하는 store.dPLA08710(...)가 Store에 정의돼 있지 않습니다
+                ← 평가 세트에 심어둔 결함 (정상 메서드명은 dPLA08701)
+    - BLOCK   PLA096 [MAPPER_XML] XML_PARSE_ERROR @ Pla096Mapper.xml:53
+              ↳ 유효한 XML이 아닙니다: mismatched tag: line 53, column 2
+                ← 평가 세트에 심어둔 결함
+    - BLOCK   검증 결과 — BLOCKER 10건 · WARNING 0건
+              ↳ 10건의 구성 (화면에 그대로 뜨는 숫자다)
+                · 2건 : 위 두 건 — 평가 세트에 심어둔 결함을 잡아낸 것
+                · 8건 : Api가 호출하는 공통 함수(fHistoryQry · fExcelDownQry)가
+                        화면별 Service에 정의돼 있지 않음 (5화면에 걸쳐 반복)
   4) 자가 교정 게이트가 대상을 고른다  ← 핵심
-    - DECIDE  BLOCKER 1건 → 교정 대상에서 제외 (다른 검사 영역)
-              ↳ LLM이 고칠 문제가 아니라 사람에게 넘긴다
+    - DECIDE  BLOCKER 1건 → 교정 대상에서 제외 → 다른 검사 영역
+              (Pla096Mapper.xml [XML_PARSE_ERROR])
+              ↳ 규칙 기반 산출물이라 LLM이 고칠 문제가 아니다 — 사람에게 넘긴다
     - REFLECT 수리 대상 9건 확정 → 회차 1 진입
-              ↳ XML 태그 누락은 규칙 기반 산출물이라 LLM이 고칠 문제가 아니다
-                의도적으로 제외하고 사람에게 넘긴다
   5) 후보를 만들고 검증기가 채점한다 (ToT)
     - REFLECT 후보 [최소수정] 채점 — 잔여 BLOCKER 0건
+    - REFLECT 후보 [계약우선] 채점 — 잔여 BLOCKER 0건
     - DECIDE  수리 후보 2개 → [최소수정] 채택
-              ↳ 채점자는 모델이 아니라 결정론적 검증기
-  6) 재검증 — BLOCKER 2건 → 1건
+              ↳ 잔여 BLOCKER 0건으로 최소 (탈락: [계약우선]=0건)
+                채점자는 모델이 아니라 결정론적 검증기다
+  6) 재검증 — BLOCKER 10건 → 1건
 
 3. 실제 전환 대상(PLA045~050) 실행 결과
   1) 대상 : 운영 소스 트리의 경영분석 화면 6건
