@@ -130,6 +130,15 @@ section{padding-block:52px 8px;scroll-margin-top:58px}
 .copy:hover{background:var(--rule);color:var(--surface)}
 .copy:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .copy[data-done="1"]{background:var(--rule);color:var(--surface);border-color:var(--rule)}
+/* 표를 가진 항목에만 붙는 두 번째 버튼. GRID 입력칸에 붙여넣으면 칸이 갈린다. */
+.copygrid{
+  margin-left:8px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.05em;
+  border:1px solid var(--accent,var(--rule));color:var(--accent,var(--rule));background:transparent;
+  padding:5px 12px;cursor:pointer;transition:background .12s,color .12s;
+}
+.copygrid:hover{background:var(--accent,var(--rule));color:var(--surface)}
+.copygrid:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.copygrid[data-done="1"]{background:var(--accent,var(--rule));color:var(--surface)}
 .field pre{
   margin:0;padding:15px 16px;font-family:"IBM Plex Mono","D2Coding",monospace;font-size:12.6px;line-height:1.72;
   white-space:pre-wrap;word-break:break-word;color:var(--ink);max-height:none;
@@ -209,10 +218,10 @@ footer p{margin:0 0 6px}
 <header class="mast">
   <div>
     <h1>G-SCM 전환 Agent 제출 워크시트</h1>
-    <p class="sub">시연 대본에서 역산한 발표 장표와, 플랫폼 입력칸에 그대로 붙여넣는 주차별 본문. 모든 수치는 <code>docs/weekly/00-종합산출물.md</code>의 실측값만 씁니다.</p>
+    <p class="sub">시연 대본에서 역산한 발표 장표와, 플랫폼 입력칸에 그대로 붙여넣는 주차별 본문. 모든 수치는 <code>docs/weekly/00-종합산출물.md</code>의 실측값만 씁니다.<br><b>복사</b>는 보이는 그대로 텍스트를, <b>표 복사</b>는 <b>탭으로 구분된 표</b>를 올립니다 — GRID 입력칸에는 <b>표 복사</b>를 써야 칸이 갈립니다.</p>
   </div>
   <div class="stamp">
-    기준일 <b>2026-09-10</b><br>
+    기준일 <b>2026-09-12</b><br>
     파이프라인 <b>8단계</b><br>
     스코어카드 <b>80.9 / 100</b>
   </div>
@@ -973,8 +982,16 @@ R7 검토 없이 결과 반영              저장 전 승인 게이트, 임시 
   </div>
   <p class="lede">시연 영상이 <b>SC-001과 SC-002</b>를 그대로 따라갑니다. 나머지 둘은 장표의 근거로 씁니다.</p>
 
-  <div class="field">
-    <div class="fhead"><span class="flabel">시나리오 1</span><span class="fhint">SC-001 · 화면 묶음 일괄 전환</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="단계	사용자 행동	시스템 동작	비고
+1	AS-IS 폴더 지정	화면 목록 스캔, 구성 파일 5종 존재 확인	LLM 미사용
+2	대상 화면 선택	—	기본 전체
+3	실행 클릭	① 계획 수립 — 규칙/LLM 분류, 예산 확정	계획 파일 고정
+4	진행 확인	② 규칙 변환 → ③ LLM 포팅 → ④ 정적 검증	단계별 표시
+5	—	⑤ 검증 실패 시 자가 교정 (회차 상한 2)	실패 시에만
+6	—	⑥ 동작 일치 → ⑦ 교차 분석 → ⑧ 빌드 검증	임시 사본
+7	화면별 결과 검토	산출물·이슈·계획·인수인계 문서 제공	아직 미저장
+8	승인하고 저장	이때 처음으로 산출물과 DB에 기록	사람 승인 필수">
+    <div class="fhead"><span class="flabel">시나리오 1</span><span class="fhint">SC-001 · 화면 묶음 일괄 전환</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>시나리오 1 : 화면 묶음을 한 번에 전환한다
 
 1. 기본 정보
@@ -1017,8 +1034,14 @@ R7 검토 없이 결과 반영              저장 전 승인 게이트, 임시 
   2) 기준 2 : 승인 전에는 산출물 폴더와 DB에 아무 변경도 없음</pre>
   </div>
 
-  <div class="field">
-    <div class="fhead"><span class="flabel">시나리오 2</span><span class="fhint">SC-002 · 결과가 원본과 같은지 확인</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="단계	사용자 행동	시스템 동작	비고
+1	파이프라인 실행	동작 일치 검증이 필수 단계로 자동 진행	선택 아님
+2	—	AS-IS/TO-BE를 임시 폴더에 배치 후 컴파일	실제 폴더 불변
+3	—	데이터 계층을 양쪽 동일 고정 데이터로 대체	차이를 포팅 차이로 한정
+4	—	0행 / 1행 / 3행으로 실행해 결과 비교	분기 경로 전수
+5	결과 확인	일치율 + 실행 불가 화면과 사유를 함께 보고	범위 별도 표기
+6	—	임시 폴더 삭제	항상 정리">
+    <div class="fhead"><span class="flabel">시나리오 2</span><span class="fhint">SC-002 · 결과가 원본과 같은지 확인</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>시나리오 2 : 변환 결과가 원본과 같은 값을 내는지 확인한다
 
 1. 기본 정보
@@ -1057,8 +1080,11 @@ R7 검토 없이 결과 반영              저장 전 승인 게이트, 임시 
     - 실측 : 규칙이 레코드셋 추출 단계를 빠뜨림 → 33% → 수정 후 100%</pre>
   </div>
 
-  <div class="field">
-    <div class="fhead"><span class="flabel">시나리오 3</span><span class="fhint">SC-003 · 영향 범위 역추적</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="단계	사용자 행동	시스템 동작	비고
+1	함수명 입력	호출 관계도를 역방향으로 순회	LLM 미사용
+2	—	호출자·깊이·영향 화면·트랜잭션 수집	규칙 기반 조회
+3	결과 확인	값의 출처(확정/파생)와 한계를 함께 표시	근거 노출">
+    <div class="fhead"><span class="flabel">시나리오 3</span><span class="fhint">SC-003 · 영향 범위 역추적</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>시나리오 3 : 이 함수를 바꾸면 어디가 영향받는지 묻는다
 
 1. 기본 정보
@@ -1088,8 +1114,11 @@ R7 검토 없이 결과 반영              저장 전 승인 게이트, 임시 
   2) 기준 2 : 출처와 한계를 함께 표시해 확정으로 오독하지 않게 함</pre>
   </div>
 
-  <div class="field">
-    <div class="fhead"><span class="flabel">시나리오 4</span><span class="fhint">SC-004 · 미변환 지점 인수인계</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="단계	사용자 행동	시스템 동작	비고
+1	파이프라인 실행	계획·이슈·검증 결과를 읽을 순서로 재구성	재판정 없음
+2	인수인계 탭	화면별 문서 표시 (복사 버튼 포함)	
+3	문서 확인	이슈 유형별 확인된 조치를 함께 제시	없는 처리법은 지어내지 않음">
+    <div class="fhead"><span class="flabel">시나리오 4</span><span class="fhint">SC-004 · 미변환 지점 인수인계</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>시나리오 4 : 자동으로 안 된 부분만 넘겨받는다
 
 1. 기본 정보
@@ -1122,8 +1151,18 @@ R7 검토 없이 결과 반영              저장 전 승인 게이트, 임시 
   2) 기준 2 : 확인된 조치가 없는 유형에는 처리법을 지어내지 않음</pre>
   </div>
 
-  <div class="field">
-    <div class="fhead"><span class="flabel">시나리오 공통 — 예외 흐름</span><span class="fhint">정상 경로만으로는 설계가 안 끝난다</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="EX	상황	시스템 동작	사용자가 받는 것
+EX-01	AS-IS 원본이 컴파일 불가	변환은 진행, 실행 검증만 건너뜀 화면 하나가 배치를 멈추지 않음	원본 결함으로 표시 된 사유와 줄 번호
+EX-02	원본 XML 태그 · 따옴표 손상	해석이 모호하지 않으면 자동 교정 모호하면 그대로 두고 위치만 지목	교정 사실을 경고로 명시 (조용히 안 고침)
+EX-03	확인된 변환 규칙이 없는 패턴 (프로시저 호출 등)	변환 전에 미지원으로 이름 붙여 표시 추측 규칙을 만들지 않음	수동 처리 대상 목록
+EX-04	LLM 응답이 검증에 실패	자가 교정 회차 2회까지 재시도 초과분은 사람에게 넘김	교정 이력과 최종 상태
+EX-05	LLM이 없는 호출 · 필드를 지어냄	생성 식별자를 원본 목록과 대조 BLOCKER로 차단, 채택 불가	차단된 항목과 사유
+EX-06	LLM Gateway 장애 · 키 미설정	규칙 기반 구간까지 진행 후 중단 부분 결과를 버리지 않음	어디까지 됐는지 명시
+EX-07	결과 건수 가정이 원본과 불일	치 자동 수정하지 않고 BLOCKER로 표출 상위 계층 시그니처가 연쇄되기 때문	사람이 결정할 선택지
+EX-08	공통 규약이 아직 미확정 (응답 메시지 키 등)	키를 지어내지 않고 TODO 주석 + BLOCKER로 올림	무엇이 미정인지와 왜 비웠는지
+EX-09	화면 간 엔드포인트 충돌	화면 하나씩 보는 검증으로는 못 봄 교차 분석 단계가 별도로 검출	충돌 목록
+EX-10	승인 전 검증이 산출물을 오염	임시 사본에서 검증하고 항상 삭제	실제 폴더 무변경">
+    <div class="fhead"><span class="flabel">시나리오 공통 — 예외 흐름</span><span class="fhint">정상 경로만으로는 설계가 안 끝난다</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>1. 전제
   - 이 도구의 입력은 이미 손상돼 있는 운영 레거시 소스다
   - 원본이 온전하다고 가정하면 첫 화면에서 멈춘다 — 예외가 예외가 아니다
@@ -1799,8 +1838,18 @@ RAG / 벡터 검색        유사 화면 few-shot 주입     —                
            메타 파일이 없는 평가 세트에서는 0건으로 나온다
   3) 별도 표기가 없으면 1회 측정값이다</pre>
   </div>
-  <div class="field">
-    <div class="fhead"><span class="flabel">0-1. 테스트 케이스 — 정확도</span><span class="fhint">정답키 대조 10건</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="TC	대상 파일	주입된 결함	탐지 신호	판정
+TC-D01	PPLA082.java	메서드 파라미터명 누락	ASIS_MISSING_PARAM_NAME	PASS
+TC-D02	PPLA089.java	마지막 메서드 닫는 중괄호 누락	BRACE_IMBALANCE	PASS
+TC-D03	FPLA093.java	선언문 끝 세미콜론 누락	ASIS_SYNTAX_ERROR	PASS
+TC-D04	DPLA091.java	사용하는 타입의 import 누락	ASIS_MISSING_IMPORT	PASS
+TC-D05	FPLA087.java	없는 메서드 호출 dPLA08710 정상명은 dPLA08701 — 자릿수 오타	UNRESOLVED_CALLEE	PASS
+TC-D06	PPLA100.java	클래스명 오타 FPLA100X	ASIS_UNRESOLVED_CLASS	PASS
+TC-D07	DPLA100.java	미정의 SQL 참조 S011 (정상 S001)	MISSING_STATEMENT	PASS
+TC-D08	DPLA096.xsql	조회 블록 닫는 태그 누락	XML_PARSE_ERROR	PASS
+TC-D09	DPLA103.xsql	속성값 따옴표 미닫힘	XML_PARSE_ERROR	PASS
+TC-D10	FPLA107.java	계층 조회 API 오용 컴파일은 통과, 실행 시 실패	ASIS_LAYER_LOOKUP_MISMATCH	PASS">
+    <div class="fhead"><span class="flabel">0-1. 테스트 케이스 — 정확도</span><span class="fhint">정답키 대조 10건</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>1. 설계
   1) 세트 : 정답키 평가 세트 30화면 — 결함 10건이 의도적으로 주입돼 있다
   2) 방식 : 파이프라인 탐지 결과와 정답키를 기계적으로 대조
@@ -1838,8 +1887,22 @@ RAG / 벡터 검색        유사 화면 few-shot 주입     —                
   4) 교차 검증 : 다른 소스 세트에 그대로 적용
     - 이 프로젝트가 처음부터 써온 원본에서 여태 보고되지 않은 결함을 새로 찾아냈다</pre>
   </div>
-  <div class="field">
-    <div class="fhead"><span class="flabel">0-2. 테스트 케이스 — 동작 일치</span><span class="fhint">57케이스 / 실행 3화면</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="TC	계층	대상 메서드	조건	기대(AS-IS)	실제(TO-BE)	판정
+TC-E01	업무로직	fAuthCheck	0행	AUTH_YN=N	AUTH_YN=N	PASS
+TC-E02	업무로직	fAuthCheck	1행	AUTH_YN=Y	AUTH_YN=Y	PASS
+TC-E03	업무로직	fPLA089QrySelectMainList	0행	MAIN_LIST#0	MAIN_LIST#0	PASS
+TC-E04	업무로직	fPLA089QrySelectMainList	3행	MAIN_LIST#3	MAIN_LIST#3	PASS
+TC-E05	업무로직	fCommonCodeQry	1행	CODE_LIST#1	CODE_LIST#1	PASS
+TC-E06	업무로직	fPLA096QrySelectDetail	3행	DETAIL_LIST#3	DETAIL_LIST#3	PASS
+TC-E07	화면요청	pPLA09601	0행	@msg=W0024	(메시지 없음)	FAIL
+TC-E08	화면요청	pPLA09601	1행	@msg=I0016;MAIN_LIST#1	MAIN_LIST#1	부분
+TC-E09	화면요청	pPLA09603	3행	@msg=I0016;HIST_LIST#3	HIST_LIST#3	부분
+
+계층	케이스	일치	페이로드 일치	메시지 일치	측정 화면
+업무로직	48	48	48	48	3
+화면요청	9	0	9	0	1
+합계	57	48	—	—	3 / 5">
+    <div class="fhead"><span class="flabel">0-2. 테스트 케이스 — 동작 일치</span><span class="fhint">57케이스 / 실행 3화면</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>1. 설계
   1) 방식 : 같은 입력을 AS-IS와 TO-BE에 각각 넣어 실행하고 응답을 비교
   2) 통제 : 데이터 계층을 양쪽 동일한 고정 데이터로 대체
@@ -1892,8 +1955,26 @@ RAG / 벡터 검색        유사 화면 few-shot 주입     —                
   3) 고정 데이터는 합성값이라 운영 데이터 분포를 대표하지 않는다
   4) SQL 자체의 정확성은 이 축이 아니라 별도 SQL 비교 테스트가 담당한다</pre>
   </div>
-  <div class="field">
-    <div class="fhead"><span class="flabel">0-3. 테스트 케이스 — 예외 · 가드레일 · 회귀</span><span class="fhint">비정상 입력과 차단 동작</span><button class="copy" type="button">복사</button></div>
+  <div class="field" data-tsv="TC	입력 상태	기대 동작	판정
+TC-X01	AS-IS가 없는 메서드 호출 (PLA087)	컴파일 실패로 보고하고 이유를 원본 결함으로 표시, 배치는 계속	PASS
+TC-X02	AS-IS 세미콜론 누락 (PLA093)	동일 — 화면 하나의 실패가 배치를 중단시키지 않음	PASS
+TC-X03	화면요청 계층만 컴파일 불가 (PLA089 · PLA100)	그 계층만 건너뛰고 업무로직 계층은 18건 · 15건 정상 측정	PASS
+TC-X04	원본 XML 속성 따옴표 누락 (DPLA046 3건)	해석이 모호하지 않아 자동 교정 후 경고로 표시 — 조용히 고치지 않음	PASS
+TC-X05	확인된 변환 규칙이 없는 호출 (프로시저 3건)	변환 전에 미지원으로 이름 붙여 드러냄 — 추측 규칙을 만들지 않음	PASS
+
+TC	차단 대상	검사 방식	판정
+TC-G01	모델이 지어낸 호출 · 필드	생성 식별자를 계약 · 원본 목록과 대조, 불일치 시 BLOCKER로 차단	PASS
+TC-G02	승인 전 산출물 오염	임시 사본에서 검증 후 항상 삭제 실행 전후 실제 폴더 스냅샷 동일	PASS
+TC-G03	BLOCKER 잔존 산출물의 저장	승인 화면에서 차단, 사람 확인 필요	PASS
+TC-G04	원본 결함의 임의 수정	보존 · 표시만, 강제 교정 없음	PASS
+TC-G05	생성물 내 자격증명 하드코딩	생성 파일 전건 검사	0건
+
+TC	절차	기준	판정
+TC-R01	코드 변경 시마다 6화면 재실행	잔여 BLOCKER 건수 동일	PASS
+TC-R02	pytest 전건	실패 0건	PASS
+TC-R03	UI 헤드리스 기동	예외 없이 렌더링	PASS
+TC-R04	응답 캐시 재실행	로그 · 결과가 첫 실행과 동일	PASS">
+    <div class="fhead"><span class="flabel">0-3. 테스트 케이스 — 예외 · 가드레일 · 회귀</span><span class="fhint">비정상 입력과 차단 동작</span><button class="copy" type="button">복사</button><button class="copygrid" type="button">표 복사</button></div>
 <pre>1. 예외 입력 — 원본이 손상된 상태를 '정상 입력'으로 취급한다
   - 전제 : 원본이 온전하다고 가정한 도구는 첫 화면에서 멈춘다
 
@@ -2438,6 +2519,55 @@ LLM 의존 최소화       30% 이하      규칙 처리 46%          달성
 </div>
 
 <script>
+/* 표 복사 — 탭 구분 텍스트와 진짜 <table>을 함께 클립보드에 올린다.
+   엑셀·시트·대부분의 GRID 위젯은 text/html의 표를 먼저 읽어 칸을 나누고,
+   그게 안 되는 곳은 text/plain의 탭으로 나눈다. */
+document.querySelectorAll(".copygrid").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var field = btn.closest(".field");
+    var tsv = field ? field.getAttribute("data-tsv") : null;
+    if(!tsv) return;
+    var htmlTable = tsv.split(/
+\s*
+/).map(function(block){
+      var rows = block.split("
+").map(function(line){
+        var tag = "td";
+        return "<tr>" + line.split("	").map(function(c){
+          return "<" + tag + ">" + c.replace(/&/g,"&amp;").replace(/</g,"&lt;") + "</" + tag + ">";
+        }).join("") + "</tr>";
+      });
+      return "<table>" + rows.join("") + "</table>";
+    }).join("<br>");
+    var done = function(){
+      btn.textContent = "복사됨";
+      btn.setAttribute("data-done","1");
+      window.setTimeout(function(){
+        btn.textContent = "표 복사";
+        btn.removeAttribute("data-done");
+      }, 1600);
+    };
+    var plain = function(){
+      var ta = document.createElement("textarea");
+      ta.value = tsv; ta.setAttribute("readonly","");
+      ta.style.position = "fixed"; ta.style.top = "-1000px";
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); done(); }catch(e){}
+      document.body.removeChild(ta);
+    };
+    if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+      navigator.clipboard.write([new ClipboardItem({
+        "text/plain": new Blob([tsv], {type:"text/plain"}),
+        "text/html":  new Blob([htmlTable], {type:"text/html"})
+      })]).then(done, plain);
+    }else if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(tsv).then(done, plain);
+    }else{
+      plain();
+    }
+  });
+});
+
 document.querySelectorAll(".copy").forEach(function(btn){
   btn.addEventListener("click", function(){
     var field = btn.closest(".field");
