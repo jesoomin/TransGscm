@@ -193,8 +193,6 @@ def _stream_text(text: str):
     표시 효과다. 토큰이 실제로 그때그때 오는 것처럼 보이게 하려고 쓰는 게 아니라, 긴 답이
     통째로 툭 나타나지 않게 하려는 것이다.
     """
-    import time
-
     buf = ""
     for ch in text:
         buf += ch
@@ -1327,7 +1325,13 @@ def _render_batch_screen_detail(
 _MAIN_RATIO = [3, 1]  # 본문 75% / 질의 패널 25%
 main_col, chat_col = st.columns(_MAIN_RATIO, gap="large")
 with chat_col:
-    _render_query_panel()
+    # 패널은 보조 기능이다. 여기서 터져도 본문(변환 파이프라인)까지 빨간 화면으로 덮이면
+    # 정작 해야 할 일을 못 한다 - 패널 안에서만 실패를 보여주고 본문은 계속 그린다.
+    try:
+        _render_query_panel()
+    except Exception as _panel_exc:  # noqa: BLE001
+        st.error(f"조회 패널을 그리지 못했습니다 — {_panel_exc}")
+        st.caption("본문 기능은 그대로 쓸 수 있습니다. Streamlit을 껐다 켜면 대개 해소됩니다.")
 main_col.__enter__()
 
 st.title("G-SCM AS-IS → TO-BE 변환 (v0)")
