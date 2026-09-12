@@ -419,8 +419,13 @@ def run_screen(screen_id: str, asis_dir: Path, tobe_dir: Path,
     # 양쪽에 다 존재하는 메서드만 비교한다 - 한쪽에만 있으면 동등성 질문 자체가 성립하지 않는다.
     asis_methods = set(_F_METHOD_RE.findall(f_src))
     tobe_methods = set(re.findall(r"public\s+Map<String,\s*Object>\s+(\w+)\s*\(", svc_src))
-    # 이름이 그대로면 그대로 짝짓고, 아니면 생성기의 개명 규칙(단순 위임은 `f` 접두어를 떼고
-    # 전부 소문자로 - skeleton_gen.detect_simple_delegation)으로 한 번 더 찾는다.
+    # 이름이 그대로면 그대로 짝짓고, 아니면 옛 개명 규칙(단순 위임은 `f` 접두어를 떼고 전부
+    # 소문자로)으로 한 번 더 찾는다.
+    #
+    # **생성기는 2026-09-12부터 개명하지 않는다**(skeleton_gen의 simple_delegations 주석 참고) -
+    # 이 폴백은 그 이전에 저장된 산출물을 위해 남겨둔 것이고, 새로 생성한 코드는 첫 분기에서
+    # 짝지어진다. 여기를 근거로 개명 규칙을 되살리지 말 것 - 그 개명이 화면마다
+    # UNRESOLVED_SERVICE_CALL을 만들던 원인이었다.
     #
     # 이게 없을 때 **규칙 기반으로 생성된 메서드가 통째로 비교에서 빠졌다.** PLA096은 F 메서드가
     # 5개인데 3개만 재고 "F 계층 100%"라고 보고하고 있었다 - 빠진 둘이 하필 결과 Map을 그대로

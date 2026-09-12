@@ -692,16 +692,23 @@ def generate_skeletons(
     f_methods_for_delegation = extract_methods(f_java_text) if f_java_text else []
     f_bodies_for_delegation = extract_method_bodies(f_java_text) if f_java_text else {}
 
-    # F 메서드 원래 이름 -> (Service에 새로 붙일 이름, 위임 대상 D 메서드명). Api 생성과 Service
-    # 생성 둘 다 이 매핑이 있어야 한다 - Service 메서드명이 바뀌면 Api가 부르는 이름도 같이
-    # 바꿔야 컴파일이 되기 때문에 여기서 미리 한 번만 계산해서 공유한다.
+    # F 메서드 원래 이름 -> (Service에 붙일 이름, 위임 대상 D 메서드명, 레코드셋 이름).
+    #
+    # **이름을 바꾸지 않는다(2026-09-12 정정).** 예전에는 D 메서드명 기준으로 개명했다
+    # (`fHistoryQry` -> `historyqry`). 그 개명의 원래 이유는 DTO 타입명을 거기서 파생시키려던
+    # 것이었는데, 2026-09-05에 시그니처를 Map<String,Object>로 통일하면서 그 이유가 사라졌다.
+    # 남은 건 부작용뿐이었다 - 같은 날 P 계층이 LLM 포팅 대상이 되면서, 모델이 원본 이름대로
+    # `service.fHistoryQry(...)`를 쓰는데 Service에는 `historyqry`만 있어 **화면마다
+    # UNRESOLVED_SERVICE_CALL이 났다**(평가 세트 5화면에서 8건). 그 8건을 수리 루프가 LLM으로
+    # 다시 고치고, 실행 하네스는 개명을 되돌려 짝짓는 식으로 **세 겹의 우회**가 쌓여 있었다.
+    # 원본 이름을 그대로 쓰면 세 우회가 전부 필요 없어지고, F 메서드명은 클래스 안에서 유일해
+    # 충돌 위험도 없다(D 메서드명 기준 개명은 두 F가 같은 D를 부르면 오히려 충돌했다).
     simple_delegations: dict[str, tuple[str, str, str]] = {}
     for f_method in f_methods_for_delegation:
         spec = detect_simple_delegation_spec(f_bodies_for_delegation.get(f_method, ""))
         if spec:
             d_method, rs_name = spec
-            renamed = d_method[1:].lower() if d_method[:1].lower() == "d" else d_method.lower()
-            simple_delegations[f_method] = (renamed, d_method, rs_name)
+            simple_delegations[f_method] = (f_method, d_method, rs_name)
 
     # ---- Api (Controller) ----
     if p_java_text:

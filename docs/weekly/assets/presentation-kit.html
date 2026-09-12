@@ -151,7 +151,7 @@ li b{color:var(--ink)}
         <td><code>REFLECT  후보 [최소수정] 채점 — 잔여 BLOCKER 0건</code><br><code>DECIDE   수리 후보 2개 → [최소수정] 채택</code></td>
       </tr>
     </table>
-    <p style="margin:8px 0 0"><b>후보가 탈락하는 장면은 이번 실행에 없습니다</b> — 두 후보가 0건 동점입니다. 대신 <b>진짜 선별 장면</b>이 따로 있고, 그게 더 강합니다(아래 컷 4).</p>
+    <p style="margin:8px 0 0"><b>후보가 탈락하는 장면은 이제 실제로 있습니다</b>(2026-09-12 기준 실행) — <code>[최소수정]</code> 잔여 1건 대 <code>[계약우선]</code> 0건으로 갈려 앞쪽이 탈락합니다. 예전 실행에서는 두 후보가 0건 동점이라 이 장면이 없었는데, 생성기의 이름 불일치 결함을 고치면서 수리 대상이 <b>실제 심어둔 결함 1건</b>으로 좁혀지자 후보 간 차이가 드러났습니다.</p>
   </div>
 
   <div class="warn">
@@ -208,13 +208,13 @@ li b{color:var(--ink)}
     </tr>
     <tr>
       <td><code>2:00</code><br><span class="pill p-llm">20초</span></td><td>터미널</td>
-      <td><code>STAGE 4/8 VALIDATE</code><br><code>BLOCKER 10건</code></td>
-      <td>“검증기는 <b>변환기와 분리</b>돼 있습니다. 만든 쪽이 스스로 채점하지 않게 하려는 설계입니다.<br>정답키에 심어둔 결함을 포함해 <b>10건</b>을 잡았습니다.”<br><span class="pill p-block">편집</span> <code>BLOCKER 10건</code>에 박스</td>
+      <td><code>STAGE 4/8 VALIDATE</code><br><code>BLOCKER 2건</code></td>
+      <td>“검증기는 <b>변환기와 분리</b>돼 있습니다. 만든 쪽이 스스로 채점하지 않게 하려는 설계입니다.<br>잡힌 <b>2건이 정확히 정답키에 심어둔 결함 2건</b>입니다 — 없는 Store 호출 하나, XML 태그 불일치 하나. <b>도구가 만든 잡음은 0건</b>입니다.”<br><span class="pill p-block">편집</span> <code>BLOCKER 2건</code>과 그 아래 두 줄에 박스</td>
     </tr>
     <tr>
       <td><code>2:20</code><br><span class="pill p-block">35초</span></td><td>터미널</td>
-      <td><code>DECIDE … 교정 대상에서 제외</code><br><code>REFLECT 수리 대상 9건</code><br><code>후보 채점</code> · <code>채택</code></td>
-      <td>“여기가 핵심입니다. <b>10건 중 9건만</b> 교정 대상으로 골랐습니다.<br>XML 태그 누락은 <b>규칙 기반 산출물이라 LLM이 고칠 문제가 아닙니다.</b> 의도적으로 빼고 사람에게 넘깁니다. Agent가 <b>내가 고칠 것과 사람이 볼 것을 구분</b>합니다.<br>그리고 후보를 방침이 다르게 만든 뒤 <b>검증기가 채점해서</b> 고릅니다.”<br><span class="pill p-block">편집</span> <b>가장 크게 확대 + 4초 정지.</b> 제외 줄과 9건 줄을 나란히 박스 ★★</td>
+      <td><code>DECIDE … 교정 대상에서 제외</code><br><code>REFLECT 수리 대상 1건</code><br><code>후보 [최소수정] 1건 / [계약우선] 0건</code><br><code>DECIDE … [계약우선] 채택</code></td>
+      <td>“여기가 핵심입니다. 2건 중 <b>고칠 1건과 사람에게 넘길 1건을 스스로 갈랐습니다.</b><br>XML 태그 누락은 <b>규칙 기반 산출물이라 LLM이 고칠 문제가 아닙니다.</b> 의도적으로 빼고 사람에게 넘깁니다.<br>남은 1건은 후보를 <b>방침이 다르게 두 갈래로</b> 만듭니다. 둘 다 없는 메서드를 정답과 같은 이름으로 바꿨지만, <b>[최소수정]은 잔여 1건, [계약우선]은 0건</b>입니다. 그래서 <b>[최소수정]이 탈락</b>합니다.<br>채점한 건 모델이 아니라 <b>규칙 기반 검증기</b>입니다 — 후보를 실제로 붙여보고 다시 검증한 수치입니다.”<br><span class="pill p-block">편집</span> <b>가장 크게 확대 + 4초 정지.</b> 두 후보의 채점 줄을 나란히 박스, <b>탈락 줄에 화살표</b> ★★</td>
     </tr>
     <tr>
       <td><code>2:55</code><br><span class="pill p-llm">30초</span></td><td>터미널<br>(좌우 분할)</td>
@@ -542,7 +542,7 @@ li b{color:var(--ink)}
     </tr>
     <tr>
       <td>"Agent라기보다 파이프라인 아닌가요?"</td>
-      <td>고정 파이프라인인 것은 <b>의도한 선택</b>입니다. 다만 안에서 <b>판단이 일어납니다</b> — 메서드마다 규칙이냐 LLM이냐를 정하고, BLOCKER 10건 중 고칠 9건과 넘길 1건을 가르고, 후보를 만들어 채점해 고릅니다. 그 판단이 전부 로그에 근거와 함께 남습니다. 자율성을 뺀 대신 <b>재현성과 통제성</b>을 얻은 구조입니다.</td>
+      <td>고정 파이프라인인 것은 <b>의도한 선택</b>입니다. 다만 안에서 <b>판단이 일어납니다</b> — 메서드마다 규칙이냐 LLM이냐를 정하고, 잡힌 BLOCKER 중 고칠 것과 사람에게 넘길 것을 가르고, 후보를 만들어 채점해 하나를 탈락시킵니다. 그 판단이 전부 로그에 근거와 함께 남습니다. 자율성을 뺀 대신 <b>재현성과 통제성</b>을 얻은 구조입니다.</td>
     </tr>
   </table>
 
